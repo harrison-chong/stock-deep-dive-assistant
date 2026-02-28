@@ -9,7 +9,8 @@ class Config(BaseSettings):
     )
     API_KEY: str = Field(default="", description="API key for the AI model")
     MODEL_NAME: str = Field(
-        default="x-ai/grok-4-fast:free", description="Name of the AI model to use"
+        default="arcee-ai/trinity-large-preview:free",
+        description="Name of the AI model to use",
     )
 
     model_config = SettingsConfigDict(env_file=".env")

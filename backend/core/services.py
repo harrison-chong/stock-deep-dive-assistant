@@ -9,6 +9,8 @@ import ta
 from datetime import datetime, timedelta
 import yfinance as yf
 import httpx
+import json
+import re
 
 from common.types import (
     OHLCData,
@@ -30,9 +32,7 @@ class DataService:
             end_date = datetime.now()
             start_date = end_date - timedelta(days=days)
 
-            data = yf.download(
-                ticker, start=start_date, end=end_date, progress=False
-            )
+            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")
@@ -40,7 +40,7 @@ class DataService:
             # Flatten multi-level columns if needed
             if isinstance(data.columns, pd.MultiIndex):
                 data.columns = data.columns.get_level_values(0)
-            
+
             # Ensure we have the right columns
             data.columns = [col.strip() for col in data.columns]
 
@@ -122,12 +122,24 @@ class TechnicalService:
         # Moving averages
         sma_20 = close.rolling(window=20).mean().iloc[-1] if len(close) >= 20 else None
         sma_50 = close.rolling(window=50).mean().iloc[-1] if len(close) >= 50 else None
-        sma_100 = close.rolling(window=100).mean().iloc[-1] if len(close) >= 100 else None
-        sma_200 = close.rolling(window=200).mean().iloc[-1] if len(close) >= 200 else None
+        sma_100 = (
+            close.rolling(window=100).mean().iloc[-1] if len(close) >= 100 else None
+        )
+        sma_200 = (
+            close.rolling(window=200).mean().iloc[-1] if len(close) >= 200 else None
+        )
 
         # Exponential moving averages
-        ema_12 = close.ewm(span=12, adjust=False).mean().iloc[-1] if len(close) >= 12 else None
-        ema_26 = close.ewm(span=26, adjust=False).mean().iloc[-1] if len(close) >= 26 else None
+        ema_12 = (
+            close.ewm(span=12, adjust=False).mean().iloc[-1]
+            if len(close) >= 12
+            else None
+        )
+        ema_26 = (
+            close.ewm(span=26, adjust=False).mean().iloc[-1]
+            if len(close) >= 26
+            else None
+        )
 
         # RSI
         rsi_14 = _calc_rsi(close, 14) if len(close) >= 14 else None
@@ -188,25 +200,19 @@ class TechnicalService:
 
 def _calc_rsi(close: pd.Series, period: int = 14) -> float | None:
     """Calculate RSI"""
-    try:
-        delta = close.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        return float(rsi.iloc[-1])
-    except:
-        return None
+    delta = close.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return float(rsi.iloc[-1])
 
 
 def _calc_macd(close: pd.Series) -> tuple[float | None, float | None]:
     """Calculate MACD"""
-    try:
-        macd_line = ta.trend.macd(close, window_fast=12, window_slow=26, window_sign=9)
-        if macd_line is not None and len(macd_line) > 0:
-            return float(macd_line.iloc[-1, 0]), float(macd_line.iloc[-1, 1])
-    except:
-        pass
+    macd_line = ta.trend.macd(close, window_fast=12, window_slow=26, window_sign=9)
+    if macd_line is not None and len(macd_line) > 0:
+        return float(macd_line.iloc[-1, 0]), float(macd_line.iloc[-1, 1])
     return None, None
 
 
@@ -369,9 +375,6 @@ Not financial advice. For educational purposes only.
                 response.raise_for_status()
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
-
-            import json
-            import re
 
             json_match = re.search(r"\{.*\}", content, re.DOTALL)
             parsed = json.loads(json_match.group() if json_match else content)

@@ -9,6 +9,7 @@ from datetime import datetime
 @dataclass
 class OHLCData:
     """Open, High, Low, Close price data"""
+
     timestamp: list[datetime]
     open: list[float]
     high: list[float]
@@ -20,6 +21,7 @@ class OHLCData:
 @dataclass
 class CompanyInfo:
     """Basic company information"""
+
     ticker: str
     name: str
     sector: str | None
@@ -31,6 +33,7 @@ class CompanyInfo:
 @dataclass
 class FundamentalData:
     """Company fundamental metrics"""
+
     ticker: str
     market_cap: float | None
     pe_ratio: float | None
@@ -51,6 +54,7 @@ class FundamentalData:
 @dataclass
 class TechnicalIndicators:
     """Complete set of technical indicators"""
+
     sma_20: float | None
     sma_50: float | None
     sma_100: float | None
@@ -71,6 +75,7 @@ class TechnicalIndicators:
 @dataclass
 class AIInterpretation:
     """AI-generated insight about a stock"""
+
     overall_summary: str
     bull_case: str
     bear_case: str
