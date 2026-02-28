@@ -17,7 +17,6 @@ from common.types import (
     TechnicalIndicators,
     AIInterpretation,
 )
-from core.helpers import safe_divide
 from common.config import config
 
 

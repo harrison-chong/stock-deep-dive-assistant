@@ -7,6 +7,9 @@ uv sync
 Set-Location ..
 Start-Process -FilePath "uv" -ArgumentList "run fastapi dev" -WorkingDirectory "backend" -NoNewWindow
 
+# Wait for backend to start before launching frontend for cleaner logs
+Start-Sleep -Seconds 3
+
 # Install frontend dependencies and start dev server
 Set-Location frontend
 npm install

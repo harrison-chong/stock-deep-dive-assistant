@@ -24,13 +24,6 @@ def is_valid_ticker(ticker: str) -> bool:
     return 1 < len(ticker) < 10 and ticker.replace(".", "").isalnum()
 
 
-def safe_divide(num: float | None, denom: float | None, fallback: float = 0.0) -> float:
-    """Safe division that handles None values"""
-    if num is None or denom is None or denom == 0:
-        return fallback
-    return float(num / denom)
-
-
 def format_currency(value: float | None) -> str:
     """Format value as currency"""
     if value is None:
