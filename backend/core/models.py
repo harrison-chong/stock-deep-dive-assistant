@@ -8,6 +8,7 @@ from typing import Optional
 
 # ============ REQUESTS ============
 
+
 class AnalysisRequest(BaseModel):
     """Request to analyze a stock"""
 
@@ -17,6 +18,7 @@ class AnalysisRequest(BaseModel):
 
 
 # ============ RESPONSES ============
+
 
 class MetricResponse(BaseModel):
     """Single metric with value and interpretation"""

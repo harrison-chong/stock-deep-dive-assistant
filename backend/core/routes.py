@@ -5,10 +5,17 @@ API routes
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 
-from core.models import AnalysisRequest, StockAnalysisResponse, MetricResponse, TechnicalOverviewResponse, FundamentalOverviewResponse, AIOutlookResponse
+from core.models import (
+    AnalysisRequest,
+    StockAnalysisResponse,
+    MetricResponse,
+    TechnicalOverviewResponse,
+    FundamentalOverviewResponse,
+    AIOutlookResponse,
+)
 from core.services import DataService, TechnicalService, FundamentalService, AIService
 from core.helpers import is_valid_ticker, get_current_price, create_snapshot_summary
-from common.types import OHLCData
+from core.types import OHLCData
 
 router = APIRouter()
 data_service = DataService()
@@ -34,7 +41,7 @@ async def analyze_stock(request: AnalysisRequest):
         company_info = await data_service.get_company_info(ticker)
 
         # Convert OHLC to DataFrame
-        df = ohlc.to_dataframe() if hasattr(ohlc, 'to_dataframe') else _ohlc_to_df(ohlc)
+        df = ohlc.to_dataframe() if hasattr(ohlc, "to_dataframe") else _ohlc_to_df(ohlc)
 
         # Calculate indicators
         tech_indicators = tech_service.calculate_all(df)
@@ -54,30 +61,73 @@ async def analyze_stock(request: AnalysisRequest):
             ],
             volatility=[
                 MetricResponse(name="ATR 14", value=tech_indicators.atr_14),
-                MetricResponse(name="Volatility 30D", value=tech_indicators.volatility_30d, unit="%"),
-                MetricResponse(name="Volatility 90D", value=tech_indicators.volatility_90d, unit="%"),
+                MetricResponse(
+                    name="Volatility 30D",
+                    value=tech_indicators.volatility_30d,
+                    unit="%",
+                ),
+                MetricResponse(
+                    name="Volatility 90D",
+                    value=tech_indicators.volatility_90d,
+                    unit="%",
+                ),
             ],
         )
 
         # Fundamental overview
-        fundamental_interpretations = fundamental_service.get_interpretations(fundamentals)
-        
+        fundamental_interpretations = fundamental_service.get_interpretations(
+            fundamentals
+        )
+
         fundamental_overview = FundamentalOverviewResponse(
             profitability=[
-                MetricResponse(name="ROE", value=fundamentals.roe, interpretation=fundamental_interpretations.get("roe"), unit="%"),
-                MetricResponse(name="Profit Margin", value=fundamentals.profit_margin, unit="%"),
+                MetricResponse(
+                    name="ROE",
+                    value=fundamentals.roe,
+                    interpretation=fundamental_interpretations.get("roe"),
+                    unit="%",
+                ),
+                MetricResponse(
+                    name="Profit Margin", value=fundamentals.profit_margin, unit="%"
+                ),
             ],
             valuation=[
-                MetricResponse(name="P/E Ratio", value=fundamentals.pe_ratio, interpretation=fundamental_interpretations.get("pe_ratio")),
-                MetricResponse(name="Forward P/E", value=fundamentals.forward_pe, interpretation=fundamental_interpretations.get("forward_pe")),
-                MetricResponse(name="PEG Ratio", value=fundamentals.peg_ratio, interpretation=fundamental_interpretations.get("peg_ratio")),
+                MetricResponse(
+                    name="P/E Ratio",
+                    value=fundamentals.pe_ratio,
+                    interpretation=fundamental_interpretations.get("pe_ratio"),
+                ),
+                MetricResponse(
+                    name="Forward P/E",
+                    value=fundamentals.forward_pe,
+                    interpretation=fundamental_interpretations.get("forward_pe"),
+                ),
+                MetricResponse(
+                    name="PEG Ratio",
+                    value=fundamentals.peg_ratio,
+                    interpretation=fundamental_interpretations.get("peg_ratio"),
+                ),
             ],
             financial_strength=[
-                MetricResponse(name="Debt-to-Equity", value=fundamentals.debt_to_equity, interpretation=fundamental_interpretations.get("debt_to_equity")),
-                MetricResponse(name="Dividend Yield", value=fundamentals.dividend_yield, interpretation=fundamental_interpretations.get("dividend_yield"), unit="%"),
+                MetricResponse(
+                    name="Debt-to-Equity",
+                    value=fundamentals.debt_to_equity,
+                    interpretation=fundamental_interpretations.get("debt_to_equity"),
+                ),
+                MetricResponse(
+                    name="Dividend Yield",
+                    value=fundamentals.dividend_yield,
+                    interpretation=fundamental_interpretations.get("dividend_yield"),
+                    unit="%",
+                ),
             ],
             growth=[
-                MetricResponse(name="Revenue Growth", value=fundamentals.revenue_growth, interpretation=fundamental_interpretations.get("revenue_growth"), unit="%"),
+                MetricResponse(
+                    name="Revenue Growth",
+                    value=fundamentals.revenue_growth,
+                    interpretation=fundamental_interpretations.get("revenue_growth"),
+                    unit="%",
+                ),
             ],
         )
 
@@ -95,7 +145,7 @@ async def analyze_stock(request: AnalysisRequest):
         tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
         fundamental_summary = f"P/E: {fundamentals.pe_ratio}, ROE: {fundamentals.roe}, D/E: {fundamentals.debt_to_equity}"
         news_summary = "News integration pending"
-        
+
         ai_interpretation = await ai_service.interpret(
             ticker=ticker,
             company_name=company_info.name,
@@ -138,13 +188,17 @@ async def analyze_stock(request: AnalysisRequest):
         raise HTTPException(status_code=500, detail="Analysis failed")
 
 
-def _ohlc_to_df(ohlc: 'OHLCData'):
+def _ohlc_to_df(ohlc: "OHLCData"):
     """Convert OHLCData to DataFrame"""
     import pandas as pd
-    return pd.DataFrame({
-        'open': ohlc.open,
-        'high': ohlc.high,
-        'low': ohlc.low,
-        'close': ohlc.close,
-        'volume': ohlc.volume,
-    }, index=ohlc.timestamp)
+
+    return pd.DataFrame(
+        {
+            "open": ohlc.open,
+            "high": ohlc.high,
+            "low": ohlc.low,
+            "close": ohlc.close,
+            "volume": ohlc.volume,
+        },
+        index=ohlc.timestamp,
+    )
