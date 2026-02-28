@@ -29,6 +29,7 @@ interface AnalysisData {
     risk_factors: string[]
     neutral_scenario: string
     recommendation: string
+    recommendation_rationale: string
     confidence_score: number
   }
   timestamp: string
@@ -220,9 +221,10 @@ function AnalysisResults({ data }: { data: AnalysisData }) {
           </div>
 
           <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-            <div>
+            <div className="flex-1">
               <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
               <p className="text-xl font-semibold text-gray-900 mt-1">{data.ai_outlook.recommendation}</p>
+              <p className="text-gray-700 text-sm mt-3 leading-relaxed">{data.ai_outlook.recommendation_rationale}</p>
             </div>
           </div>
         </div>
