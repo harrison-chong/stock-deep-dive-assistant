@@ -82,4 +82,5 @@ class AIInterpretation:
     risk_factors: list[str]
     neutral_scenario: str
     recommendation: str
+    recommendation_rationale: str
     confidence_score: float

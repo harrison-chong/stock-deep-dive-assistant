@@ -345,6 +345,7 @@ Respond in JSON format:
     "risk_factors": ["Risk 1", "Risk 2"],
     "neutral_scenario": "Base case",
     "recommendation": "Avoid, Hold, or Consider",
+    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing specific technical and fundamental metrics. Explain the key factors influencing the decision and the risk-reward profile.",
     "confidence_score": 75
 }}
 
@@ -386,6 +387,7 @@ Not financial advice. For educational purposes only.
                 risk_factors=parsed.get("risk_factors", []),
                 neutral_scenario=parsed.get("neutral_scenario", ""),
                 recommendation=parsed.get("recommendation", "Hold"),
+                recommendation_rationale=parsed.get("recommendation_rationale", ""),
                 confidence_score=float(parsed.get("confidence_score", 50)),
             )
 
@@ -398,5 +400,6 @@ Not financial advice. For educational purposes only.
                 risk_factors=[],
                 neutral_scenario="Pending",
                 recommendation="Hold",
+                recommendation_rationale="Unable to generate recommendation explanation due to service unavailability.",
                 confidence_score=0,
             )
