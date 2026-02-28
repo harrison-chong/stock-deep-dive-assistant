@@ -111,6 +111,7 @@ async def analyze_stock(request: AnalysisRequest):
             risk_factors=ai_interpretation.risk_factors,
             neutral_scenario=ai_interpretation.neutral_scenario,
             recommendation=ai_interpretation.recommendation,
+            recommendation_rationale=ai_interpretation.recommendation_rationale,
             confidence_score=ai_interpretation.confidence_score,
         )
 
