@@ -12,7 +12,7 @@ import httpx
 import json
 import re
 
-from common.types import (
+from core.types import (
     OHLCData,
     CompanyInfo,
     FundamentalData,

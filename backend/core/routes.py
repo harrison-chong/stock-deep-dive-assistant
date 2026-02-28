@@ -15,7 +15,7 @@ from core.models import (
 )
 from core.services import DataService, TechnicalService, FundamentalService, AIService
 from core.helpers import is_valid_ticker, get_current_price, create_snapshot_summary
-from common.types import OHLCData
+from core.types import OHLCData
 
 router = APIRouter()
 data_service = DataService()

@@ -1,5 +1,5 @@
 """
-Stock Deep Dive Assistant - Shared Types
+Stock Deep Dive Assistant - Domain Types
 """
 
 from dataclasses import dataclass
