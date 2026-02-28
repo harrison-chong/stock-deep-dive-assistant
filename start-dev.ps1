@@ -1,0 +1,13 @@
+# PowerShell script to run both backend (FastAPI with uv) and frontend (Vite React)
+# Run this from the root of your repository
+
+# Sync backend dependencies
+Set-Location backend
+uv sync
+Set-Location ..
+Start-Process -FilePath "uv" -ArgumentList "run fastapi dev" -WorkingDirectory "backend" -NoNewWindow
+
+# Install frontend dependencies and start dev server
+Set-Location frontend
+npm install
+npm run dev
