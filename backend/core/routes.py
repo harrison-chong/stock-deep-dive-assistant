@@ -146,7 +146,7 @@ async def analyze_stock(request: AnalysisRequest):
         fundamental_summary = f"P/E: {fundamentals.pe_ratio}, ROE: {fundamentals.roe}, D/E: {fundamentals.debt_to_equity}"
         news_summary = "News integration pending"
 
-        ai_interpretation = await ai_service.interpret(
+        ai_interpretation = ai_service.interpret(
             ticker=ticker,
             company_name=company_info.name,
             technical_summary=tech_summary,

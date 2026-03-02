@@ -1,0 +1,19 @@
+Analyze this stock briefly ({{ ticker }} - {{ company_name }}):
+
+Technical: {{ technical_summary }}
+Fundamental: {{ fundamental_summary }}
+News: {{ news_summary }}
+
+Respond in JSON format:
+{
+    "overall_summary": "1-2 sentences",
+    "bull_case": "Key reasons to be optimistic",
+    "bear_case": "Key risks",
+    "risk_factors": ["Risk 1", "Risk 2"],
+    "neutral_scenario": "Base case",
+    "recommendation": "Avoid, Hold, or Consider",
+    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing specific technical and fundamental metrics. Explain the key factors influencing the decision and the risk-reward profile.",
+    "confidence_score": 75
+}}
+
+Not financial advice. For educational purposes only.
