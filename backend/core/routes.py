@@ -4,6 +4,7 @@ API routes
 
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
+import pandas as pd
 
 from core.models import (
     AnalysisRequest,
@@ -190,8 +191,6 @@ async def analyze_stock(request: AnalysisRequest):
 
 def _ohlc_to_df(ohlc: "OHLCData"):
     """Convert OHLCData to DataFrame"""
-    import pandas as pd
-
     return pd.DataFrame(
         {
             "open": ohlc.open,

@@ -101,14 +101,6 @@ class DataService:
         except Exception as e:
             raise ValueError(f"Failed to fetch company info for {ticker}: {str(e)}")
 
-    @staticmethod
-    async def get_industry_peers(ticker: str, limit: int = 5) -> list[str]:
-        """
-        Get industry peers
-        TODO: Implement via Polygon API or maintain local database
-        """
-        return []
-
 
 class TechnicalService:
     """Calculate technical indicators"""
@@ -212,14 +204,18 @@ def _calc_rsi(close: pd.Series, period: int = 14) -> float | None:
 def _calc_macd(close: pd.Series) -> tuple[float | None, float | None]:
     """Calculate MACD and signal line using ta library"""
     from ta.trend import MACD
-    
+
     macd_indicator = MACD(close, window_fast=12, window_slow=26, window_sign=9)
     macd_line = macd_indicator.macd()
     signal_line = macd_indicator.macd_signal()
-    
+
     if macd_line is not None and len(macd_line) > 0:
         macd_val = float(macd_line.iloc[-1])
-        signal_val = float(signal_line.iloc[-1]) if signal_line is not None and len(signal_line) > 0 else None
+        signal_val = (
+            float(signal_line.iloc[-1])
+            if signal_line is not None and len(signal_line) > 0
+            else None
+        )
         return macd_val, signal_val
     return None, None
 
@@ -355,8 +351,6 @@ class AIService:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                temperature=0.7,
-                max_tokens=800,
             )
             content = response.choices[0].message.content
 
