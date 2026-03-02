@@ -3,7 +3,7 @@ API routes
 """
 
 from fastapi import APIRouter, HTTPException
-from datetime import datetime
+from datetime import datetime, date
 import pandas as pd
 
 from core.models import (
@@ -13,6 +13,8 @@ from core.models import (
     TechnicalOverviewResponse,
     FundamentalOverviewResponse,
     AIOutlookResponse,
+    PerformanceRequest,
+    PerformanceResponse,
 )
 from core.services import DataService, TechnicalService, FundamentalService, AIService
 from core.helpers import is_valid_ticker, get_current_price, create_snapshot_summary
@@ -178,7 +180,7 @@ async def analyze_stock(request: AnalysisRequest):
             technical_overview=technical_overview,
             fundamental_overview=fundamental_overview,
             ai_outlook=ai_outlook,
-            disclaimer="⚠️ Not financial advice. For educational purposes only.",
+            disclaimer="Not financial advice. For educational purposes only. Ligma",
             timestamp=datetime.now().isoformat(),
         )
 
@@ -187,6 +189,73 @@ async def analyze_stock(request: AnalysisRequest):
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Analysis failed")
+
+
+@router.post("/performance", response_model=PerformanceResponse)
+async def calculate_performance(request: PerformanceRequest):
+    """
+    Calculate stock performance from purchase date to current
+    """
+    ticker = request.ticker.upper()
+
+    if not is_valid_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        # Get current price
+        ohlc = await data_service.get_ohlc(ticker)
+        df = ohlc.to_dataframe() if hasattr(ohlc, "to_dataframe") else _ohlc_to_df(ohlc)
+        current_price = get_current_price(df)
+
+        # Get purchase price (use provided or fetch from historical data)
+        purchase_price = request.purchase_price
+        if purchase_price is None:
+            # Find price on purchase date
+            historical_data = yf.download(ticker, start=request.purchase_date, end=request.purchase_date, progress=False)
+            if historical_data.empty:
+                raise HTTPException(status_code=404, detail=f"No data found for {ticker} on {request.purchase_date}")
+            purchase_price = historical_data["Close"].iloc[0]
+
+        # Calculate performance metrics
+        total_cost = request.quantity * purchase_price
+        current_value = request.quantity * current_price
+        profit_loss = current_value - total_cost
+        profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+
+        # Calculate holding period in days
+        holding_period = (datetime.now().date() - request.purchase_date).days
+
+        # Calculate annualized return (simple)
+        annualized_return = None
+        if holding_period > 0:
+            years_held = holding_period / 365.25
+            annualized_return = ((current_value / total_cost) ** (1 / years_held) - 1) * 100
+
+        # Get company info for display
+        company_info = await data_service.get_company_info(ticker)
+
+        return PerformanceResponse(
+            ticker=ticker,
+            company_name=company_info.name,
+            purchase_date=request.purchase_date,
+            quantity=request.quantity,
+            purchase_price=float(purchase_price),
+            current_price=float(current_price),
+            total_cost=float(total_cost),
+            current_value=float(current_value),
+            profit_loss=float(profit_loss),
+            profit_loss_percentage=float(profit_loss_percentage),
+            holding_period=holding_period,
+            annualized_return=float(annualized_return) if annualized_return else None,
+            disclaimer="Not financial advice. For educational purposes only. Ligma",
+            timestamp=datetime.now().isoformat(),
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Performance calculation failed")
 
 
 def _ohlc_to_df(ohlc: "OHLCData"):
