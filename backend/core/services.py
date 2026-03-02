@@ -3,14 +3,13 @@ Core analysis services
 Combines technical, fundamental, and AI analysis
 """
 
+import json
+import re
 import pandas as pd
 import numpy as np
 import ta
 from datetime import datetime, timedelta
 import yfinance as yf
-import httpx
-import json
-import re
 
 from core.types import (
     OHLCData,
@@ -20,6 +19,8 @@ from core.types import (
     AIInterpretation,
 )
 from common.config import config
+from common.client import client
+from common.utils import render_template
 
 
 class DataService:
@@ -99,14 +100,6 @@ class DataService:
             )
         except Exception as e:
             raise ValueError(f"Failed to fetch company info for {ticker}: {str(e)}")
-
-    @staticmethod
-    async def get_industry_peers(ticker: str, limit: int = 5) -> list[str]:
-        """
-        Get industry peers
-        TODO: Implement via Polygon API or maintain local database
-        """
-        return []
 
 
 class TechnicalService:
@@ -209,10 +202,21 @@ def _calc_rsi(close: pd.Series, period: int = 14) -> float | None:
 
 
 def _calc_macd(close: pd.Series) -> tuple[float | None, float | None]:
-    """Calculate MACD"""
-    macd_line = ta.trend.macd(close, window_fast=12, window_slow=26, window_sign=9)
+    """Calculate MACD and signal line using ta library"""
+    from ta.trend import MACD
+
+    macd_indicator = MACD(close, window_fast=12, window_slow=26, window_sign=9)
+    macd_line = macd_indicator.macd()
+    signal_line = macd_indicator.macd_signal()
+
     if macd_line is not None and len(macd_line) > 0:
-        return float(macd_line.iloc[-1, 0]), float(macd_line.iloc[-1, 1])
+        macd_val = float(macd_line.iloc[-1])
+        signal_val = (
+            float(signal_line.iloc[-1])
+            if signal_line is not None and len(signal_line) > 0
+            else None
+        )
+        return macd_val, signal_val
     return None, None
 
 
@@ -316,11 +320,9 @@ class AIService:
     """AI-powered interpretation using OpenRouter"""
 
     def __init__(self):
-        self.base_url = config.BASE_URL
-        self.api_key = config.API_KEY
         self.model = config.MODEL_NAME
 
-    async def interpret(
+    def interpret(
         self,
         ticker: str,
         company_name: str,
@@ -330,52 +332,27 @@ class AIService:
     ) -> AIInterpretation:
         """Use LLM to generate holistic interpretation"""
 
-        prompt = f"""
-Analyze this stock briefly ({ticker} - {company_name}):
-
-Technical: {technical_summary}
-Fundamental: {fundamental_summary}
-News: {news_summary}
-
-Respond in JSON format:
-{{
-    "overall_summary": "1-2 sentences",
-    "bull_case": "Key reasons to be optimistic",
-    "bear_case": "Key risks",
-    "risk_factors": ["Risk 1", "Risk 2"],
-    "neutral_scenario": "Base case",
-    "recommendation": "Avoid, Hold, or Consider",
-    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing specific technical and fundamental metrics. Explain the key factors influencing the decision and the risk-reward profile.",
-    "confidence_score": 75
-}}
-
-Not financial advice. For educational purposes only.
-"""
+        prompt = render_template(
+            "prompts/stock_analysis.jinja2",
+            ticker=ticker,
+            company_name=company_name,
+            technical_summary=technical_summary,
+            fundamental_summary=fundamental_summary,
+            news_summary=news_summary,
+        )
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a financial analyst. Provide balanced analysis without giving advice.",
                     },
-                    json={
-                        "model": self.model,
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": "You are a financial analyst. Provide balanced analysis without giving advice.",
-                            },
-                            {"role": "user", "content": prompt},
-                        ],
-                        "temperature": 0.7,
-                        "max_tokens": 800,
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
-                content = data["choices"][0]["message"]["content"]
+                    {"role": "user", "content": prompt},
+                ],
+            )
+            content = response.choices[0].message.content
 
             json_match = re.search(r"\{.*\}", content, re.DOTALL)
             parsed = json.loads(json_match.group() if json_match else content)

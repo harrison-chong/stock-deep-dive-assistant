@@ -4,6 +4,7 @@ API routes
 
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
+import pandas as pd
 
 from core.models import (
     AnalysisRequest,
@@ -146,7 +147,7 @@ async def analyze_stock(request: AnalysisRequest):
         fundamental_summary = f"P/E: {fundamentals.pe_ratio}, ROE: {fundamentals.roe}, D/E: {fundamentals.debt_to_equity}"
         news_summary = "News integration pending"
 
-        ai_interpretation = await ai_service.interpret(
+        ai_interpretation = ai_service.interpret(
             ticker=ticker,
             company_name=company_info.name,
             technical_summary=tech_summary,
@@ -190,8 +191,6 @@ async def analyze_stock(request: AnalysisRequest):
 
 def _ohlc_to_df(ohlc: "OHLCData"):
     """Convert OHLCData to DataFrame"""
-    import pandas as pd
-
     return pd.DataFrame(
         {
             "open": ohlc.open,
