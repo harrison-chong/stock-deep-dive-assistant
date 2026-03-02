@@ -1,4 +1,8 @@
 [project]
+description = "FastAPI backend for Stock Deep Dive Assistant"
+name = "stock-deep-dive-assistant-backend"
+requires-python = ">=3.12"
+version = "0.1.0"
 dependencies = [
     "fastapi[standard]>=0.135.1",
     "jinja2>=3.1.6",
@@ -9,14 +13,10 @@ dependencies = [
     "ta>=0.11.0",
     "yfinance>=1.2.0",
 ]
-description = "FastAPI backend for Stock Deep Dive Assistant"
-name = "stock-deep-dive-assistant-backend"
-requires-python = ">=3.12"
-version = "0.1.0"
 
 [project.optional-dependencies]
 hooks = [
     "detect-secrets>=1.5.0",
-    "pyprojectsort>=0.2.0",
     "ruff>=0.15.2",
+    "uv-sort>=0.7.0",
 ]

@@ -19,9 +19,9 @@ repos = [
         files = "^backend/.*\\.py$"
       },
       {
-        id = "pyprojectsort",
-        name = "pyprojectsort",
-        entry = "uv run --directory backend pyprojectsort",
+        id = "uv-sort",
+        name = "uv sort dependencies",
+        entry = "uv run --directory backend uv-sort",
         files = "^backend/pyproject\\.toml$",
         pass_filenames = false,
         language = "system"
