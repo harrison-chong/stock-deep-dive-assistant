@@ -1,0 +1,65 @@
+repos = [
+
+  # ================= Backend =================
+  {
+    repo = "local",
+    hooks = [
+      {
+        id = "ruff-check",
+        name = "ruff check --fix",
+        entry = "uv run --directory backend ruff check --fix",
+        language = "system",
+        files = "^backend/.*\\.py$"
+      },
+      {
+        id = "ruff-format",
+        name = "ruff format",
+        entry = "uv run --directory backend ruff format",
+        language = "system",
+        files = "^backend/.*\\.py$"
+      },
+      {
+        id = "pyprojectsort",
+        name = "pyprojectsort",
+        entry = "uv run --directory backend pyprojectsort",
+        language = "system",
+        files = "^backend/pyproject\\.toml$"
+      }
+    ]
+  },
+
+  # ================= Security =================
+  {
+    repo = "local",
+    hooks = [
+      {
+        id = "gitleaks",
+        name = "gitleaks protect",
+        entry = "gitleaks protect --staged --verbose",
+        language = "system",
+        pass_filenames = false
+      }
+    ]
+  },
+
+  # ================= Frontend =================
+  {
+    repo = "local",
+    hooks = [
+      {
+        id = "eslint",
+        name = "eslint",
+        entry = "npm run lint --prefix frontend",
+        language = "system",
+        files = "^frontend/.*\\.(js|ts|tsx)$"
+      },
+      {
+        id = "prettier",
+        name = "prettier format",
+        entry = "npm run format --prefix frontend",
+        language = "system",
+        files = "^frontend/.*\\.(js|ts|tsx|css|json|md)$"
+      }
+    ]
+  }
+]

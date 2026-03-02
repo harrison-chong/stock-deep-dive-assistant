@@ -15,6 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-lint = [
+hooks = [
     "ruff>=0.15.2",
+    "pyprojectsort>=0.2.0",
 ]
