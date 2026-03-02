@@ -22,8 +22,9 @@ repos = [
         id = "pyprojectsort",
         name = "pyprojectsort",
         entry = "uv run --directory backend pyprojectsort",
-        language = "system",
-        files = "^backend/pyproject\\.toml$"
+        files = "^backend/pyproject\\.toml$",
+        pass_filenames = false,
+        language = "system"
       }
     ]
   },
@@ -33,11 +34,11 @@ repos = [
     repo = "local",
     hooks = [
       {
-        id = "gitleaks",
-        name = "gitleaks protect",
-        entry = "gitleaks protect --staged --verbose",
+        id = "detect-secrets",
+        name = "detect-secrets",
+        entry = "uv run --directory backend detect-secrets-hook",
         language = "system",
-        pass_filenames = false
+        pass_filenames = true
       }
     ]
   },

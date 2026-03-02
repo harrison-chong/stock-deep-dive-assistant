@@ -49,5 +49,6 @@ Then open `http://localhost:5173` in your browser.
 
 ```ps1
 winget install --id j178.Prek
-winget install Gitleaks.Gitleaks
+
+prek install
 ```
