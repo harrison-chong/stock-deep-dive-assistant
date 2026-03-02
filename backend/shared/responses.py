@@ -67,3 +67,23 @@ class StockAnalysisResponse(BaseModel):
     ai_outlook: AIOutlookResponse
     disclaimer: str
     timestamp: str
+
+
+class PerformanceResponse(BaseModel):
+    """Stock performance calculation response"""
+
+    ticker: str
+    company_name: str
+    purchase_date: str
+    current_date: str
+    quantity: float
+    purchase_price: float
+    current_price: float
+    total_cost: float
+    current_value: float
+    profit_loss: float
+    profit_loss_percentage: float
+    annualized_return: float
+    annualized_return_percentage: float
+    disclaimer: str
+    timestamp: str
