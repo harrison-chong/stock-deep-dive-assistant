@@ -44,3 +44,11 @@ start-dev.ps1
 ```
 
 Then open `http://localhost:5173` in your browser.
+
+## Installing pre-commit hook
+
+```ps1
+winget install --id j178.Prek
+
+prek install
+```
