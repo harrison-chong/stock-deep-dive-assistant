@@ -1,23 +1,16 @@
 """
-Pydantic schemas for requests/responses
+Response models for the API.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
-
-
-# ============ REQUESTS ============
-
-
-class AnalysisRequest(BaseModel):
-    """Request to analyze a stock"""
-
-    ticker: str = Field(..., description="Stock ticker")
-    investment_horizon: Optional[str] = Field(default="1y")
-    risk_tolerance: Optional[str] = Field(default="moderate")
-
-
-# ============ RESPONSES ============
+from typing import Optional, List
+from shared.domain import (
+    OHLCData,
+    CompanyInfo,
+    FundamentalData,
+    TechnicalIndicators,
+    AIInterpretation,
+)
 
 
 class MetricResponse(BaseModel):
@@ -32,18 +25,18 @@ class MetricResponse(BaseModel):
 class TechnicalOverviewResponse(BaseModel):
     """Technical indicators overview"""
 
-    moving_averages: list[MetricResponse]
-    momentum: list[MetricResponse]
-    volatility: list[MetricResponse]
+    moving_averages: List[MetricResponse]
+    momentum: List[MetricResponse]
+    volatility: List[MetricResponse]
 
 
 class FundamentalOverviewResponse(BaseModel):
     """Fundamental metrics grouped by category"""
 
-    profitability: list[MetricResponse]
-    valuation: list[MetricResponse]
-    financial_strength: list[MetricResponse]
-    growth: list[MetricResponse]
+    profitability: List[MetricResponse]
+    valuation: List[MetricResponse]
+    financial_strength: List[MetricResponse]
+    growth: List[MetricResponse]
 
 
 class AIOutlookResponse(BaseModel):
@@ -52,7 +45,7 @@ class AIOutlookResponse(BaseModel):
     overall_summary: str
     bull_case: str
     bear_case: str
-    risk_factors: list[str]
+    risk_factors: List[str]
     neutral_scenario: str
     recommendation: str
     recommendation_rationale: str
