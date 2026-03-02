@@ -50,15 +50,17 @@ repos = [
       {
         id = "eslint",
         name = "eslint",
-        entry = "npm run lint --prefix frontend",
+        entry = "npx --prefix frontend eslint",
         language = "system",
+        pass_filenames = true,
         files = "^frontend/.*\\.(js|ts|tsx)$"
       },
       {
         id = "prettier",
         name = "prettier format",
-        entry = "npm run format --prefix frontend",
+        entry = "npx --prefix frontend prettier --write",
         language = "system",
+        pass_filenames = true,
         files = "^frontend/.*\\.(js|ts|tsx|css|json|md)$"
       }
     ]

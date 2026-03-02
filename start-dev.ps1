@@ -3,7 +3,7 @@
 
 # Sync backend dependencies
 Set-Location backend
-uv sync
+uv sync --all-extras
 Set-Location ..
 Start-Process -FilePath "uv" -ArgumentList "run fastapi dev" -WorkingDirectory "backend" -NoNewWindow
 

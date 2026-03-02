@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:js": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:css": "stylelint '**/*.{css,scss}'",
+    "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,scss,json,md}'"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -22,8 +25,13 @@
     "@typescript-eslint/parser": "^8.56.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
-    "eslint": "^8.55.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "postcss": "^8.4.32",
+    "prettier": "^3.8.1",
+    "stylelint-config-prettier": "^9.0.5",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.3.3",
     "vite": "^7.3.1"
