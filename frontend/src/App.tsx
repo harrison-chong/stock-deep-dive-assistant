@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import axios from 'axios'
-import { Search, AlertCircle, TrendingUp } from 'lucide-react'
+import { Search, AlertCircle, TrendingUp, Calculator } from 'lucide-react'
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import PerformanceCalculatorPage from './PerformanceCalculatorPage'
 import './App.css'
 
 interface AnalysisData {
@@ -64,184 +66,210 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-6 h-6 text-gray-900" />
-            <h1 className="text-xl font-semibold text-gray-900">
-              Stock Deep Dive
-            </h1>
+    <Router>
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div className="border-b border-gray-200 bg-white sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-6 h-6 text-gray-900" />
+              <h1 className="text-xl font-semibold text-gray-900">
+                Stock Deep Dive
+              </h1>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Search Section */}
-        <div className="mb-12">
-          <form onSubmit={handleAnalyze} className="relative">
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
-                />
-                <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-colors"
+        {/* Navigation */}
+        <div className="border-b border-gray-200 bg-white sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition-colors"
               >
-                {loading ? 'Analyzing...' : 'Analyze'}
-              </button>
-            </div>
-          </form>
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Results */}
-        {data && <AnalysisResults data={data} />}
-      </div>
-    </div>
-  )
-}
-
-function AnalysisResults({ data }: { data: AnalysisData }) {
-  return (
-    <div className="space-y-8">
-      {/* Company Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <div className="flex items-start justify-between gap-6 mb-6">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">{data.company_name}</h2>
-            <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-4xl font-bold text-gray-900">${data.current_price.toFixed(2)}</p>
-            {data.market_cap && (
-              <p className="text-sm text-gray-600 mt-1">
-                Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
-              </p>
-            )}
-          </div>
-        </div>
-        {data.sector && <p className="text-gray-700">{data.sector} • {data.industry}</p>}
-      </div>
-
-      {/* Snapshot Summary */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Snapshot</h3>
-        <p className="text-gray-700 leading-relaxed">{data.snapshot_summary}</p>
-      </div>
-
-      {/* Technical Overview */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <MetricsCard title="Moving Averages" metrics={data.technical_overview.moving_averages} />
-        <MetricsCard title="Momentum" metrics={data.technical_overview.momentum} />
-        <MetricsCard title="Volatility" metrics={data.technical_overview.volatility || []} />
-      </div>
-
-      {/* Fundamental Overview */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <MetricsCard 
-          title="Profitability" 
-          metrics={data.fundamental_overview.profitability}
-          showInterpretation={true}
-        />
-        <MetricsCard 
-          title="Valuation" 
-          metrics={data.fundamental_overview.valuation}
-          showInterpretation={true}
-        />
-        <MetricsCard 
-          title="Financial Strength" 
-          metrics={data.fundamental_overview.financial_strength}
-          showInterpretation={true}
-        />
-        <MetricsCard 
-          title="Growth" 
-          metrics={data.fundamental_overview.growth}
-          showInterpretation={true}
-        />
-      </div>
-
-      {/* AI Outlook */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-          AI Analysis
-          <span className="text-sm font-normal text-gray-600">
-            Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
-          </span>
-        </h3>
-
-        <div className="space-y-6">
-          <div>
-            <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="border border-gray-200 rounded-lg p-6 bg-green-50">
-              <h4 className="font-semibold text-gray-900 mb-3">Bull Case</h4>
-              <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.bull_case}</p>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-6 bg-red-50">
-              <h4 className="font-semibold text-gray-900 mb-3">Bear Case</h4>
-              <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.bear_case}</p>
-            </div>
-          </div>
-
-          {data.ai_outlook.risk_factors.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Risk Factors</h4>
-              <ul className="space-y-2">
-                {data.ai_outlook.risk_factors.map((risk, i) => (
-                  <li key={i} className="text-gray-700 text-sm flex gap-3">
-                    <span className="text-gray-400">•</span>
-                    {risk}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
-            <h4 className="font-semibold text-gray-900 mb-3">Neutral Scenario</h4>
-            <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.neutral_scenario}</p>
-          </div>
-
-          <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-            <div className="flex-1">
-              <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
-              <p className="text-xl font-semibold text-gray-900 mt-1">{data.ai_outlook.recommendation}</p>
-              <p className="text-gray-700 text-sm mt-3 leading-relaxed">{data.ai_outlook.recommendation_rationale}</p>
+                Analysis
+              </Link>
+              <Link
+                to="/performance"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Performance Calculator
+              </Link>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Disclaimer */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-4">
-        <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
-        <p className="text-yellow-800 text-sm leading-relaxed">
-          This is not financial advice. This tool is for educational purposes only. Always conduct your own research and consult with qualified financial advisors before making investment decisions.
-        </p>
-      </div>
+        {/* Main Content */}
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <div>
+                  {/* Search Section */}
+                  <div className="mb-12">
+                    <form onSubmit={handleAnalyze} className="relative">
+                      <div className="flex gap-3">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
+                            value={ticker}
+                            onChange={(e) => setTicker(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
+                          />
+                          <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="px-6 py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-colors"
+                        >
+                          {loading ? 'Analyzing...' : 'Analyze'}
+                        </button>
+                      </div>
+                    </form>
+                    {error && (
+                      <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-red-800 text-sm">{error}</p>
+                      </div>
+                    )}
+                  </div>
 
-      <p className="text-xs text-gray-500 text-center">
-        Analysis generated: {new Date(data.timestamp).toLocaleString()}
-      </p>
-    </div>
+                  {/* Analysis Results */}
+                  {data && (
+                    <div>
+                      <div className="bg-white border border-gray-200 rounded-lg p-8">
+                        <div className="flex items-start justify-between gap-6 mb-6">
+                          <div>
+                            <h2 className="text-3xl font-bold text-gray-900">{data.company_name}</h2>
+                            <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-4xl font-bold text-gray-900">${data.current_price.toFixed(2)}</p>
+                            {data.market_cap && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {data.sector && <p className="text-gray-700">{data.sector} • {data.industry}</p>}
+                      </div>
+
+                      <div className="bg-white border border-gray-200 rounded-lg p-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Snapshot</h3>
+                        <p className="text-gray-700 leading-relaxed">{data.snapshot_summary}</p>
+                      </div>
+
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <MetricsCard title="Moving Averages" metrics={data.technical_overview.moving_averages} />
+                        <MetricsCard title="Momentum" metrics={data.technical_overview.momentum} />
+                        <MetricsCard title="Volatility" metrics={data.technical_overview.volatility || []} />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <MetricsCard 
+                          title="Profitability" 
+                          metrics={data.fundamental_overview.profitability}
+                          showInterpretation={true}
+                        />
+                        <MetricsCard 
+                          title="Valuation" 
+                          metrics={data.fundamental_overview.valuation}
+                          showInterpretation={true}
+                        />
+                        <MetricsCard 
+                          title="Financial Strength" 
+                          metrics={data.fundamental_overview.financial_strength}
+                          showInterpretation={true}
+                        />
+                        <MetricsCard 
+                          title="Growth" 
+                          metrics={data.fundamental_overview.growth}
+                          showInterpretation={true}
+                        />
+                      </div>
+
+                      <div className="bg-white border border-gray-200 rounded-lg p-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                          AI Analysis
+                          <span className="text-sm font-normal text-gray-600">
+                            Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
+                          </span>
+                        </h3>
+
+                        <div className="space-y-6">
+                          <div>
+                            <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="border border-gray-200 rounded-lg p-6 bg-green-50">
+                              <h4 className="font-semibold text-gray-900 mb-3">Bull Case</h4>
+                              <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.bull_case}</p>
+                            </div>
+                            <div className="border border-gray-200 rounded-lg p-6 bg-red-50">
+                              <h4 className="font-semibold text-gray-900 mb-3">Bear Case</h4>
+                              <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.bear_case}</p>
+                            </div>
+                          </div>
+
+                          {data.ai_outlook.risk_factors.length > 0 && (
+                            <div>
+                              <h4 className="font-semibold text-gray-900 mb-3">Risk Factors</h4>
+                              <ul className="space-y-2">
+                                {data.ai_outlook.risk_factors.map((risk, i) => (
+                                  <li key={i} className="text-gray-700 text-sm flex gap-3">
+                                    <span className="text-gray-400">•</span>
+                                    {risk}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
+                            <h4 className="font-semibold text-gray-900 mb-3">Neutral Scenario</h4>
+                            <p className="text-gray-700 text-sm leading-relaxed">{data.ai_outlook.neutral_scenario}</p>
+                          </div>
+
+                          <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
+                            <div className="flex-1">
+                              <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
+                              <p className="text-xl font-semibold text-gray-900 mt-1">{data.ai_outlook.recommendation}</p>
+                              <p className="text-gray-700 text-sm mt-3 leading-relaxed">{data.ai_outlook.recommendation_rationale}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-4">
+                        <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
+                        <p className="text-yellow-800 text-sm leading-relaxed">
+                          This is not financial advice. This tool is for educational purposes only. Always conduct your own research and consult with qualified financial advisors before making investment decisions.
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-gray-500 text-center">
+                        Analysis generated: {new Date(data.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              }
+            />
+            
+            <Route
+              path="/performance"
+              element={<PerformanceCalculatorPage />}
+            />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   )
 }
 
