@@ -1,9 +1,11 @@
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Search, AlertCircle, TrendingUp } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
+import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
 import './App.css';
 
-function App() {
+function HomePage() {
   const { ticker, setTicker, loading, error, data, handleAnalyze } = useStockAnalysis();
 
   return (
@@ -14,6 +16,26 @@ function App() {
           <div className="flex items-center gap-3">
             <TrendingUp className="w-6 h-6 text-gray-900" />
             <h1 className="text-xl font-semibold text-gray-900">Stock Deep Dive</h1>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="border-b border-gray-200 bg-white sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Analysis
+            </Link>
+            <Link
+              to="/performance"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Performance Calculator
+            </Link>
           </div>
         </div>
       </div>
@@ -51,10 +73,21 @@ function App() {
           )}
         </div>
 
-        {/* Results */}
+        {/* Analysis Results */}
         {data && <AnalysisResults data={data} />}
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/performance" element={<PerformanceCalculatorPage />} />
+      </Routes>
+    </Router>
   );
 }
 

@@ -94,3 +94,16 @@ class DataService:
         TODO: Implement via Polygon API or maintain local database
         """
         return []
+
+    @staticmethod
+    async def get_current_price(ticker: str) -> float:
+        """
+        Get the current price for a ticker
+        """
+        try:
+            data = yf.download(ticker, period="1d", progress=False)
+            if data.empty:
+                raise ValueError(f"No data found for {ticker}")
+            return float(data["Close"].iloc[-1].item())
+        except Exception as e:
+            raise ValueError(f"Failed to fetch current price for {ticker}: {str(e)}")
