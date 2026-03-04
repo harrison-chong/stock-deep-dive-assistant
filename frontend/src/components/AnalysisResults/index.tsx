@@ -17,7 +17,10 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
             <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
           </div>
           <div className="text-right">
-            <p className="text-4xl font-bold text-gray-900">${data.current_price.toFixed(2)}</p>
+            <div className="flex items-baseline justify-end gap-2">
+              <p className="text-4xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
+              {data.currency && <p className="text-lg text-gray-600">{data.currency}</p>}
+            </div>
             {data.market_cap && (
               <p className="text-sm text-gray-600 mt-1">
                 Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B

@@ -2,15 +2,8 @@
 Response models for the API.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List
-from shared.domain import (
-    OHLCData,
-    CompanyInfo,
-    FundamentalData,
-    TechnicalIndicators,
-    AIInterpretation,
-)
 
 
 class MetricResponse(BaseModel):
@@ -60,6 +53,7 @@ class StockAnalysisResponse(BaseModel):
     sector: Optional[str]
     industry: Optional[str]
     current_price: float
+    currency: Optional[str]
     market_cap: Optional[float]
     snapshot_summary: str
     technical_overview: TechnicalOverviewResponse

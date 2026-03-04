@@ -5,14 +5,6 @@ Application service that orchestrates stock analysis.
 import asyncio
 from datetime import datetime
 
-from shared.domain import (
-    OHLCData,
-    CompanyInfo,
-    FundamentalData,
-    TechnicalIndicators,
-    AIInterpretation,
-)
-from shared.requests import AnalysisRequest
 from shared.responses import (
     StockAnalysisResponse,
     TechnicalOverviewResponse,
@@ -189,6 +181,7 @@ class StockAnalyzer:
             sector=company_info.sector,
             industry=company_info.industry,
             current_price=current_price,
+            currency=company_info.currency,
             market_cap=fundamentals.market_cap,
             snapshot_summary=snapshot,
             technical_overview=technical_overview,
@@ -198,33 +191,41 @@ class StockAnalyzer:
             timestamp=datetime.now().isoformat(),
         )
 
-    async def calculate_performance(self, ticker: str, purchase_date: str, quantity: float, purchase_price: float) -> PerformanceResponse:
+    async def calculate_performance(
+        self, ticker: str, purchase_date: str, quantity: float, purchase_price: float
+    ) -> PerformanceResponse:
         """Calculate stock performance from purchase date to current date"""
         try:
             # Get current price
             current_price = await self.data_service.get_current_price(ticker)
-            
+
             # Calculate performance metrics
             total_cost = quantity * purchase_price
             current_value = quantity * current_price
             profit_loss = current_value - total_cost
-            profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
-            
+            profit_loss_percentage = (
+                (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+            )
+
             # Calculate annualized return
             purchase_date_dt = datetime.strptime(purchase_date, "%Y-%m-%d")
             current_date = datetime.now()
             days_held = (current_date - purchase_date_dt).days
-            
+
             if days_held <= 0:
                 raise ValueError("Purchase date must be in the past")
-            
+
             years_held = days_held / 365.25
-            annualized_return = ((current_price / purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+            annualized_return = (
+                ((current_price / purchase_price) ** (1 / years_held)) - 1
+                if years_held > 0
+                else 0
+            )
             annualized_return_percentage = annualized_return * 100
-            
+
             # Get company info
             company_info = await self.data_service.get_company_info(ticker)
-            
+
             return PerformanceResponse(
                 ticker=ticker,
                 company_name=company_info.name,
@@ -242,6 +243,6 @@ class StockAnalyzer:
                 disclaimer="⚠️ Not financial advice. For educational purposes only.",
                 timestamp=datetime.now().isoformat(),
             )
-            
+
         except Exception as e:
             raise ValueError(f"Performance calculation failed: {str(e)}")

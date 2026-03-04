@@ -52,28 +52,36 @@ async def calculate_performance(request: PerformanceRequest):
     try:
         # Get current price
         current_price = await analyzer.data_service.get_current_price(ticker)
-        
+
         # Calculate performance metrics
         total_cost = request.quantity * request.purchase_price
         current_value = request.quantity * current_price
         profit_loss = current_value - total_cost
-        profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
-        
+        profit_loss_percentage = (
+            (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+        )
+
         # Calculate annualized return
         purchase_date = datetime.strptime(request.purchase_date, "%Y-%m-%d")
         current_date = datetime.now()
         days_held = (current_date - purchase_date).days
-        
+
         if days_held <= 0:
-            raise HTTPException(status_code=400, detail="Purchase date must be in the past")
-        
+            raise HTTPException(
+                status_code=400, detail="Purchase date must be in the past"
+            )
+
         years_held = days_held / 365.25
-        annualized_return = ((current_price / request.purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+        annualized_return = (
+            ((current_price / request.purchase_price) ** (1 / years_held)) - 1
+            if years_held > 0
+            else 0
+        )
         annualized_return_percentage = annualized_return * 100
-        
+
         # Get company info
         company_info = await analyzer.data_service.get_company_info(ticker)
-        
+
         return PerformanceResponse(
             ticker=ticker,
             company_name=company_info.name,
