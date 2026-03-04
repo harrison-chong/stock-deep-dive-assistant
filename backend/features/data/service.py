@@ -83,6 +83,7 @@ class DataService:
                 industry=info.get("industry"),
                 website=info.get("website"),
                 description=info.get("longBusinessSummary"),
+                currency=info.get("currency"),
             )
         except Exception as e:
             raise ValueError(f"Failed to fetch company info for {ticker}: {str(e)}")

@@ -4,6 +4,7 @@ export interface AnalysisData {
   sector: string | null;
   industry: string | null;
   current_price: number;
+  currency: string | null;
   market_cap: number | null;
   snapshot_summary: string;
   technical_overview: {

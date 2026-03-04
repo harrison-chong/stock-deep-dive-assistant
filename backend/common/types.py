@@ -1,5 +1,5 @@
 """
-Stock Deep Dive Assistant - Domain Types
+Stock Deep Dive Assistant - Shared Types
 """
 
 from dataclasses import dataclass
@@ -28,7 +28,7 @@ class CompanyInfo:
     industry: str | None
     website: str | None
     description: str | None
-    currency: str | None
+    logo_url: str | None
 
 
 @dataclass
