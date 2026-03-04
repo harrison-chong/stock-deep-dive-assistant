@@ -1,3 +1,27 @@
+export interface StockMoverData {
+  ticker: string;
+  company_name: string;
+  change_percent: number;
+  current_price: number;
+  currency: string | null;
+}
+
+export interface MarketMoversData {
+  top_performers: StockMoverData[];
+  bottom_performers: StockMoverData[];
+  timestamp: string;
+}
+
+export interface SectorPerformance {
+  sector_name: string | null;
+  sector_1d_return: number | null;
+  sector_3m_return: number | null;
+  sector_1y_return: number | null;
+  stock_1d_return: number | null;
+  stock_3m_return: number | null;
+  stock_1y_return: number | null;
+}
+
 export interface AnalysisData {
   ticker: string;
   company_name: string;
@@ -7,6 +31,7 @@ export interface AnalysisData {
   currency: string | null;
   market_cap: number | null;
   snapshot_summary: string;
+  sector_performance: SectorPerformance;
   technical_overview: {
     moving_averages: { name: string; value: number | null }[];
     momentum: { name: string; value: number | null }[];

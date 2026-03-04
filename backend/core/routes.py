@@ -6,7 +6,11 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 
 from shared.requests import AnalysisRequest, PerformanceRequest
-from shared.responses import StockAnalysisResponse, PerformanceResponse
+from shared.responses import (
+    StockAnalysisResponse,
+    PerformanceResponse,
+    MarketMoversResponse,
+)
 from application.analysis import StockAnalyzer
 
 router = APIRouter()
@@ -105,6 +109,23 @@ async def calculate_performance(request: PerformanceRequest):
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Performance calculation failed")
+
+
+@router.get("/market-movers", response_model=MarketMoversResponse)
+async def get_market_movers():
+    """
+    Get top 5 and bottom 5 performing stocks in the past 24 hours
+    """
+    try:
+        movers_data = await analyzer.data_service.get_market_movers()
+        return MarketMoversResponse(
+            top_performers=movers_data["top_performers"],
+            bottom_performers=movers_data["bottom_performers"],
+            timestamp=datetime.now().isoformat(),
+        )
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch market movers")
 
 
 @router.get("/health")

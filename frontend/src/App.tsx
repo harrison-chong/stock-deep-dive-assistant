@@ -1,12 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom';
 import { Search, AlertCircle, TrendingUp } from 'lucide-react';
+import { useEffect } from 'react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
+import MarketMoversPage from './pages/MarketMoversPage';
 import './App.css';
 
 function HomePage() {
   const { ticker, setTicker, loading, error, data, handleAnalyze } = useStockAnalysis();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const tickerParam = searchParams.get('ticker');
+    if (tickerParam) {
+      setTicker(tickerParam);
+      // Trigger analysis after setting ticker
+      setTimeout(() => {
+        const event = new SubmitEvent('submit', { bubbles: true });
+        handleAnalyze(event as any);
+      }, 0);
+    }
+  }, [searchParams, setTicker, handleAnalyze]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -29,6 +44,12 @@ function HomePage() {
               className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-medium transition-colors"
             >
               Analysis
+            </Link>
+            <Link
+              to="/market-movers"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Market Movers
             </Link>
             <Link
               to="/performance"
@@ -85,6 +106,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/market-movers" element={<MarketMoversPage />} />
         <Route path="/performance" element={<PerformanceCalculatorPage />} />
       </Routes>
     </Router>

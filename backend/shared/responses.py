@@ -45,6 +45,18 @@ class AIOutlookResponse(BaseModel):
     confidence_score: float
 
 
+class SectorPerformanceResponse(BaseModel):
+    """Sector performance comparison"""
+
+    sector_name: Optional[str]
+    sector_1d_return: Optional[float]
+    sector_3m_return: Optional[float]
+    sector_1y_return: Optional[float]
+    stock_1d_return: Optional[float]
+    stock_3m_return: Optional[float]
+    stock_1y_return: Optional[float]
+
+
 class StockAnalysisResponse(BaseModel):
     """Complete stock analysis response"""
 
@@ -56,6 +68,7 @@ class StockAnalysisResponse(BaseModel):
     currency: Optional[str]
     market_cap: Optional[float]
     snapshot_summary: str
+    sector_performance: SectorPerformanceResponse
     technical_overview: TechnicalOverviewResponse
     fundamental_overview: FundamentalOverviewResponse
     ai_outlook: AIOutlookResponse
@@ -80,4 +93,22 @@ class PerformanceResponse(BaseModel):
     annualized_return: float
     annualized_return_percentage: float
     disclaimer: str
+    timestamp: str
+
+
+class StockMoverResponse(BaseModel):
+    """Single stock mover data"""
+
+    ticker: str
+    company_name: str
+    change_percent: float
+    current_price: float
+    currency: Optional[str]
+
+
+class MarketMoversResponse(BaseModel):
+    """Top and bottom market movers"""
+
+    top_performers: List[StockMoverResponse]
+    bottom_performers: List[StockMoverResponse]
     timestamp: str
