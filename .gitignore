@@ -29,3 +29,10 @@ build
 # OS
 .DS_Store
 Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite generated types / configs
+vite.config.d.ts
+vite.config.js

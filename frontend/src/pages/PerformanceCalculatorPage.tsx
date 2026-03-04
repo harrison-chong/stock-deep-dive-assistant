@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { AlertCircle, Calculator, Search } from 'lucide-react';
+import { AlertCircle, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AutocompleteInput } from '../components/AutocompleteInput';
 
 interface PerformanceData {
   ticker: string;
@@ -32,8 +33,8 @@ function PerformanceCalculatorPage() {
   const [apiUrl] = useState('http://localhost:8000');
   const navigate = useNavigate();
 
-  const handleCalculate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCalculate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!ticker.trim() || !purchaseDate.trim() || !quantity.trim() || !purchasePrice.trim()) return;
 
     setLoading(true);
@@ -102,19 +103,18 @@ function PerformanceCalculatorPage() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Calculator Section */}
         <div className="mb-12">
-          <form onSubmit={handleCalculate} className="relative">
+          <form onSubmit={handleCalculate}>
             <div className="grid md:grid-cols-2 gap-4">
               {/* Stock Ticker */}
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
-                />
-                <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
-              </div>
+              <AutocompleteInput
+                value={ticker}
+                onChange={setTicker}
+                onSubmit={handleCalculate}
+                placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
+                disabled={loading}
+                submitLabel=""
+                showSubmitButton={false}
+              />
 
               {/* Purchase Date */}
               <div className="flex-1 relative">
