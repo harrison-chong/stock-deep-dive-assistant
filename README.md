@@ -48,7 +48,13 @@ Then open `http://localhost:5173` in your browser.
 ## Installing pre-commit hook
 
 ```ps1
+# For Windows
 winget install --id j178.Prek
+
+prek install
+
+# For Mac
+brew install prek
 
 prek install
 ```

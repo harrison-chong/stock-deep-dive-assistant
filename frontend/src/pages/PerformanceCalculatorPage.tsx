@@ -1,82 +1,84 @@
-import React, { useState } from 'react'
-import axios from 'axios'
-import { Search, AlertCircle, TrendingUp, Calculator } from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import React, { useState } from 'react';
+import axios from 'axios';
+import { AlertCircle, Calculator, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PerformanceData {
-  ticker: string
-  company_name: string
-  purchase_date: string
-  current_date: string
-  quantity: number
-  purchase_price: number
-  current_price: number
-  total_cost: number
-  current_value: number
-  profit_loss: number
-  profit_loss_percentage: number
-  annualized_return: number
-  annualized_return_percentage: number
-  disclaimer: string
-  timestamp: string
+  ticker: string;
+  company_name: string;
+  purchase_date: string;
+  current_date: string;
+  quantity: number;
+  purchase_price: number;
+  current_price: number;
+  total_cost: number;
+  current_value: number;
+  profit_loss: number;
+  profit_loss_percentage: number;
+  annualized_return: number;
+  annualized_return_percentage: number;
+  disclaimer: string;
+  timestamp: string;
 }
 
 function PerformanceCalculatorPage() {
-  const [ticker, setTicker] = useState('')
-  const [purchaseDate, setPurchaseDate] = useState('')
-  const [quantity, setQuantity] = useState('')
-  const [purchasePrice, setPurchasePrice] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [data, setData] = useState<PerformanceData | null>(null)
-  const [apiUrl] = useState('http://localhost:8000')
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [ticker, setTicker] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [data, setData] = useState<PerformanceData | null>(null);
+  const [apiUrl] = useState('http://localhost:8000');
+  const navigate = useNavigate();
 
   const handleCalculate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!ticker.trim() || !purchaseDate.trim() || !quantity.trim() || !purchasePrice.trim()) return
+    e.preventDefault();
+    if (!ticker.trim() || !purchaseDate.trim() || !quantity.trim() || !purchasePrice.trim()) return;
 
-    setLoading(true)
-    setError('')
-    setData(null)
+    setLoading(true);
+    setError('');
+    setData(null);
 
     try {
       const response = await axios.post(`${apiUrl}/api/performance`, {
         ticker: ticker.toUpperCase(),
         purchase_date: purchaseDate,
         quantity: parseFloat(quantity),
-        purchase_price: parseFloat(purchasePrice)
-      })
-      setData(response.data)
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to calculate performance. Check inputs and try again.')
-      console.error(err)
+        purchase_price: parseFloat(purchasePrice),
+      });
+      setData(response.data);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to calculate performance. Check inputs and try again.',
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value)
-  }
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 
   const formatPercentage = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'percent',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value / 100)
-  }
+      maximumFractionDigits: 2,
+    }).format(value / 100);
+  };
 
   const handleBack = () => {
-    navigate('/')
-  }
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -85,9 +87,7 @@ function PerformanceCalculatorPage() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
             <Calculator className="w-6 h-6 text-gray-900" />
-            <h1 className="text-xl font-semibold text-gray-900">
-              Performance Calculator
-            </h1>
+            <h1 className="text-xl font-semibold text-gray-900">Performance Calculator</h1>
             <button
               onClick={handleBack}
               className="ml-auto px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
@@ -115,7 +115,7 @@ function PerformanceCalculatorPage() {
                 />
                 <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
               </div>
-              
+
               {/* Purchase Date */}
               <div className="flex-1 relative">
                 <input
@@ -126,7 +126,7 @@ function PerformanceCalculatorPage() {
                 />
               </div>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-4 mt-4">
               {/* Quantity */}
               <div className="flex-1 relative">
@@ -138,7 +138,7 @@ function PerformanceCalculatorPage() {
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
                 />
               </div>
-              
+
               {/* Purchase Price */}
               <div className="flex-1 relative">
                 <input
@@ -178,7 +178,9 @@ function PerformanceCalculatorPage() {
                   <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-4xl font-bold text-gray-900">{formatCurrency(data.current_price)}</p>
+                  <p className="text-4xl font-bold text-gray-900">
+                    {formatCurrency(data.current_price)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -195,29 +197,43 @@ function PerformanceCalculatorPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                   <h4 className="font-semibold text-blue-900 mb-3">Total Investment</h4>
-                  <p className="text-2xl font-bold text-blue-900">{formatCurrency(data.total_cost)}</p>
-                  <p className="text-sm text-blue-600">{data.quantity} shares @ {formatCurrency(data.purchase_price)}</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {formatCurrency(data.total_cost)}
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    {data.quantity} shares @ {formatCurrency(data.purchase_price)}
+                  </p>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                   <h4 className="font-semibold text-green-900 mb-3">Current Value</h4>
-                  <p className="text-2xl font-bold text-green-900">{formatCurrency(data.current_value)}</p>
-                  <p className="text-sm text-green-600">{data.quantity} shares @ {formatCurrency(data.current_price)}</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {formatCurrency(data.current_value)}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {data.quantity} shares @ {formatCurrency(data.current_price)}
+                  </p>
                 </div>
 
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
                   <h4 className="font-semibold text-purple-900 mb-3">Profit/Loss</h4>
-                  <p className={`text-2xl font-bold ${data.profit_loss >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+                  <p
+                    className={`text-2xl font-bold ${data.profit_loss >= 0 ? 'text-green-900' : 'text-red-900'}`}
+                  >
                     {data.profit_loss >= 0 ? '↑' : '↓'} {formatCurrency(data.profit_loss)}
                   </p>
-                  <p className={`text-sm ${data.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p
+                    className={`text-sm ${data.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
                     {formatPercentage(data.profit_loss_percentage)}
                   </p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
                   <h4 className="font-semibold text-orange-900 mb-3">Annualized Return</h4>
-                  <p className="text-2xl font-bold text-orange-900">{formatPercentage(data.annualized_return_percentage)}</p>
+                  <p className="text-2xl font-bold text-orange-900">
+                    {formatPercentage(data.annualized_return_percentage)}
+                  </p>
                   <p className="text-sm text-orange-600">Compounded annually</p>
                 </div>
               </div>
@@ -239,7 +255,11 @@ function PerformanceCalculatorPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-700">Days Held:</span>
                     <span className="font-medium text-gray-900">
-                      {Math.round((new Date(data.current_date).getTime() - new Date(data.purchase_date).getTime()) / (1000 * 60 * 60 * 24))}
+                      {Math.round(
+                        (new Date(data.current_date).getTime() -
+                          new Date(data.purchase_date).getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      )}
                     </span>
                   </div>
                 </div>
@@ -247,16 +267,23 @@ function PerformanceCalculatorPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-700">Purchase Price:</span>
-                    <span className="font-medium text-gray-900">{formatCurrency(data.purchase_price)}</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(data.purchase_price)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-700">Current Price:</span>
-                    <span className="font-medium text-gray-900">{formatCurrency(data.current_price)}</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(data.current_price)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-700">Price Change:</span>
-                    <span className={`font-medium ${data.current_price >= data.purchase_price ? 'text-green-900' : 'text-red-900'}`}>
-                      {data.current_price >= data.purchase_price ? '↑' : '↓'} {formatCurrency(data.current_price - data.purchase_price)}
+                    <span
+                      className={`font-medium ${data.current_price >= data.purchase_price ? 'text-green-900' : 'text-red-900'}`}
+                    >
+                      {data.current_price >= data.purchase_price ? '↑' : '↓'}{' '}
+                      {formatCurrency(data.current_price - data.purchase_price)}
                     </span>
                   </div>
                 </div>
@@ -266,9 +293,7 @@ function PerformanceCalculatorPage() {
             {/* Disclaimer */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-4">
               <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
-              <p className="text-yellow-800 text-sm leading-relaxed">
-                {data.disclaimer}
-              </p>
+              <p className="text-yellow-800 text-sm leading-relaxed">{data.disclaimer}</p>
             </div>
 
             <p className="text-xs text-gray-500 text-center">
@@ -278,7 +303,7 @@ function PerformanceCalculatorPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default PerformanceCalculatorPage
+export default PerformanceCalculatorPage;
