@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AutocompleteInput } from './components/AutocompleteInput';
-import { Search, AlertCircle, TrendingUp, Briefcase } from 'lucide-react';
+import { AlertCircle, TrendingUp } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
@@ -52,17 +52,15 @@ function HomePage() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Search Section */}
         <div className="mb-12">
-          <form onSubmit={handleAnalyze}>
-            <AutocompleteInput
-              value={ticker}
-              onChange={setTicker}
-              onSubmit={handleAnalyze}
-              placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
-              disabled={loading}
-              submitLabel={loading ? 'Analyzing...' : 'Analyze'}
-              showSubmitButton={true}
-            />
-          </form>
+          <AutocompleteInput
+            value={ticker}
+            onChange={setTicker}
+            onSubmit={handleAnalyze}
+            placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
+            disabled={loading}
+            submitLabel={loading ? 'Analyzing...' : 'Analyze'}
+            showSubmitButton={true}
+          />
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
