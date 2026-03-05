@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { AlertCircle, TrendingUp } from 'lucide-react';
+import { AutocompleteInput } from './components/AutocompleteInput';
+import { Search, AlertCircle, TrendingUp, Briefcase } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
-import { AutocompleteInput } from './components/AutocompleteInput';
+import PortfolioPage from './pages/PortfolioPage';
 import './App.css';
 
 function HomePage() {
@@ -36,6 +37,12 @@ function HomePage() {
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
               Performance Calculator
+            </Link>
+            <Link
+              to="/portfolio"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Portfolio
             </Link>
           </div>
         </div>
@@ -77,6 +84,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/performance" element={<PerformanceCalculatorPage />} />
+        <Route path="/portfolio" element={<PortfolioPage />} />
       </Routes>
     </Router>
   );
