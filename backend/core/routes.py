@@ -5,12 +5,14 @@ API routes
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 
-from shared.requests import AnalysisRequest, PerformanceRequest
-from shared.responses import StockAnalysisResponse, PerformanceResponse
+from shared.requests import AnalysisRequest, PerformanceRequest, PortfolioEntryRequest, PortfolioSellRequest
+from shared.responses import StockAnalysisResponse, PerformanceResponse, PortfolioEntryResponse, PortfolioListResponse, PortfolioPerformanceResponse, PortfolioSummaryResponse
 from application.analysis import StockAnalyzer
+from features.portfolio.service import PortfolioService
 
 router = APIRouter()
 analyzer = StockAnalyzer()
+portfolio_service = PortfolioService()
 
 
 @router.post("/analyze", response_model=StockAnalysisResponse)
@@ -105,6 +107,87 @@ async def calculate_performance(request: PerformanceRequest):
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Performance calculation failed")
+
+
+@router.post("/portfolio/add", response_model=PortfolioEntryResponse)
+async def add_to_portfolio(request: PortfolioEntryRequest):
+    """
+    Add a stock to the portfolio
+    """
+    ticker = request.ticker.upper()
+
+    from core.helpers import is_valid_ticker
+
+    if not is_valid_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        result = await portfolio_service.add_stock(request)
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add stock to portfolio")
+
+
+@router.post("/portfolio/sell", response_model=PortfolioEntryResponse)
+async def sell_from_portfolio(request: PortfolioSellRequest):
+    """
+    Sell a stock from the portfolio
+    """
+    try:
+        result = await portfolio_service.sell_stock(request)
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to sell stock from portfolio")
+
+
+@router.get("/portfolio", response_model=PortfolioListResponse)
+async def get_portfolio():
+    """
+    Get all portfolio entries
+    """
+    try:
+        portfolio = portfolio_service.get_portfolio()
+        return portfolio
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve portfolio")
+
+
+@router.get("/portfolio/performance", response_model=PortfolioPerformanceResponse)
+async def get_portfolio_performance():
+    """
+    Get portfolio performance metrics
+    """
+    try:
+        performance = await portfolio_service.get_performance()
+        return performance
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to calculate portfolio performance")
+
+
+@router.get("/portfolio/summary", response_model=PortfolioSummaryResponse)
+async def get_portfolio_summary():
+    """
+    Get portfolio summary
+    """
+    try:
+        summary = portfolio_service.get_summary()
+        return summary
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve portfolio summary")
 
 
 @router.get("/health")

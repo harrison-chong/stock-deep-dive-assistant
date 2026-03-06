@@ -4,6 +4,7 @@ Stock Deep Dive Assistant - Domain Types
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Optional
 
 
 @dataclass
@@ -85,3 +86,57 @@ class AIInterpretation:
     recommendation: str
     recommendation_rationale: str
     confidence_score: float
+
+
+@dataclass
+class PortfolioEntry:
+    """Individual stock holding in portfolio"""
+
+    id: str
+    ticker: str
+    company_name: str
+    purchase_date: datetime
+    quantity: float
+    purchase_price: float
+    sold: bool = False
+    sell_date: datetime | None = None
+    sell_price: float | None = None
+
+
+@dataclass
+class PortfolioBenchmark:
+    """Benchmark index for portfolio comparison"""
+
+    id: str
+    name: str
+    ticker: str
+    description: str
+
+
+@dataclass
+class PortfolioPerformance:
+    """Portfolio performance metrics"""
+
+    total_cost: float
+    current_value: float
+    total_profit_loss: float
+    total_profit_loss_percentage: float
+    annualized_return: float
+    annualized_return_percentage: float
+    benchmark_comparison: dict[str, float]
+    holdings: list[dict]
+
+
+@dataclass
+class PortfolioSummary:
+    """Summary of portfolio holdings"""
+
+    total_investment: float
+    total_value: float
+    total_profit_loss: float
+    total_profit_loss_percentage: float
+    holdings_count: int
+    annualized_return: float
+    annualized_return_percentage: float
+    benchmarks: list[PortfolioBenchmark]
+    last_updated: datetime
