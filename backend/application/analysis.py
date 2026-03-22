@@ -4,6 +4,7 @@ Application service that orchestrates stock analysis.
 
 import asyncio
 from datetime import datetime
+import pandas as pd
 
 from shared.responses import (
     StockAnalysisResponse,
@@ -17,6 +18,7 @@ from features.data.service import DataService
 from features.technical.service import TechnicalService
 from features.fundamental.service import FundamentalService
 from features.ai.service import AIService
+from features.advanced.service import AdvancedMetricsService
 from core.helpers import get_current_price, create_snapshot_summary
 
 
@@ -28,19 +30,17 @@ class StockAnalyzer:
         self.technical_service = TechnicalService()
         self.fundamental_service = FundamentalService()
         self.ai_service = AIService()
+        self.advanced_service = AdvancedMetricsService()
 
     async def analyze(self, ticker: str) -> StockAnalysisResponse:
         """Perform complete stock analysis"""
-        # Fetch data concurrently
-        ohlc, fundamentals, company_info = await asyncio.gather(
+        # Fetch data concurrently (OHLC in parallel with ticker info)
+        ohlc, (fundamentals, company_info, info) = await asyncio.gather(
             self.data_service.get_ohlc(ticker),
-            self.data_service.get_fundamentals(ticker),
-            self.data_service.get_company_info(ticker),
+            self.data_service.get_ticker_info(ticker),
         )
 
         # Convert OHLC to DataFrame
-        import pandas as pd
-
         df = pd.DataFrame(
             {
                 "open": ohlc.open,
@@ -55,6 +55,9 @@ class StockAnalyzer:
         # Calculate technical indicators
         tech_indicators = self.technical_service.calculate_all(df)
         current_price = get_current_price(df)
+
+        # Calculate advanced metrics
+        advanced_metrics = self.advanced_service.calculate_all(df)
 
         # Technical overview
         technical_overview = TechnicalOverviewResponse(
@@ -83,7 +86,7 @@ class StockAnalyzer:
             ],
         )
 
-        # Fundamental overview
+        # Fundamental overview - comprehensive coverage of all metrics
         fundamental_interpretations = self.fundamental_service.get_interpretations(
             fundamentals
         )
@@ -138,6 +141,68 @@ class StockAnalyzer:
                     unit="%",
                 ),
             ],
+            # New categories with additional yfinance data
+            market_data=[
+                MetricResponse(
+                    name="Previous Close", value=fundamentals.previous_close
+                ),
+                MetricResponse(name="Day High", value=fundamentals.day_high),
+                MetricResponse(name="Day Low", value=fundamentals.day_low),
+                MetricResponse(name="Bid", value=fundamentals.bid),
+                MetricResponse(name="Ask", value=fundamentals.ask),
+                MetricResponse(name="Volume", value=fundamentals.volume, unit="shares"),
+                MetricResponse(
+                    name="Avg Volume", value=fundamentals.average_volume, unit="shares"
+                ),
+                MetricResponse(name="52W High", value=fundamentals.fifty_two_week_high),
+                MetricResponse(name="52W Low", value=fundamentals.fifty_two_week_low),
+            ],
+            liquidity_valuation=[
+                MetricResponse(
+                    name="Enterprise Value", value=fundamentals.enterprise_value
+                ),
+                MetricResponse(name="Price/Book", value=fundamentals.price_to_book),
+                MetricResponse(name="Price/Sales", value=fundamentals.price_to_sales),
+                MetricResponse(
+                    name="EV/EBITDA", value=fundamentals.enterprise_to_ebitda
+                ),
+                MetricResponse(
+                    name="Trailing PEG", value=fundamentals.trailing_peg_ratio
+                ),
+            ],
+            earnings=[
+                MetricResponse(name="Forward EPS", value=fundamentals.forward_eps),
+                MetricResponse(name="Book Value", value=fundamentals.book_value),
+                MetricResponse(name="Book/Share", value=fundamentals.book_per_share),
+                MetricResponse(
+                    name="Earnings Growth", value=fundamentals.earnings_growth, unit="%"
+                ),
+                MetricResponse(
+                    name="Quarterly Growth",
+                    value=fundamentals.earnings_quarterly_growth,
+                    unit="%",
+                ),
+            ],
+            margins=[
+                MetricResponse(
+                    name="Return on Assets",
+                    value=fundamentals.return_on_assets,
+                    unit="%",
+                ),
+                MetricResponse(
+                    name="Return on Investment",
+                    value=fundamentals.return_on_investment,
+                    unit="%",
+                ),
+                MetricResponse(
+                    name="Gross Margins", value=fundamentals.gross_margins, unit="%"
+                ),
+                MetricResponse(
+                    name="Operating Margins",
+                    value=fundamentals.operating_margins,
+                    unit="%",
+                ),
+            ],
         )
 
         # Snapshot summary
@@ -174,7 +239,7 @@ class StockAnalyzer:
             confidence_score=ai_interpretation.confidence_score,
         )
 
-        # Build response
+        # Build response - include all available data
         return StockAnalysisResponse(
             ticker=ticker,
             company_name=company_info.name,
@@ -189,6 +254,19 @@ class StockAnalyzer:
             ai_outlook=ai_outlook,
             disclaimer="⚠️ Not financial advice. For educational purposes only.",
             timestamp=datetime.now().isoformat(),
+            # Additional company info fields
+            website=company_info.website,
+            description=company_info.description,
+            full_time_employees=company_info.full_time_employees,
+            country=company_info.country,
+            state=company_info.state,
+            city=company_info.city,
+            phone=company_info.phone,
+            fax=company_info.fax,
+            # Raw yfinance info dict for maximum data exposure
+            extra_info=info,
+            # Advanced metrics from 10 years of OHLC data
+            advanced_metrics=advanced_metrics,
         )
 
     async def calculate_performance(

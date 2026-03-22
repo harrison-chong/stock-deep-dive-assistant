@@ -3,7 +3,6 @@ Data fetching service.
 """
 
 import pandas as pd
-from datetime import datetime, timedelta
 import yfinance as yf
 
 from shared.domain import OHLCData, FundamentalData, CompanyInfo
@@ -13,13 +12,10 @@ class DataService:
     """Fetch market and fundamental data from Yahoo Finance"""
 
     @staticmethod
-    async def get_ohlc(ticker: str, days: int = 252) -> OHLCData:
-        """Fetch OHLC data from yfinance"""
+    async def get_ohlc(ticker: str, period: str = "10y") -> OHLCData:
+        """Fetch OHLC data from yfinance using period parameter"""
         try:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=days)
-
-            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+            data = yf.download(ticker, period=period, progress=False)
 
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")
@@ -43,13 +39,17 @@ class DataService:
             raise ValueError(f"Failed to fetch data for {ticker}: {str(e)}")
 
     @staticmethod
-    async def get_fundamentals(ticker: str) -> FundamentalData:
-        """Fetch fundamental metrics from yfinance"""
+    async def get_ticker_info(ticker: str) -> tuple[FundamentalData, CompanyInfo, dict]:
+        """
+        Fetch both fundamental metrics and company info from a single API call.
+        This avoids duplicate yf.Ticker() calls.
+        Returns the fundamentals, company info, and the raw info dict.
+        """
         try:
             ticker_obj = yf.Ticker(ticker)
             info = ticker_obj.info
 
-            return FundamentalData(
+            fundamentals = FundamentalData(
                 ticker=ticker,
                 market_cap=info.get("marketCap"),
                 pe_ratio=info.get("trailingPE"),
@@ -65,18 +65,32 @@ class DataService:
                 peg_ratio=info.get("pegRatio"),
                 industry=info.get("industry"),
                 sector=info.get("sector"),
+                previous_close=info.get("previousClose"),
+                day_high=info.get("dayHigh"),
+                day_low=info.get("dayLow"),
+                bid=info.get("bid"),
+                ask=info.get("ask"),
+                volume=info.get("volume"),
+                average_volume=info.get("averageVolume"),
+                fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
+                fifty_two_week_low=info.get("fiftyTwoWeekLow"),
+                enterprise_value=info.get("enterpriseValue"),
+                price_to_book=info.get("priceToBook"),
+                price_to_sales=info.get("priceToSalesTrailing12Months"),
+                enterprise_to_ebitda=info.get("enterpriseToEbitda"),
+                trailing_peg_ratio=info.get("trailingPegRatio"),
+                forward_eps=info.get("forwardEps"),
+                book_value=info.get("bookValue"),
+                book_per_share=info.get("bookPerShare"),
+                return_on_assets=info.get("returnOnAssets"),
+                return_on_investment=info.get("returnOnInvestment"),
+                gross_margins=info.get("grossMargins"),
+                operating_margins=info.get("operatingMargins"),
+                earnings_quarterly_growth=info.get("earningsQuarterlyGrowth"),
+                earnings_growth=info.get("earningsGrowth"),
             )
-        except Exception as e:
-            raise ValueError(f"Failed to fetch fundamentals for {ticker}: {str(e)}")
 
-    @staticmethod
-    async def get_company_info(ticker: str) -> CompanyInfo:
-        """Fetch company information"""
-        try:
-            ticker_obj = yf.Ticker(ticker)
-            info = ticker_obj.info
-
-            return CompanyInfo(
+            company_info = CompanyInfo(
                 ticker=ticker,
                 name=info.get("longName", ticker),
                 sector=info.get("sector"),
@@ -84,9 +98,17 @@ class DataService:
                 website=info.get("website"),
                 description=info.get("longBusinessSummary"),
                 currency=info.get("currency"),
+                full_time_employees=info.get("fullTimeEmployees"),
+                country=info.get("country"),
+                state=info.get("state"),
+                city=info.get("city"),
+                phone=info.get("phone"),
+                fax=info.get("fax"),
             )
+
+            return fundamentals, company_info, info
         except Exception as e:
-            raise ValueError(f"Failed to fetch company info for {ticker}: {str(e)}")
+            raise ValueError(f"Failed to fetch ticker info for {ticker}: {str(e)}")
 
     @staticmethod
     async def get_industry_peers(ticker: str, limit: int = 5) -> list[str]:

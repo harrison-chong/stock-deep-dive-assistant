@@ -4,17 +4,6 @@ Request models for the API.
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
-from shared.domain import (
-    OHLCData,
-    CompanyInfo,
-    FundamentalData,
-    TechnicalIndicators,
-    AIInterpretation,
-    PortfolioEntry,
-    PortfolioBenchmark,
-    PortfolioPerformance,
-    PortfolioSummary,
-)
 
 
 class AnalysisRequest(BaseModel):
