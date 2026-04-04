@@ -80,7 +80,7 @@ class StockAnalyzer:
                 MetricResponse(name="MACD", value=tech_indicators.macd),
             ],
             volatility=[
-                MetricResponse(name="ATR 14", value=tech_indicators.atr_14),
+                MetricResponse(name="ATR 14", value=tech_indicators.atr_14, unit="$"),
                 MetricResponse(
                     name="Volatility 30D",
                     value=tech_indicators.volatility_30d,
@@ -113,7 +113,7 @@ class StockAnalyzer:
             ],
             valuation=[
                 MetricResponse(
-                    name="P/E Ratio",
+                    name="P/E Ratio (TTM)",
                     value=fundamentals.pe_ratio,
                     interpretation=fundamental_interpretations.get("pe_ratio"),
                 ),
@@ -179,6 +179,7 @@ class StockAnalyzer:
                 ),
             ],
             earnings=[
+                MetricResponse(name="EPS (TTM)", value=fundamentals.eps),
                 MetricResponse(name="Forward EPS", value=fundamentals.forward_eps),
                 MetricResponse(name="Book Value", value=fundamentals.book_value),
                 MetricResponse(name="Book/Share", value=fundamentals.book_per_share),
@@ -322,6 +323,15 @@ class StockAnalyzer:
             extra_info=info,
             # Advanced metrics from OHLC data (period determined by user selection)
             advanced_metrics=advanced_metrics,
+            # Additional Yahoo Finance fields
+            regular_market_change=fundamentals.regular_market_change,
+            regular_market_change_percent=fundamentals.regular_market_change_percent,
+            beta=fundamentals.beta,
+            earnings_timestamp=fundamentals.earnings_timestamp,
+            target_mean_price=fundamentals.target_mean_price,
+            target_median_price=fundamentals.target_median_price,
+            dividend_rate=fundamentals.dividend_rate,
+            forward_dividend_yield=fundamentals.forward_dividend_yield,
         )
 
     async def calculate_performance(

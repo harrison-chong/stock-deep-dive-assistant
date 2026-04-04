@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -12,9 +13,36 @@ interface PriceChartProps {
   ticker: string;
   currentPrice: number;
   chartData: { date: string; close: number }[];
+  period: string;
+  onPeriodChange: (period: string) => void;
 }
 
-export function PriceChart({ ticker, currentPrice, chartData }: PriceChartProps) {
+const PERIODS = [
+  { value: '1mo', label: '1M' },
+  { value: '3mo', label: '3M' },
+  { value: '6mo', label: '6M' },
+  { value: '1y', label: '1Y' },
+  { value: '2y', label: '2Y' },
+  { value: '5y', label: '5Y' },
+  { value: '10y', label: '10Y' },
+  { value: 'ytd', label: 'YTD' },
+  { value: 'max', label: 'Max' },
+];
+
+export function PriceChart({
+  ticker,
+  currentPrice,
+  chartData,
+  period,
+  onPeriodChange,
+}: PriceChartProps) {
+  const [selectedPeriod, setSelectedPeriod] = useState(period);
+
+  // Sync with parent period when it changes
+  useEffect(() => {
+    setSelectedPeriod(period);
+  }, [period]);
+
   // Transform chart data for the chart
   const data = chartData.map((point) => ({
     date: new Date(point.date).toLocaleDateString('en-US', {
@@ -29,6 +57,11 @@ export function PriceChart({ ticker, currentPrice, chartData }: PriceChartProps)
   const startPrice = data[0]?.price ?? currentPrice;
   const priceChange = latestPrice - startPrice;
   const percentChange = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
+
+  const handlePeriodChange = (newPeriod: string) => {
+    setSelectedPeriod(newPeriod);
+    onPeriodChange(newPeriod);
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -50,6 +83,23 @@ export function PriceChart({ ticker, currentPrice, chartData }: PriceChartProps)
             <p className="text-xs text-gray-500">Period Change</p>
           </div>
         </div>
+      </div>
+
+      {/* Period Selector */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {PERIODS.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => handlePeriodChange(p.value)}
+            className={`px-3 py-2 text-xs font-medium transition-colors ${
+              selectedPeriod === p.value
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {/* Chart */}

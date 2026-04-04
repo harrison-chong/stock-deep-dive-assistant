@@ -26,6 +26,24 @@ class AnalysisRequest(BaseModel):
     risk_tolerance: Optional[str] = Field(default="moderate")
 
 
+class ChartDataRequest(BaseModel):
+    """Request to fetch only chart data (lightweight, no metrics calculation)"""
+
+    ticker: str = Field(..., description="Stock ticker")
+    period: Optional[str] = Field(
+        default=None,
+        description="Data period (optional): 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max. Use period OR start_date+end_date.",
+    )
+    start_date: Optional[str] = Field(
+        default=None,
+        description="Start date in YYYY-MM-DD format. Use with end_date for exact date range.",
+    )
+    end_date: Optional[str] = Field(
+        default=None,
+        description="End date in YYYY-MM-DD format. Defaults to today if not specified.",
+    )
+
+
 class PerformanceRequest(BaseModel):
     """Request to calculate stock performance"""
 

@@ -81,6 +81,15 @@ class FundamentalData:
     operating_margins: float | None = None
     earnings_quarterly_growth: float | None = None
     earnings_growth: float | None = None
+    # Additional Yahoo Finance fields
+    regular_market_change: float | None = None  # Daily price change
+    regular_market_change_percent: float | None = None  # Daily change %
+    beta: float | None = None  # Beta vs market
+    earnings_timestamp: int | None = None  # Earnings date timestamp
+    target_mean_price: float | None = None  # 1Y mean target price
+    target_median_price: float | None = None  # 1Y median target price
+    dividend_rate: float | None = None  # Annual dividend rate
+    forward_dividend_yield: float | None = None  # Forward dividend yield
 
 
 @dataclass

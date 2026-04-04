@@ -1,14 +1,17 @@
 import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
 import { PriceChart } from '../PriceChart';
+import { StockNews } from '../StockNews';
 import { MetricDefinition } from '../shared/MetricDefinition';
 import { AlertCircle } from 'lucide-react';
 
 interface AnalysisResultsProps {
   data: AnalysisData;
+  period: string;
+  onPeriodChange: (period: string) => void;
 }
 
-export function AnalysisResults({ data }: AnalysisResultsProps) {
+export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResultsProps) {
   // Metric definitions for Technical Overview
   const movingAverageDefinitions: Record<string, string> = {
     'SMA 20':
@@ -70,11 +73,19 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
     Bid: 'Highest price a buyer will pay to purchase this stock (in price units). Higher bid = more buying interest.',
     Ask: 'Lowest price a seller will accept to sell this stock (in price units). Lower ask = more selling pressure.',
     Volume: 'Shares traded today (e.g., 5.2M = 5.2 million shares). Higher = more liquid.',
-    'Avg Volume': 'Average shares traded per day over recent period. 50-day average shown.',
+    'Avg Volume':
+      "Average shares traded per day over the last 50 trading days (e.g., 2.2M = 2.2 million shares/day). Use to gauge liquidity - stocks with higher volume are easier to buy/sell without moving the price much. Compare to today's volume to see if trading is above or below normal.",
     '52W High':
       'Highest price over past 52 weeks (in price units). Price near this = near peak valuation.',
     '52W Low':
       'Lowest price over past 52 weeks (in price units). Price near this = near minimum valuation.',
+    Beta: 'Measure of stock volatility vs the market (S&P 500). Beta of 1 = same volatility as market. >1 = more volatile, <1 = less volatile.',
+    '1Y Target':
+      'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+    'Earnings Date':
+      'Upcoming earnings announcement date. When the company will report quarterly results.',
+    'Forward Dividend':
+      'Expected annual dividend per share (in dollars). Based on recent dividend payments.',
   };
 
   const liquidityValuationDefinitions: Record<string, string> = {
@@ -90,6 +101,8 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
   };
 
   const earningsDefinitions: Record<string, string> = {
+    'EPS (TTM)':
+      'Earnings Per Share Trailing Twelve Months (in dollars, e.g., $2.50). Actual reported earnings over the last 12 months.',
     'Forward EPS':
       'Expected EPS over next 12 months (in dollars, e.g., $5.00). Analyst consensus estimates.',
     'Book Value':
@@ -113,35 +126,47 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
   return (
     <div className="space-y-8">
       {/* Company Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <div className="flex items-start justify-between gap-6 mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">{data.company_name}</h2>
-            <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
+            <div className="flex items-baseline gap-3">
+              <h2 className="text-2xl font-bold text-gray-900">{data.company_name}</h2>
+              <span className="text-sm text-gray-500">{data.ticker}</span>
+              {data.sector && <span className="text-sm text-gray-400">• {data.sector}</span>}
+            </div>
+            {data.industry && <p className="text-sm text-gray-500 mt-1">{data.industry}</p>}
           </div>
           <div className="text-right">
             <div className="flex items-baseline justify-end gap-2">
-              <p className="text-4xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
-              {data.currency && <p className="text-lg text-gray-600">{data.currency}</p>}
+              <p className="text-3xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
+              {data.currency && <p className="text-base text-gray-600">{data.currency}</p>}
             </div>
+            {data.regular_market_change !== null && data.regular_market_change !== undefined && (
+              <p
+                className={`text-sm font-medium ${data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {data.regular_market_change >= 0 ? '+' : ''}
+                {data.regular_market_change.toFixed(2)} (
+                {data.regular_market_change_percent !== null &&
+                data.regular_market_change_percent !== undefined
+                  ? `${data.regular_market_change_percent >= 0 ? '+' : ''}${data.regular_market_change_percent.toFixed(2)}%`
+                  : 'N/A'}
+                ) Today
+              </p>
+            )}
             {data.market_cap && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600">
                 Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
               </p>
             )}
             {data.data_start_date && data.data_end_date && (
-              <p className="text-xs text-gray-500 mt-1">
-                Data period: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
+              <p className="text-xs text-gray-500">
+                Data: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
                 {new Date(data.data_end_date).toLocaleDateString()}
               </p>
             )}
           </div>
         </div>
-        {data.sector && (
-          <p className="text-gray-700">
-            {data.sector} • {data.industry}
-          </p>
-        )}
       </div>
 
       {/* Price Chart */}
@@ -149,7 +174,12 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         ticker={data.ticker}
         currentPrice={data.current_price}
         chartData={data.chart_data}
+        period={period}
+        onPeriodChange={onPeriodChange}
       />
+
+      {/* Stock News */}
+      <StockNews ticker={data.ticker} />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -196,12 +226,34 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
           showInterpretation={true}
           metricDefinitions={growthDefinitions}
         />
-        <MetricsCard
-          title="Market Data"
-          metrics={data.fundamental_overview.market_data}
-          showInterpretation={true}
-          metricDefinitions={marketDataDefinitions}
-        />
+        {/* Market Data and Analyst Estimates side by side */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Market Data"
+            metrics={[
+              ...data.fundamental_overview.market_data,
+              { name: 'Beta', value: data.beta },
+              { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
+              { name: 'Forward Dividend Yield', value: data.forward_dividend_yield, unit: '%' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={marketDataDefinitions}
+          />
+          <MetricsCard
+            title="Analyst Estimates"
+            metrics={[
+              { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
+              { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={{
+              '1Y Target (Mean)':
+                'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+              '1Y Target (Median)':
+                'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
+            }}
+          />
+        </div>
         <MetricsCard
           title="Liquidity & Valuation"
           metrics={[
@@ -619,15 +671,38 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
                 Seasonal & Cyclical Patterns
               </h4>
-              <p className="text-sm text-gray-600 mb-6">
-                Average return for each period, calculated across all years in the available dataset
-                (max 5 years)
+              <p className="text-sm text-gray-600 mb-4">
+                Based on data from{' '}
+                {data.data_start_date
+                  ? new Date(data.data_start_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '?'}{' '}
+                to{' '}
+                {data.data_end_date
+                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '?'}{' '}
+                (using max period for accuracy)
                 <MetricDefinition text="These show the historical AVERAGE return for each calendar period (e.g., January, Q1, Monday) computed across all occurrences in the available dataset (up to 5 years). This reveals if a stock tends to perform better/worse during specific times." />
               </p>
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">
-                    Monthly Returns (Avg across all years)
+                    Monthly Returns (Avg across{' '}
+                    {data.data_start_date && data.data_end_date
+                      ? Math.round(
+                          (new Date(data.data_end_date).getTime() -
+                            new Date(data.data_start_date).getTime()) /
+                            (1000 * 60 * 60 * 24 * 365),
+                        )
+                      : '?'}{' '}
+                    years)
                   </h5>
                   {data.advanced_metrics.seasonal.monthly_returns && (
                     <div className="grid grid-cols-3 gap-3">
@@ -735,12 +810,39 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
 
           {/* AI Outlook - Moved to bottom */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              AI Analysis
-              <span className="text-sm font-normal text-gray-600">
-                Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
-              </span>
-            </h3>
+            <div className="flex items-start justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                AI Analysis for {data.ticker}
+                <span className="text-sm font-normal text-gray-600">
+                  Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
+                </span>
+              </h3>
+              <div className="text-right text-xs text-gray-500">
+                <p>
+                  Data:{' '}
+                  {data.data_start_date
+                    ? new Date(data.data_start_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '?'}{' '}
+                  -{' '}
+                  {data.data_end_date
+                    ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '?'}
+                </p>
+                {data.sector && (
+                  <p>
+                    {data.sector} {data.industry ? `• ${data.industry}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-6">
               <div>

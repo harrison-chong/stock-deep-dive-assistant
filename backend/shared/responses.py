@@ -27,6 +27,51 @@ class ChartDataPoint(BaseModel):
     volume: int
 
 
+class ChartDataResponse(BaseModel):
+    """Lightweight chart data response (no metrics calculation)"""
+
+    ticker: str
+    chart_data: List[Dict[str, Any]]  # [{date: "2024-01-01", close: 150.25}, ...]
+    data_start_date: Optional[str] = None
+    data_end_date: Optional[str] = None
+
+
+class MarketSummaryIndex(BaseModel):
+    """Single market index data"""
+
+    symbol: str
+    name: str
+    price: float
+    change: float
+    change_percent: float
+
+
+class MarketSummaryResponse(BaseModel):
+    """Market summary with major indices"""
+
+    indices: List[MarketSummaryIndex]
+    timestamp: str
+
+
+class NewsArticle(BaseModel):
+    """Single news article"""
+
+    title: str
+    description: Optional[str] = None
+    provider: Optional[str] = None
+    link: Optional[str] = None
+    pub_date: Optional[str] = None
+    thumbnail: Optional[str] = None
+
+
+class StockNewsResponse(BaseModel):
+    """Stock news articles"""
+
+    ticker: str
+    articles: List[NewsArticle]
+    timestamp: str
+
+
 class IndicatorPoint(BaseModel):
     """Single data point for technical indicator"""
 
@@ -185,6 +230,15 @@ class StockAnalysisResponse(BaseModel):
     extra_info: Dict[str, Any] = {}
     # Advanced metrics calculated from OHLC data
     advanced_metrics: Optional[AdvancedMetrics] = None
+    # Additional Yahoo Finance fields
+    regular_market_change: Optional[float] = None
+    regular_market_change_percent: Optional[float] = None
+    beta: Optional[float] = None
+    earnings_timestamp: Optional[int] = None
+    target_mean_price: Optional[float] = None
+    target_median_price: Optional[float] = None
+    dividend_rate: Optional[float] = None
+    forward_dividend_yield: Optional[float] = None
 
 
 class PerformanceResponse(BaseModel):
