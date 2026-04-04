@@ -31,6 +31,11 @@ function formatMetricValue(value: number | null, unit?: string): string {
     return value.toLocaleString();
   }
 
+  // Handle dollar values (ATR, etc.)
+  if (unit === '$') {
+    return `$${value.toFixed(2)}`;
+  }
+
   // Format large numbers (market cap, enterprise value, etc.)
   if (Math.abs(value) >= 1e9) {
     return formatLargeNumber(value);

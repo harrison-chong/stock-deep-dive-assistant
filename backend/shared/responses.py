@@ -185,6 +185,15 @@ class StockAnalysisResponse(BaseModel):
     extra_info: Dict[str, Any] = {}
     # Advanced metrics calculated from OHLC data
     advanced_metrics: Optional[AdvancedMetrics] = None
+    # Additional Yahoo Finance fields
+    regular_market_change: Optional[float] = None
+    regular_market_change_percent: Optional[float] = None
+    beta: Optional[float] = None
+    earnings_timestamp: Optional[int] = None
+    target_mean_price: Optional[float] = None
+    target_median_price: Optional[float] = None
+    dividend_rate: Optional[float] = None
+    forward_dividend_yield: Optional[float] = None
 
 
 class PerformanceResponse(BaseModel):

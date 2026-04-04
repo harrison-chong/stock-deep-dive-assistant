@@ -78,6 +78,15 @@ export interface AnalysisData {
   fax: string | null;
   // Raw yfinance info dict for maximum data exposure
   extra_info: Record<string, unknown>;
+  // Additional Yahoo Finance fields
+  regular_market_change: number | null;
+  regular_market_change_percent: number | null;
+  beta: number | null;
+  earnings_timestamp: number | null;
+  target_mean_price: number | null;
+  target_median_price: number | null;
+  dividend_rate: number | null;
+  forward_dividend_yield: number | null;
   // Advanced metrics calculated from available OHLC data (max period="max")
   advanced_metrics: {
     statistical: {

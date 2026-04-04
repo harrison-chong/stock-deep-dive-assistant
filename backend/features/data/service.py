@@ -23,13 +23,13 @@ class DataService:
             # Use start/end dates if provided, otherwise fall back to period
             if start_date and end_date:
                 data = yf.download(
-                    ticker, start=start_date, end=end_date, progress=False
+                    ticker, start=start_date, end=end_date, progress=False, repair=True
                 )
             elif period:
-                data = yf.download(ticker, period=period, progress=False)
+                data = yf.download(ticker, period=period, progress=False, repair=True)
             else:
                 # Default to 5 years if nothing specified
-                data = yf.download(ticker, period="5y", progress=False)
+                data = yf.download(ticker, period="5y", progress=False, repair=True)
 
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")
@@ -76,7 +76,9 @@ class DataService:
                 roe=info.get("returnOnEquity"),
                 debt_to_equity=info.get("debtToEquity"),
                 free_cash_flow=info.get("operatingCashflow"),
-                dividend_yield=info.get("dividendYield"),
+                dividend_yield=(info.get("dividendYield") or 0) / 100
+                if info.get("dividendYield")
+                else None,
                 profit_margin=info.get("profitMargins"),
                 peg_ratio=info.get("pegRatio"),
                 industry=info.get("industry"),
@@ -104,6 +106,16 @@ class DataService:
                 operating_margins=info.get("operatingMargins"),
                 earnings_quarterly_growth=info.get("earningsQuarterlyGrowth"),
                 earnings_growth=info.get("earningsGrowth"),
+                regular_market_change=info.get("regularMarketChange"),
+                regular_market_change_percent=info.get("regularMarketChangePercent"),
+                beta=info.get("beta"),
+                earnings_timestamp=info.get("earningsTimestamp"),
+                target_mean_price=info.get("targetMeanPrice"),
+                target_median_price=info.get("targetMedianPrice"),
+                dividend_rate=info.get("dividendRate"),
+                forward_dividend_yield=(info.get("dividendYield") or 0) / 100
+                if info.get("dividendYield")
+                else None,
             )
 
             company_info = CompanyInfo(
@@ -140,7 +152,7 @@ class DataService:
         Get the current price for a ticker
         """
         try:
-            data = yf.download(ticker, period="1d", progress=False)
+            data = yf.download(ticker, period="1d", progress=False, repair=True)
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")
             return float(data["Close"].iloc[-1].item())

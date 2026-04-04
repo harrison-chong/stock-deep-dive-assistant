@@ -6,9 +6,11 @@ import { AlertCircle } from 'lucide-react';
 
 interface AnalysisResultsProps {
   data: AnalysisData;
+  period: string;
+  onPeriodChange: (period: string) => void;
 }
 
-export function AnalysisResults({ data }: AnalysisResultsProps) {
+export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResultsProps) {
   // Metric definitions for Technical Overview
   const movingAverageDefinitions: Record<string, string> = {
     'SMA 20':
@@ -75,6 +77,13 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
       'Highest price over past 52 weeks (in price units). Price near this = near peak valuation.',
     '52W Low':
       'Lowest price over past 52 weeks (in price units). Price near this = near minimum valuation.',
+    Beta: 'Measure of stock volatility vs the market (S&P 500). Beta of 1 = same volatility as market. >1 = more volatile, <1 = less volatile.',
+    '1Y Target':
+      'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+    'Earnings Date':
+      'Upcoming earnings announcement date. When the company will report quarterly results.',
+    'Forward Dividend':
+      'Expected annual dividend per share (in dollars). Based on recent dividend payments.',
   };
 
   const liquidityValuationDefinitions: Record<string, string> = {
@@ -90,6 +99,8 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
   };
 
   const earningsDefinitions: Record<string, string> = {
+    'EPS (TTM)':
+      'Earnings Per Share Trailing Twelve Months (in dollars, e.g., $2.50). Actual reported earnings over the last 12 months.',
     'Forward EPS':
       'Expected EPS over next 12 months (in dollars, e.g., $5.00). Analyst consensus estimates.',
     'Book Value':
@@ -124,6 +135,19 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <p className="text-4xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
               {data.currency && <p className="text-lg text-gray-600">{data.currency}</p>}
             </div>
+            {data.regular_market_change !== null && data.regular_market_change !== undefined && (
+              <p
+                className={`text-sm font-medium mt-1 ${data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {data.regular_market_change >= 0 ? '+' : ''}
+                {data.regular_market_change.toFixed(2)} (
+                {data.regular_market_change_percent !== null &&
+                data.regular_market_change_percent !== undefined
+                  ? `${data.regular_market_change_percent >= 0 ? '+' : ''}${data.regular_market_change_percent.toFixed(2)}%`
+                  : 'N/A'}
+                ) Today
+              </p>
+            )}
             {data.market_cap && (
               <p className="text-sm text-gray-600 mt-1">
                 Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
@@ -149,6 +173,8 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         ticker={data.ticker}
         currentPrice={data.current_price}
         chartData={data.chart_data}
+        period={period}
+        onPeriodChange={onPeriodChange}
       />
 
       {/* Technical Overview */}
@@ -198,10 +224,53 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         />
         <MetricsCard
           title="Market Data"
-          metrics={data.fundamental_overview.market_data}
+          metrics={[
+            ...data.fundamental_overview.market_data,
+            { name: 'Beta', value: data.beta },
+            { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
+            { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
+            { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
+            { name: 'Forward Dividend Yield', value: data.forward_dividend_yield, unit: '%' },
+          ]}
           showInterpretation={true}
           metricDefinitions={marketDataDefinitions}
         />
+        {/* Analyst Estimates Section */}
+        {(data.earnings_timestamp || data.target_mean_price || data.target_median_price) && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Analyst Estimates</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              {data.earnings_timestamp && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Earnings Date</p>
+                  <p className="text-lg font-medium text-gray-900">
+                    {new Date(data.earnings_timestamp * 1000).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+              )}
+              {data.target_mean_price && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">1Y Target (Mean)</p>
+                  <p className="text-lg font-medium text-gray-900">
+                    ${data.target_mean_price.toFixed(2)}
+                  </p>
+                </div>
+              )}
+              {data.target_median_price && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">1Y Target (Median)</p>
+                  <p className="text-lg font-medium text-gray-900">
+                    ${data.target_median_price.toFixed(2)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <MetricsCard
           title="Liquidity & Valuation"
           metrics={[

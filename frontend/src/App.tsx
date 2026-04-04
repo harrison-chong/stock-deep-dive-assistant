@@ -86,6 +86,15 @@ function HomePage() {
   // Get date range for the selected period
   const dateRange = getDateRange(period);
 
+  // Handle period change from chart
+  const handleChartPeriodChange = (newPeriod: string) => {
+    setPeriod(newPeriod);
+    if (ticker.trim()) {
+      const newDateRange = getDateRange(newPeriod);
+      handleAnalyze(undefined, newDateRange);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -151,7 +160,9 @@ function HomePage() {
         </div>
 
         {/* Analysis Results */}
-        {data && <AnalysisResults data={data} />}
+        {data && (
+          <AnalysisResults data={data} period={period} onPeriodChange={handleChartPeriodChange} />
+        )}
       </div>
     </div>
   );
