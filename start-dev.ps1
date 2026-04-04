@@ -15,8 +15,8 @@ try {
 
     # Install frontend dependencies and start dev server
     Set-Location frontend
-    npm install
-    npm run dev
+    npm.cmd install
+    npm.cmd run dev
 } finally {
     Set-Location $orig
 }
