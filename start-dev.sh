@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Kill any process running on port 5173
-fuser -k 5173/tcp 2>/dev/null || true
+# Kill any process running on ports 5173 and 8000
+lsof -ti :5173 | xargs kill -9 2>/dev/null || true
+lsof -ti :8000 | xargs kill -9 2>/dev/null || true
 
 # Start backend in background
 cd backend
