@@ -1,7 +1,7 @@
 """
 Advanced metrics calculation service.
 
-Calculates comprehensive statistical, technical, pattern recognition, and seasonal
+Calculates comprehensive statistical, technical, and seasonal
 metrics from historical OHLC data.
 """
 
@@ -11,7 +11,6 @@ from shared.domain import (
     AdvancedMetrics,
     StatisticalMetrics,
     TechnicalPerformance,
-    PatternDetection,
     SeasonalAnalysis,
 )
 
@@ -53,13 +52,11 @@ class AdvancedMetricsService:
         technical = AdvancedMetricsService._calculate_technical(
             close, high, low, volume, df.index
         )
-        patterns = AdvancedMetricsService._calculate_patterns(close, high, low, volume)
         seasonal = AdvancedMetricsService._calculate_seasonal(close, df.index)
 
         return AdvancedMetrics(
             statistical=statistical,
             technical=technical,
-            patterns=patterns,
             seasonal=seasonal,
         )
 
@@ -210,56 +207,25 @@ class AdvancedMetricsService:
         )
 
     @staticmethod
-    def _calculate_patterns(
-        close: pd.Series, high: pd.Series, low: pd.Series, volume: pd.Series
-    ) -> PatternDetection:
-        """Detect chart patterns and technical signals."""
-        # Simple pattern detection (in production would use more sophisticated algorithms)
-        double_top = AdvancedMetricsService._detect_double_top(high)
-        double_bottom = AdvancedMetricsService._detect_double_bottom(low)
-        head_shoulders = False  # Placeholder
-        inverted_head_shoulders = False  # Placeholder
-        triangle = False  # Placeholder
-        flag = False  # Placeholder
-        cup_handle = False  # Placeholder
-
-        # ADX (Average Directional Index) - simplified
-        adx = AdvancedMetricsService._calculate_adx(high, low, close)
-
-        # Gap analysis
-        gap_up, gap_down = AdvancedMetricsService._detect_gaps(close)
-
-        return PatternDetection(
-            head_and_shoulders=head_shoulders,
-            inverted_head_and_shoulders=inverted_head_shoulders,
-            double_top=double_top,
-            double_bottom=double_bottom,
-            triangle_pattern=triangle,
-            flag_pattern=flag,
-            cup_and_handle=cup_handle,
-            adx=float(adx),
-            gap_up_detected=gap_up,
-            gap_down_detected=gap_down,
-            support_break=False,
-            resistance_break=False,
-        )
-
-    @staticmethod
     def _calculate_seasonal(
         close: pd.Series, index: pd.DatetimeIndex
     ) -> SeasonalAnalysis:
-        """Calculate seasonal and cyclical patterns."""
-        # Monthly returns
+        """Calculate seasonal and cyclical patterns.
+
+        Monthly/quarterly returns show the AVERAGE return for each calendar period,
+        calculated across all years in the available data (typically 10+ years).
+        """
+        # Monthly returns - average return for each calendar month across all years
         monthly_returns = AdvancedMetricsService._calculate_monthly_returns(
             close, index
         )
 
-        # Quarterly returns
+        # Quarterly returns - average return for each calendar quarter across all years
         quarterly_returns = AdvancedMetricsService._calculate_quarterly_returns(
             close, index
         )
 
-        # Day of week effect
+        # Day of week effect - average return for each weekday across all years
         weekday_returns = AdvancedMetricsService._calculate_weekday_effect(close, index)
 
         # Earnings season impact (simplified - would need earnings dates)
@@ -341,114 +307,6 @@ class AdvancedMetricsService:
             return "stable"
 
     @staticmethod
-    def _detect_double_top(high: pd.Series) -> bool:
-        """Simple double top detection (placeholder)."""
-        # In production, would analyze peaks with tolerance
-        return False
-
-    @staticmethod
-    def _detect_double_bottom(low: pd.Series) -> bool:
-        """Simple double bottom detection (placeholder)."""
-        # In production, would analyze troughs with tolerance
-        return False
-
-    @staticmethod
-    def _calculate_adx(
-        high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
-    ) -> float:
-        """Calculate Average Directional Index (ADX)."""
-        # Simplified ADX calculation
-        if len(high) < period + 1:
-            return 0.0
-
-        # Calculate +DM and -DM
-        plus_dm = high.diff()
-        minus_dm = low.diff()
-        plus_dm = plus_dm.where(plus_dm > 0, 0)
-        minus_dm = minus_dm.where(minus_dm < 0, 0).abs()
-
-        # True Range
-        tr1 = high - low
-        tr2 = abs(high - close.shift())
-        tr3 = abs(low - close.shift())
-        tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-
-        # Smoothed averages
-        tr_smooth = tr.rolling(window=period).mean()
-        plus_dm_smooth = plus_dm.rolling(window=period).mean()
-        minus_dm_smooth = minus_dm.rolling(window=period).mean()
-
-        # +DI and -DI
-        plus_di = 100 * (plus_dm_smooth / tr_smooth)
-        minus_di = 100 * (minus_dm_smooth / tr_smooth)
-
-        # DX
-        dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
-        adx = dx.rolling(window=period).mean()
-
-        return float(adx.iloc[-1]) if not pd.isna(adx.iloc[-1]) else 0.0
-
-    @staticmethod
-    def _detect_gaps(
-        close: pd.Series, threshold_pct: float = 0.02
-    ) -> tuple[bool, bool]:
-        """Detect price gaps (opening gap from previous close)."""
-        if len(close) < 2:
-            return False, False
-
-        # Calculate gap percentage (current open vs previous close)
-        # Note: need open prices for accurate gap detection
-        # Using high-low spread as proxy
-        gap_detected_up = False
-        gap_detected_down = False
-
-        # Placeholder implementation - would need actual open prices
-        return gap_detected_up, gap_detected_down
-
-    @staticmethod
-    def _calculate_monthly_returns(
-        close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by month."""
-        if len(close) < 30:
-            return {}
-
-        returns = close.pct_change().dropna()
-        returns_df = pd.DataFrame({"return": returns})
-
-        monthly = returns_df.groupby(returns_df.index.month).mean()["return"]
-        return {f"month_{int(m)}": float(r) for m, r in monthly.items()}
-
-    @staticmethod
-    def _calculate_quarterly_returns(
-        close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by quarter."""
-        if len(close) < 60:
-            return {}
-
-        returns = close.pct_change().dropna()
-        returns_df = pd.DataFrame({"return": returns})
-
-        quarterly = returns_df.groupby(returns_df.index.quarter).mean()["return"]
-        return {f"q{int(q)}": float(r) for q, r in quarterly.items()}
-
-    @staticmethod
-    def _calculate_weekday_effect(
-        close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by day of week."""
-        if len(close) < 5:
-            return {}
-
-        returns = close.pct_change().dropna()
-        returns_df = pd.DataFrame({"return": returns})
-
-        weekday = returns_df.groupby(returns_df.index.dayofweek).mean()["return"]
-        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        return {days[int(d)]: float(r) for d, r in weekday.items()}
-
-    @staticmethod
     def _calculate_recovery_days(drawdown: pd.Series) -> int:
         """Calculate days to recover from max drawdown."""
         max_dd_idx = drawdown.idxmin()
@@ -463,3 +321,46 @@ class AdvancedMetricsService:
             return recovery_duration
         else:
             return -1  # Never recovered
+
+    @staticmethod
+    def _calculate_monthly_returns(
+        close: pd.Series, index: pd.DatetimeIndex
+    ) -> dict[str, float]:
+        """Calculate average returns by calendar month across all years in dataset."""
+        if len(close) < 365:  # Need at least 1 year of data
+            return {}
+
+        returns = close.pct_change().dropna()
+        returns_df = pd.DataFrame({"return": returns})
+
+        monthly = returns_df.groupby(returns_df.index.month).mean()["return"]
+        return {f"month_{int(m)}": float(r) for m, r in monthly.items()}
+
+    @staticmethod
+    def _calculate_quarterly_returns(
+        close: pd.Series, index: pd.DatetimeIndex
+    ) -> dict[str, float]:
+        """Calculate average returns by calendar quarter across all years in dataset."""
+        if len(close) < 365:  # Need at least 1 year of data
+            return {}
+
+        returns = close.pct_change().dropna()
+        returns_df = pd.DataFrame({"return": returns})
+
+        quarterly = returns_df.groupby(returns_df.index.quarter).mean()["return"]
+        return {f"q{int(q)}": float(r) for q, r in quarterly.items()}
+
+    @staticmethod
+    def _calculate_weekday_effect(
+        close: pd.Series, index: pd.DatetimeIndex
+    ) -> dict[str, float]:
+        """Calculate average returns by day of week across all years in dataset."""
+        if len(close) < 5:
+            return {}
+
+        returns = close.pct_change().dropna()
+        returns_df = pd.DataFrame({"return": returns})
+
+        weekday = returns_df.groupby(returns_df.index.dayofweek).mean()["return"]
+        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        return {days[int(d)]: float(r) for d, r in weekday.items()}

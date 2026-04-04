@@ -1,24 +1,13 @@
 #!/bin/bash
 
-# Bash script to run both backend (FastAPI with uv) and frontend (Vite React)
-# Run this from the root of your repository
-
-orig=$(pwd)
-trap "cd '$orig'" EXIT
-
-# Sync backend dependencies
-cd backend
-uv sync --all-extras
-cd ..
+# Kill any process running on port 5173
+fuser -k 5173/tcp 2>/dev/null || true
 
 # Start backend in background
 cd backend
 uv run fastapi dev &
 backend_pid=$!
 cd ..
-
-# Wait for backend to start before launching frontend for cleaner logs
-sleep 3
 
 # Install frontend dependencies and start dev server
 cd frontend

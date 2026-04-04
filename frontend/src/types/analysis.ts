@@ -115,7 +115,7 @@ export interface AnalysisData {
       volume_avg_50d: number | null;
       volume_trend: string | null; // "increasing", "decreasing", "stable", "insufficient_data"
     };
-    patterns: {
+    patterns?: {
       head_and_shoulders: boolean;
       inverted_head_and_shoulders: boolean;
       double_top: boolean;
@@ -128,13 +128,13 @@ export interface AnalysisData {
       gap_down_detected: boolean;
       support_break: boolean;
       resistance_break: boolean;
-    };
-    seasonal: {
+    } | null;
+    seasonal?: {
       monthly_returns: Record<string, number> | null; // e.g., { month_1: 0.012, month_2: -0.005, ... }
       quarterly_returns: Record<string, number> | null; // e.g., { q1: 0.03, q2: -0.01, ... }
       day_of_week_effect: Record<string, number> | null; // e.g., { Monday: 0.001, Tuesday: -0.002, ... }
       earnings_season_impact: number | null;
-    };
+    } | null;
   };
 }
 

@@ -255,31 +255,6 @@ class TechnicalPerformance:
 
 
 @dataclass
-class PatternDetection:
-    """Chart pattern recognition results"""
-
-    # Traditional chart patterns
-    head_and_shoulders: bool = False
-    inverted_head_and_shoulders: bool = False
-    double_top: bool = False
-    double_bottom: bool = False
-    triangle_pattern: bool = False
-    flag_pattern: bool = False
-    cup_and_handle: bool = False
-
-    # ADX trend strength
-    adx: float | None = None
-
-    # Gap analysis
-    gap_up_detected: bool = False
-    gap_down_detected: bool = False
-
-    # Support/Resistance breaks
-    support_break: bool = False
-    resistance_break: bool = False
-
-
-@dataclass
 class SeasonalAnalysis:
     """Seasonal and calendar-based patterns"""
 
@@ -302,8 +277,7 @@ class AdvancedMetrics:
 
     statistical: StatisticalMetrics
     technical: TechnicalPerformance
-    patterns: PatternDetection
-    seasonal: SeasonalAnalysis
+    seasonal: SeasonalAnalysis | None = None
     disclaimer: str = (
         "Advanced metrics are statistical estimates for educational purposes only."
     )
