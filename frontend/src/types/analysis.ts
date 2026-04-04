@@ -6,7 +6,8 @@ export interface AnalysisData {
   current_price: number;
   currency: string | null;
   market_cap: number | null;
-  snapshot_summary: string;
+  data_start_date: string | null;
+  data_end_date: string | null;
   technical_overview: {
     moving_averages: { name: string; value: number | null }[];
     momentum: { name: string; value: number | null }[];
@@ -76,7 +77,7 @@ export interface AnalysisData {
   fax: string | null;
   // Raw yfinance info dict for maximum data exposure
   extra_info: Record<string, unknown>;
-  // Advanced metrics calculated from 10 years of OHLC data
+  // Advanced metrics calculated from available OHLC data (max period="max")
   advanced_metrics: {
     statistical: {
       total_return: number | null;
@@ -104,6 +105,9 @@ export interface AnalysisData {
       returns_3y: number | null;
       returns_5y: number | null;
       returns_10y: number | null;
+      cagr_2y: number | null;
+      cagr_3y: number | null;
+      cagr_5y: number | null;
       golden_cross_detected: boolean;
       death_cross_detected: boolean;
       price_vs_sma_50: number | null;
@@ -147,4 +151,5 @@ export interface MetricsCardProps {
     unit?: string;
   }[];
   showInterpretation?: boolean;
+  metricDefinitions?: Record<string, string>;
 }

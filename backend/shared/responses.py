@@ -162,12 +162,14 @@ class StockAnalysisResponse(BaseModel):
     current_price: float
     currency: Optional[str]
     market_cap: Optional[float]
-    snapshot_summary: str
     technical_overview: TechnicalOverviewResponse
     fundamental_overview: FundamentalOverviewResponse
     ai_outlook: AIOutlookResponse
     disclaimer: str
     timestamp: str
+    # Date range of the OHLC data used for calculations
+    data_start_date: Optional[str] = None  # ISO format
+    data_end_date: Optional[str] = None  # ISO format
     # Chart data availability flags for frontend
     available_chart_periods: List[str] = [
         "1d",

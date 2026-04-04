@@ -1,23 +1,115 @@
 import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
-import { AlertCircle, HelpCircle } from 'lucide-react';
+import { PriceChart } from '../PriceChart';
+import { MetricDefinition } from '../shared/MetricDefinition';
+import { AlertCircle } from 'lucide-react';
 
 interface AnalysisResultsProps {
   data: AnalysisData;
 }
 
-function MetricDefinition({ text }: { text: string }) {
-  return (
-    <span className="group relative inline-flex items-center ml-1">
-      <HelpCircle className="w-3 h-3 text-gray-400 cursor-help" />
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        {text}
-      </span>
-    </span>
-  );
-}
-
 export function AnalysisResults({ data }: AnalysisResultsProps) {
+  // Metric definitions for Technical Overview
+  const movingAverageDefinitions: Record<string, string> = {
+    'SMA 20':
+      'Simple Moving Average over the last 20 trading days (in price units, e.g., $150.00). Short-term trend indicator. Above 20 SMA = short-term bullish.',
+    'SMA 50':
+      'Simple Moving Average over the last 50 trading days (in price units). Medium-term trend indicator. Widely used by institutions.',
+    'SMA 100':
+      'Simple Moving Average over the last 100 trading days (in price units). Medium-long term trend indicator.',
+    'SMA 200':
+      'Simple Moving Average over the last 200 trading days (in price units). Long-term trend indicator. Price above 200 SMA = long-term bullish.',
+  };
+
+  const momentumDefinitions: Record<string, string> = {
+    'RSI 14':
+      'Relative Strength Index over 14 periods (scale 0-100). >70 = overbought (possible pullback), <30 = oversold (possible bounce). Below 50 = bearish, above 50 = bullish.',
+    MACD: 'Moving Average Convergence Divergence (in price units, e.g., +2.50 means short-term MA is $2.50 above long-term MA). Positive MACD = bullish momentum.',
+  };
+
+  const volatilityDefinitions: Record<string, string> = {
+    'ATR 14':
+      'Average True Range over 14 periods (in price units, e.g., $3.59 means the stock moves ~$3.59 per day on average). Higher ATR = more volatile stock.',
+    'Volatility 30D':
+      '30-day annualized volatility (shown as percentage, e.g., 17% means the stock has historically fluctuated 17% annually). Higher = more volatile.',
+    'Volatility 90D': '90-day annualized volatility (shown as percentage). Higher = more volatile.',
+  };
+
+  // Metric definitions for Fundamental Overview
+  const profitabilityDefinitions: Record<string, string> = {
+    ROE: 'Return on Equity (shown as %). Net income / Shareholder Equity. Measures efficiency at generating profits from shareholder money. >15% = good, >20% = excellent.',
+    'Profit Margin':
+      'Net profit / Revenue (shown as %). Percentage of revenue that becomes profit. Higher is better, but banking ~15-20% is solid, tech can be 20%+.',
+  };
+
+  const valuationDefinitions: Record<string, string> = {
+    'P/E Ratio':
+      'Price / Earnings per share (ratio, e.g., 20x means you pay $20 for $1 of earnings). Lower may = undervalued, higher may = overvalued. Varies by industry.',
+    'Forward P/E':
+      'Price / Expected future EPS (ratio). Uses analyst estimates for next 12 months. Lower = potentially cheaper vs future earnings.',
+    'PEG Ratio':
+      'P/E / Growth Rate (ratio). <1 may indicate undervalued, 1-2 = fairly valued, >2 may indicate overvalued. Growth is annual %.',
+  };
+
+  const financialStrengthDefinitions: Record<string, string> = {
+    'Debt-to-Equity':
+      'Total Debt / Total Equity (ratio, e.g., 0.5 means 50 cents debt per $1 equity). <1 is generally conservative, >2 may indicate high leverage.',
+    'Dividend Yield':
+      "Annual Dividends / Stock Price (shown as %). Income return from dividends. 2-5% is typical. Higher isn't always better - check sustainability.",
+  };
+
+  const growthDefinitions: Record<string, string> = {
+    'Revenue Growth':
+      "Year-over-year % change in total revenue. >10% = strong growth. Varies by company stage (startups may grow faster but aren't profitable).",
+  };
+
+  const marketDataDefinitions: Record<string, string> = {
+    'Previous Close': 'Closing price from previous trading day (in price units, e.g., $150.00).',
+    'Day High': 'Highest trading price today (in price units).',
+    'Day Low': 'Lowest trading price today (in price units).',
+    Bid: 'Highest price a buyer will pay to purchase this stock (in price units). Higher bid = more buying interest.',
+    Ask: 'Lowest price a seller will accept to sell this stock (in price units). Lower ask = more selling pressure.',
+    Volume: 'Shares traded today (e.g., 5.2M = 5.2 million shares). Higher = more liquid.',
+    'Avg Volume': 'Average shares traded per day over recent period. 50-day average shown.',
+    '52W High':
+      'Highest price over past 52 weeks (in price units). Price near this = near peak valuation.',
+    '52W Low':
+      'Lowest price over past 52 weeks (in price units). Price near this = near minimum valuation.',
+  };
+
+  const liquidityValuationDefinitions: Record<string, string> = {
+    'Enterprise Value':
+      'Market Cap + Debt - Cash (in billions, e.g., $50B). What it would cost to buy the whole company.',
+    'Price/Book':
+      'Stock price / Book value per share (ratio, e.g., 3x). <1 may = undervalued, >3 may = overvalued. Common for banks.',
+    'Price/Sales':
+      'Stock price / Revenue per share (ratio). Varies by industry; lower generally better. SaaS companies often trade at 10-20x.',
+    'EV/EBITDA':
+      'Enterprise Value / EBITDA (ratio). <10 generally considered good/cheap, >15 may be expensive.',
+    'Trailing PEG': 'P/E ratio / Expected earnings growth (ratio). <1 may indicate undervalued.',
+  };
+
+  const earningsDefinitions: Record<string, string> = {
+    'Forward EPS':
+      'Expected EPS over next 12 months (in dollars, e.g., $5.00). Analyst consensus estimates.',
+    'Book Value':
+      'Total assets - Total liabilities per share (in dollars). Represents intrinsic value.',
+    'Book/Share': 'Book value per share (in dollars, same as above).',
+    'Earnings Growth': 'Year-over-year % change in earnings. Positive = growing profits.',
+    'Quarterly Growth': 'Quarter-over-quarter % change in earnings. Shows momentum.',
+  };
+
+  const marginsDefinitions: Record<string, string> = {
+    'Return on Assets':
+      'Net income / Total assets (shown as %). Efficiency at using assets. >5% = good.',
+    'Return on Investment':
+      'Net income / Total investments (shown as %). Similar to ROE but for all capital.',
+    'Gross Margins':
+      '(Revenue - COGS) / Revenue (shown as %). Profitability before operating costs. >40% = strong, <20% = low margin industry.',
+    'Operating Margins':
+      'Operating income / Revenue (shown as %). Profitability from core ops. 15-20% = healthy.',
+  };
+
   return (
     <div className="space-y-8">
       {/* Company Header */}
@@ -37,6 +129,12 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
               </p>
             )}
+            {data.data_start_date && data.data_end_date && (
+              <p className="text-xs text-gray-500 mt-1">
+                Data period: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
+                {new Date(data.data_end_date).toLocaleDateString()}
+              </p>
+            )}
           </div>
         </div>
         {data.sector && (
@@ -46,17 +144,26 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         )}
       </div>
 
-      {/* Snapshot Summary */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Snapshot</h3>
-        <p className="text-gray-700 leading-relaxed">{data.snapshot_summary}</p>
-      </div>
+      {/* Price Chart */}
+      <PriceChart ticker={data.ticker} currentPrice={data.current_price} />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">
-        <MetricsCard title="Moving Averages" metrics={data.technical_overview.moving_averages} />
-        <MetricsCard title="Momentum" metrics={data.technical_overview.momentum} />
-        <MetricsCard title="Volatility" metrics={data.technical_overview.volatility || []} />
+        <MetricsCard
+          title="Moving Averages"
+          metrics={data.technical_overview.moving_averages}
+          metricDefinitions={movingAverageDefinitions}
+        />
+        <MetricsCard
+          title="Momentum"
+          metrics={data.technical_overview.momentum}
+          metricDefinitions={momentumDefinitions}
+        />
+        <MetricsCard
+          title="Volatility"
+          metrics={data.technical_overview.volatility || []}
+          metricDefinitions={volatilityDefinitions}
+        />
       </div>
 
       {/* Fundamental Overview */}
@@ -65,21 +172,49 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
           title="Profitability"
           metrics={data.fundamental_overview.profitability}
           showInterpretation={true}
+          metricDefinitions={profitabilityDefinitions}
         />
         <MetricsCard
           title="Valuation"
           metrics={data.fundamental_overview.valuation}
           showInterpretation={true}
+          metricDefinitions={valuationDefinitions}
         />
         <MetricsCard
           title="Financial Strength"
           metrics={data.fundamental_overview.financial_strength}
           showInterpretation={true}
+          metricDefinitions={financialStrengthDefinitions}
         />
         <MetricsCard
           title="Growth"
           metrics={data.fundamental_overview.growth}
           showInterpretation={true}
+          metricDefinitions={growthDefinitions}
+        />
+        <MetricsCard
+          title="Market Data"
+          metrics={data.fundamental_overview.market_data}
+          showInterpretation={true}
+          metricDefinitions={marketDataDefinitions}
+        />
+        <MetricsCard
+          title="Liquidity & Valuation"
+          metrics={data.fundamental_overview.liquidity_valuation}
+          showInterpretation={true}
+          metricDefinitions={liquidityValuationDefinitions}
+        />
+        <MetricsCard
+          title="Earnings"
+          metrics={data.fundamental_overview.earnings}
+          showInterpretation={true}
+          metricDefinitions={earningsDefinitions}
+        />
+        <MetricsCard
+          title="Margins"
+          metrics={data.fundamental_overview.margins}
+          showInterpretation={true}
+          metricDefinitions={marginsDefinitions}
         />
       </div>
 
@@ -95,7 +230,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Total Return
-                  <MetricDefinition text="Cumulative return from the beginning of the available data period to the most recent date." />
+                  <MetricDefinition
+                    text={`Cumulative return over the full available data period (shown as %). Based on data from ${data.data_start_date ? new Date(data.data_start_date).toLocaleDateString() : '?'} to ${data.data_end_date ? new Date(data.data_end_date).toLocaleDateString() : '?'}.`}
+                  />
                 </p>
                 <p className="text-xl font-bold text-gray-900">
                   {data.advanced_metrics.statistical.total_return != null
@@ -106,7 +243,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Annualized Return (CAGR)
-                  <MetricDefinition text="Compound Annual Growth Rate - the mean annual return required for an investment to grow from its initial to its ending value, assuming profits are reinvested." />
+                  <MetricDefinition text="Compound Annual Growth Rate (shown as %). The mean annual return if you held the stock over the data period, with profits reinvested annually." />
                 </p>
                 <p className="text-xl font-bold text-gray-900">
                   {data.advanced_metrics.statistical.annualized_return != null
@@ -117,7 +254,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Annualized Volatility
-                  <MetricDefinition text="Standard deviation of daily returns annualized to a yearly measure. Higher values indicate greater price fluctuations and risk." />
+                  <MetricDefinition text="Standard deviation of daily returns annualized (shown as %). Market average is ~15-20%. Above 30% = high volatility/high risk. Below 15% = low volatility." />
                 </p>
                 <p className="text-xl font-bold text-gray-900">
                   {data.advanced_metrics.statistical.annualized_volatility != null
@@ -170,7 +307,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Calmar Ratio
-                  <MetricDefinition text="Annualized return divided by maximum drawdown. Measures return per unit of worst-case loss. Values above 1 are favorable." />
+                  <MetricDefinition text="Annualized return / Maximum drawdown (ratio). Return per unit of worst-case loss. >1 = favorable, >2 = excellent, <0.5 = high risk relative to returns." />
                 </p>
                 {data.advanced_metrics.statistical.calmar_ratio != null ? (
                   <p
@@ -191,7 +328,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Maximum Drawdown
-                  <MetricDefinition text="The largest peak-to-trough decline during the analysis period. Indicates the worst losses an investor would have experienced." />
+                  <MetricDefinition text="Largest peak-to-trough decline (shown as %, e.g., -25% means portfolio dropped 25% at worst point). Indicates worst losses historically." />
                 </p>
                 <p className="text-xl font-bold text-red-600">
                   {data.advanced_metrics.statistical.max_drawdown != null
@@ -202,7 +339,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Value at Risk (95%, 1-day)
-                  <MetricDefinition text="The maximum expected loss over a 1-day period at 95% confidence. A VaR of -2% means there's a 95% probability that daily losses won't exceed 2%." />
+                  <MetricDefinition text="Maximum expected daily loss at 95% confidence (shown as %, e.g., -2% means on 95% of days losses won't exceed 2% of portfolio value)." />
                 </p>
                 <p className="text-xl font-bold text-gray-900">
                   {data.advanced_metrics.statistical.var_95 != null
@@ -213,7 +350,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               <div>
                 <p className="text-sm text-gray-600 mb-1">
                   Ulcer Index
-                  <MetricDefinition text="Measures downside volatility focusing on the depth and duration of drawdowns. Lower values indicate less stressful volatility." />
+                  <MetricDefinition text="Measures pain of drawdowns (in % terms). Higher = more severe/longer drawdowns historically. <5 = mild, 5-10 = moderate, >10 = severe volatility stress." />
                 </p>
                 <p className="text-xl font-bold text-gray-900">
                   {data.advanced_metrics.statistical.ulcer_index != null
@@ -431,52 +568,12 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
               </div>
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <h5 className="text-sm font-semibold text-gray-900 mb-3">
-                Pivot Points
-                <MetricDefinition text="Support and resistance levels calculated from recent price action using the Fibonacci-based formula." />
-              </h5>
-              <div className="grid md:grid-cols-4 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Resistance 1</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {data.advanced_metrics.technical.pivot_resistance_1 != null
-                      ? `$${data.advanced_metrics.technical.pivot_resistance_1.toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Resistance 2</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {data.advanced_metrics.technical.pivot_resistance_2 != null
-                      ? `$${data.advanced_metrics.technical.pivot_resistance_2.toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Support 1</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {data.advanced_metrics.technical.pivot_support_1 != null
-                      ? `$${data.advanced_metrics.technical.pivot_support_1.toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Support 2</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {data.advanced_metrics.technical.pivot_support_2 != null
-                      ? `$${data.advanced_metrics.technical.pivot_support_2.toFixed(2)}`
-                      : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-gray-200">
               <h5 className="text-sm font-semibold text-gray-900 mb-3">Volume Analysis</h5>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">
                     50-Day Average Volume
-                    <MetricDefinition text="The average number of shares traded per day over the last 50 trading sessions." />
+                    <MetricDefinition text="Average shares traded per day over 50 sessions (e.g., 5.2M = 5.2 million shares/day). Higher = more liquid/easier to buy/sell." />
                   </p>
                   <p className="text-xl font-bold text-gray-900">
                     {data.advanced_metrics.technical.volume_avg_50d != null
@@ -487,7 +584,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">
                     Volume Trend
-                    <MetricDefinition text="Comparison of recent 20-day average volume vs prior 20-day average. Shows if trading activity is increasing or decreasing." />
+                    <MetricDefinition text="Recent 20-day avg vs prior 20-day avg. 'Increasing' = more interest (bullish). 'Decreasing' = less interest (could be bearish)." />
                   </p>
                   <p
                     className={`text-xl font-bold ${
@@ -512,8 +609,9 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                 Seasonal & Cyclical Patterns
               </h4>
               <p className="text-sm text-gray-600 mb-6">
-                Average return for each period, calculated across all years in the 10-year dataset
-                <MetricDefinition text="These show the historical AVERAGE return for each calendar period (e.g., January, Q1, Monday) computed across all occurrences in the available 10-year dataset. This reveals if a stock tends to perform better/worse during specific times." />
+                Average return for each period, calculated across all years in the available dataset
+                (max 5 years)
+                <MetricDefinition text="These show the historical AVERAGE return for each calendar period (e.g., January, Q1, Monday) computed across all occurrences in the available dataset (up to 5 years). This reveals if a stock tends to perform better/worse during specific times." />
               </p>
               <div className="grid md:grid-cols-2 gap-8">
                 <div>

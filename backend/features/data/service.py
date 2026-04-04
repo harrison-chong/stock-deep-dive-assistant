@@ -12,7 +12,7 @@ class DataService:
     """Fetch market and fundamental data from Yahoo Finance"""
 
     @staticmethod
-    async def get_ohlc(ticker: str, period: str = "10y") -> OHLCData:
+    async def get_ohlc(ticker: str, period: str = "max") -> OHLCData:
         """Fetch OHLC data from yfinance using period parameter"""
         try:
             data = yf.download(ticker, period=period, progress=False)
@@ -34,6 +34,8 @@ class DataService:
                 low=data["Low"].tolist(),
                 close=data["Close"].tolist(),
                 volume=data["Volume"].astype(int).tolist(),
+                start_date=data.index[0],
+                end_date=data.index[-1],
             )
         except Exception as e:
             raise ValueError(f"Failed to fetch data for {ticker}: {str(e)}")

@@ -41,7 +41,7 @@ async def analyze_stock(request: AnalysisRequest):
 
     try:
         # Use the orchestrator to perform analysis
-        result = await analyzer.analyze(ticker)
+        result = await analyzer.analyze(ticker, period=request.period)
         return result
 
     except ValueError as e:

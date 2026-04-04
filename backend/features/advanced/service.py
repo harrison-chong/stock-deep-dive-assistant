@@ -153,6 +153,11 @@ class AdvancedMetricsService:
         returns_5y = AdvancedMetricsService._period_return(close, "5Y")
         returns_10y = AdvancedMetricsService._period_return(close, "10Y")
 
+        # Annualized CAGR for specific periods
+        cagr_2y = AdvancedMetricsService._calculate_cagr(close, 2)  # 2-year CAGR
+        cagr_3y = AdvancedMetricsService._calculate_cagr(close, 3)  # 3-year CAGR
+        cagr_5y = AdvancedMetricsService._calculate_cagr(close, 5)  # 5-year CAGR
+
         # Moving average crossovers
         ma_50 = close.rolling(window=50).mean()
         ma_200 = close.rolling(window=200).mean()
@@ -194,6 +199,9 @@ class AdvancedMetricsService:
             returns_3y=float(returns_3y) if not pd.isna(returns_3y) else None,
             returns_5y=float(returns_5y) if not pd.isna(returns_5y) else None,
             returns_10y=float(returns_10y) if not pd.isna(returns_10y) else None,
+            cagr_2y=cagr_2y,
+            cagr_3y=cagr_3y,
+            cagr_5y=cagr_5y,
             golden_cross_detected=golden_cross,
             death_cross_detected=death_cross,
             price_vs_sma_50=float(price_vs_ma50),
@@ -213,28 +221,67 @@ class AdvancedMetricsService:
         """Calculate seasonal and cyclical patterns.
 
         Monthly/quarterly returns show the AVERAGE return for each calendar period,
-        calculated across all years in the available data (typically 10+ years).
+        calculated across the last 5 years of available data (or all data if less than 5 years).
         """
-        # Monthly returns - average return for each calendar month across all years
-        monthly_returns = AdvancedMetricsService._calculate_monthly_returns(
-            close, index
+        # Use only last 5 years of data for seasonal analysis (or all available if less)
+        max_years = 5
+        cutoff_date = index[-1] - pd.DateOffset(years=max_years)
+        recent_mask = index >= cutoff_date
+        close_recent = close[recent_mask]
+
+        # Monthly returns - average return for each calendar month across last 5 years
+        monthly_returns, monthly_win_rate = (
+            AdvancedMetricsService._calculate_monthly_returns(
+                close_recent, index[recent_mask]
+            )
         )
 
-        # Quarterly returns - average return for each calendar quarter across all years
-        quarterly_returns = AdvancedMetricsService._calculate_quarterly_returns(
-            close, index
+        # Find best and worst month
+        if monthly_returns:
+            best_month_key = max(monthly_returns, key=monthly_returns.get)
+            worst_month_key = min(monthly_returns, key=monthly_returns.get)
+            best_month = (best_month_key, monthly_returns[best_month_key])
+            worst_month = (worst_month_key, monthly_returns[worst_month_key])
+        else:
+            best_month = None
+            worst_month = None
+
+        # Quarterly returns - average return for each calendar quarter across last 5 years
+        quarterly_returns, quarterly_win_rate = (
+            AdvancedMetricsService._calculate_quarterly_returns(
+                close_recent, index[recent_mask]
+            )
         )
+
+        # Find best and worst quarter
+        if quarterly_returns:
+            best_quarter_key = max(quarterly_returns, key=quarterly_returns.get)
+            worst_quarter_key = min(quarterly_returns, key=quarterly_returns.get)
+            best_quarter = (best_quarter_key, quarterly_returns[best_quarter_key])
+            worst_quarter = (worst_quarter_key, quarterly_returns[worst_quarter_key])
+        else:
+            best_quarter = None
+            worst_quarter = None
 
         # Day of week effect - average return for each weekday across all years
-        weekday_returns = AdvancedMetricsService._calculate_weekday_effect(close, index)
+        weekday_returns, weekday_win_rate = (
+            AdvancedMetricsService._calculate_weekday_effect(close, index)
+        )
 
         # Earnings season impact (simplified - would need earnings dates)
         earnings_impact = None
 
         return SeasonalAnalysis(
             monthly_returns=monthly_returns,
+            monthly_win_rate=monthly_win_rate,
+            best_month=best_month,
+            worst_month=worst_month,
             quarterly_returns=quarterly_returns,
+            quarterly_win_rate=quarterly_win_rate,
+            best_quarter=best_quarter,
+            worst_quarter=worst_quarter,
             day_of_week_effect=weekday_returns,
+            day_of_week_win_rate=weekday_win_rate,
             earnings_season_impact=earnings_impact,
         )
 
@@ -272,6 +319,34 @@ class AdvancedMetricsService:
         end_price = close.iloc[-1]
 
         return (end_price / start_price) - 1
+
+    @staticmethod
+    def _calculate_cagr(close: pd.Series, years: int) -> float | None:
+        """Calculate annualized CAGR over specified number of years."""
+        end_date = close.index[-1]
+        start_date = end_date - pd.DateOffset(years=years)
+
+        # Find closest available start date
+        available_dates = close.index[close.index >= start_date]
+        if len(available_dates) == 0:
+            return None
+
+        start_date_actual = available_dates[0]
+        start_price = close.loc[start_date_actual]
+        end_price = close.iloc[-1]
+
+        # Calculate actual years held
+        actual_days = (end_date - start_date_actual).days
+        if actual_days <= 0:
+            return None
+        actual_years = actual_days / 365.25
+
+        # Annualized CAGR formula: (end/start)^(1/years) - 1
+        if start_price <= 0 or actual_years <= 0:
+            return None
+
+        cagr = (end_price / start_price) ** (1 / actual_years) - 1
+        return float(cagr)
 
     @staticmethod
     def _detect_crossovers(ma1: pd.Series, ma2: pd.Series) -> tuple[bool, bool]:
@@ -325,42 +400,63 @@ class AdvancedMetricsService:
     @staticmethod
     def _calculate_monthly_returns(
         close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by calendar month across all years in dataset."""
+    ) -> tuple[dict[str, float], dict[str, float]]:
+        """Calculate average returns and win rate by calendar month across all years in dataset."""
         if len(close) < 365:  # Need at least 1 year of data
-            return {}
+            return {}, {}
 
         returns = close.pct_change().dropna()
         returns_df = pd.DataFrame({"return": returns})
+        returns_df["month"] = returns_df.index.month
+        returns_df["positive"] = returns_df["return"] > 0
 
-        monthly = returns_df.groupby(returns_df.index.month).mean()["return"]
-        return {f"month_{int(m)}": float(r) for m, r in monthly.items()}
+        monthly_avg = returns_df.groupby("month")["return"].mean()
+        monthly_win = returns_df.groupby("month")["positive"].mean()
+
+        returns_dict = {f"month_{int(m)}": float(r) for m, r in monthly_avg.items()}
+        win_rate_dict = {f"month_{int(m)}": float(w) for m, w in monthly_win.items()}
+
+        return returns_dict, win_rate_dict
 
     @staticmethod
     def _calculate_quarterly_returns(
         close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by calendar quarter across all years in dataset."""
+    ) -> tuple[dict[str, float], dict[str, float]]:
+        """Calculate average returns and win rate by calendar quarter across all years in dataset."""
         if len(close) < 365:  # Need at least 1 year of data
-            return {}
+            return {}, {}
 
         returns = close.pct_change().dropna()
         returns_df = pd.DataFrame({"return": returns})
+        returns_df["quarter"] = returns_df.index.quarter
+        returns_df["positive"] = returns_df["return"] > 0
 
-        quarterly = returns_df.groupby(returns_df.index.quarter).mean()["return"]
-        return {f"q{int(q)}": float(r) for q, r in quarterly.items()}
+        quarterly_avg = returns_df.groupby("quarter")["return"].mean()
+        quarterly_win = returns_df.groupby("quarter")["positive"].mean()
+
+        returns_dict = {f"q{int(q)}": float(r) for q, r in quarterly_avg.items()}
+        win_rate_dict = {f"q{int(q)}": float(w) for q, w in quarterly_win.items()}
+
+        return returns_dict, win_rate_dict
 
     @staticmethod
     def _calculate_weekday_effect(
         close: pd.Series, index: pd.DatetimeIndex
-    ) -> dict[str, float]:
-        """Calculate average returns by day of week across all years in dataset."""
+    ) -> tuple[dict[str, float], dict[str, float]]:
+        """Calculate average returns and win rate by day of week across all years in dataset."""
         if len(close) < 5:
-            return {}
+            return {}, {}
 
         returns = close.pct_change().dropna()
         returns_df = pd.DataFrame({"return": returns})
+        returns_df["weekday"] = returns_df.index.dayofweek
+        returns_df["positive"] = returns_df["return"] > 0
 
-        weekday = returns_df.groupby(returns_df.index.dayofweek).mean()["return"]
+        weekday_avg = returns_df.groupby("weekday")["return"].mean()
+        weekday_win = returns_df.groupby("weekday")["positive"].mean()
+
         days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        return {days[int(d)]: float(r) for d, r in weekday.items()}
+        returns_dict = {days[int(d)]: float(r) for d, r in weekday_avg.items()}
+        win_rate_dict = {days[int(d)]: float(w) for d, w in weekday_win.items()}
+
+        return returns_dict, win_rate_dict

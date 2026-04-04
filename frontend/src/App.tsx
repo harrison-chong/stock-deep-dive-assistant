@@ -7,8 +7,21 @@ import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
 import PortfolioPage from './pages/PortfolioPage';
 import './App.css';
 
+const PERIODS = [
+  { value: '1mo', label: '1 Month' },
+  { value: '3mo', label: '3 Months' },
+  { value: '6mo', label: '6 Months' },
+  { value: '1y', label: '1 Year' },
+  { value: '2y', label: '2 Years' },
+  { value: '5y', label: '5 Years' },
+  { value: '10y', label: '10 Years' },
+  { value: 'ytd', label: 'Year to Date' },
+  { value: 'max', label: 'Max' },
+];
+
 function HomePage() {
-  const { ticker, setTicker, loading, error, data, handleAnalyze } = useStockAnalysis();
+  const { ticker, setTicker, period, setPeriod, loading, error, data, handleAnalyze } =
+    useStockAnalysis();
 
   return (
     <div className="min-h-screen bg-white">
@@ -52,15 +65,37 @@ function HomePage() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Search Section */}
         <div className="mb-12">
-          <AutocompleteInput
-            value={ticker}
-            onChange={setTicker}
-            onSubmit={handleAnalyze}
-            placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
-            disabled={loading}
-            submitLabel={loading ? 'Analyzing...' : 'Analyze'}
-            showSubmitButton={true}
-          />
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <AutocompleteInput
+                value={ticker}
+                onChange={setTicker}
+                onSubmit={handleAnalyze}
+                placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
+                disabled={loading}
+                submitLabel={loading ? 'Analyzing...' : 'Analyze'}
+                showSubmitButton={true}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="period-select" className="text-sm text-gray-600 whitespace-nowrap">
+                Data Period:
+              </label>
+              <select
+                id="period-select"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                disabled={loading}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {PERIODS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />

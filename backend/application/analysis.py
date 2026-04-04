@@ -19,7 +19,7 @@ from features.technical.service import TechnicalService
 from features.fundamental.service import FundamentalService
 from features.ai.service import AIService
 from features.advanced.service import AdvancedMetricsService
-from core.helpers import get_current_price, create_snapshot_summary
+from core.helpers import get_current_price
 
 
 class StockAnalyzer:
@@ -32,11 +32,11 @@ class StockAnalyzer:
         self.ai_service = AIService()
         self.advanced_service = AdvancedMetricsService()
 
-    async def analyze(self, ticker: str) -> StockAnalysisResponse:
+    async def analyze(self, ticker: str, period: str = "5y") -> StockAnalysisResponse:
         """Perform complete stock analysis"""
         # Fetch data concurrently (OHLC in parallel with ticker info)
         ohlc, (fundamentals, company_info, info) = await asyncio.gather(
-            self.data_service.get_ohlc(ticker),
+            self.data_service.get_ohlc(ticker, period=period),
             self.data_service.get_ticker_info(ticker),
         )
 
@@ -205,16 +205,6 @@ class StockAnalyzer:
             ],
         )
 
-        # Snapshot summary
-        snapshot = create_snapshot_summary(
-            ticker=ticker,
-            current_price=current_price,
-            sma_200=tech_indicators.sma_200,
-            pe_ratio=fundamentals.pe_ratio,
-            fcf=fundamentals.free_cash_flow,
-            rsi=tech_indicators.rsi_14,
-        )
-
         # AI interpretation
         tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, MACD Signal: {tech_indicators.macd_signal}, SMA20: {tech_indicators.sma_20}, SMA50: {tech_indicators.sma_50}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
         fundamental_summary = f"P/E Ratio: {fundamentals.pe_ratio}, Forward P/E: {fundamentals.forward_pe}, ROE: {fundamentals.roe}%, Debt-to-Equity: {fundamentals.debt_to_equity}, Profit Margin: {fundamentals.profit_margin}%, Revenue Growth: {fundamentals.revenue_growth}%"
@@ -294,12 +284,13 @@ class StockAnalyzer:
             current_price=current_price,
             currency=company_info.currency,
             market_cap=fundamentals.market_cap,
-            snapshot_summary=snapshot,
             technical_overview=technical_overview,
             fundamental_overview=fundamental_overview,
             ai_outlook=ai_outlook,
             disclaimer="⚠️ Not financial advice. For educational purposes only.",
             timestamp=datetime.now().isoformat(),
+            data_start_date=ohlc.start_date.isoformat() if ohlc.start_date else None,
+            data_end_date=ohlc.end_date.isoformat() if ohlc.end_date else None,
             # Additional company info fields
             website=company_info.website,
             description=company_info.description,
@@ -311,7 +302,7 @@ class StockAnalyzer:
             fax=company_info.fax,
             # Raw yfinance info dict for maximum data exposure
             extra_info=info,
-            # Advanced metrics from 10 years of OHLC data
+            # Advanced metrics from OHLC data (period determined by user selection)
             advanced_metrics=advanced_metrics,
         )
 

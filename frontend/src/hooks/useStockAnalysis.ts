@@ -5,6 +5,7 @@ import { ERROR_MESSAGES } from '../constants';
 
 export const useStockAnalysis = () => {
   const [ticker, setTicker] = useState('');
+  const [period, setPeriod] = useState('5y');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
@@ -18,7 +19,7 @@ export const useStockAnalysis = () => {
     setData(null);
 
     try {
-      const result = await analyzeStock(ticker);
+      const result = await analyzeStock(ticker, period);
       setData(result);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : ERROR_MESSAGES.ANALYSIS_FAILED);
@@ -30,6 +31,8 @@ export const useStockAnalysis = () => {
   return {
     ticker,
     setTicker,
+    period,
+    setPeriod,
     loading,
     error,
     data,

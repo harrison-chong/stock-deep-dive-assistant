@@ -16,6 +16,8 @@ class OHLCData:
     low: list[float]
     close: list[float]
     volume: list[int]
+    start_date: datetime = None  # First date in the data
+    end_date: datetime = None  # Last date in the data
 
 
 @dataclass
@@ -233,6 +235,11 @@ class TechnicalPerformance:
     returns_5y: float | None = None
     returns_10y: float | None = None
 
+    # Annualized CAGR for specific periods
+    cagr_2y: float | None = None  # Annualized CAGR over last 2 years
+    cagr_3y: float | None = None  # Annualized CAGR over last 3 years
+    cagr_5y: float | None = None  # Annualized CAGR over last 5 years
+
     # Moving average crossovers (boolean flags)
     golden_cross_detected: bool = False  # MA50 crossed above MA200
     death_cross_detected: bool = False  # MA50 crossed below MA200
@@ -261,11 +268,28 @@ class SeasonalAnalysis:
     # Monthly returns (average % for each month) - keys: "month_1" through "month_12"
     monthly_returns: dict[str, float] = None
 
+    # Monthly win rate (% of positive months) - keys: "month_1" through "month_12"
+    monthly_win_rate: dict[str, float] = None
+
+    # Best and worst month - tuple of (month_key, return_value)
+    best_month: tuple[str, float] = None  # (month_1, 0.05)
+    worst_month: tuple[str, float] = None  # (month_3, -0.03)
+
     # Quarterly returns - keys: "q1", "q2", "q3", "q4"
     quarterly_returns: dict[str, float] = None
 
+    # Quarterly win rate - keys: "q1", "q2", "q3", "q4"
+    quarterly_win_rate: dict[str, float] = None
+
+    # Best and worst quarter
+    best_quarter: tuple[str, float] = None
+    worst_quarter: tuple[str, float] = None
+
     # Day of week effects - keys: "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
     day_of_week_effect: dict[str, float] = None
+
+    # Day of week win rate
+    day_of_week_win_rate: dict[str, float] = None
 
     # Earnings season impact (if earnings dates available)
     earnings_season_impact: float | None = None
