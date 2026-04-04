@@ -8,6 +8,7 @@ export interface AnalysisData {
   market_cap: number | null;
   data_start_date: string | null;
   data_end_date: string | null;
+  chart_data: { date: string; close: number }[];
   technical_overview: {
     moving_averages: { name: string; value: number | null }[];
     momentum: { name: string; value: number | null }[];

@@ -145,7 +145,11 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
       </div>
 
       {/* Price Chart */}
-      <PriceChart ticker={data.ticker} currentPrice={data.current_price} />
+      <PriceChart
+        ticker={data.ticker}
+        currentPrice={data.current_price}
+        chartData={data.chart_data}
+      />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">

@@ -12,10 +12,24 @@ class DataService:
     """Fetch market and fundamental data from Yahoo Finance"""
 
     @staticmethod
-    async def get_ohlc(ticker: str, period: str = "max") -> OHLCData:
-        """Fetch OHLC data from yfinance using period parameter"""
+    async def get_ohlc(
+        ticker: str,
+        period: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> OHLCData:
+        """Fetch OHLC data from yfinance using period OR start/end dates"""
         try:
-            data = yf.download(ticker, period=period, progress=False)
+            # Use start/end dates if provided, otherwise fall back to period
+            if start_date and end_date:
+                data = yf.download(
+                    ticker, start=start_date, end=end_date, progress=False
+                )
+            elif period:
+                data = yf.download(ticker, period=period, progress=False)
+            else:
+                # Default to 5 years if nothing specified
+                data = yf.download(ticker, period="5y", progress=False)
 
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")

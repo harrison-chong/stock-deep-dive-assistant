@@ -10,7 +10,10 @@ export const useStockAnalysis = () => {
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
 
-  const handleAnalyze = async (e?: React.FormEvent) => {
+  const handleAnalyze = async (
+    e?: React.FormEvent,
+    dateRange?: { startDate?: string; endDate?: string; period?: string },
+  ) => {
     if (e) e.preventDefault();
     if (!ticker.trim()) return;
 
@@ -19,7 +22,7 @@ export const useStockAnalysis = () => {
     setData(null);
 
     try {
-      const result = await analyzeStock(ticker, period);
+      const result = await analyzeStock(ticker, dateRange);
       setData(result);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : ERROR_MESSAGES.ANALYSIS_FAILED);

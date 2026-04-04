@@ -40,8 +40,13 @@ async def analyze_stock(request: AnalysisRequest):
         raise HTTPException(status_code=400, detail="Invalid ticker format")
 
     try:
-        # Use the orchestrator to perform analysis
-        result = await analyzer.analyze(ticker, period=request.period)
+        # Use the orchestrator to perform analysis with period or start/end dates
+        result = await analyzer.analyze(
+            ticker,
+            period=request.period,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
         return result
 
     except ValueError as e:

@@ -10,8 +10,17 @@ class AnalysisRequest(BaseModel):
     """Request to analyze a stock"""
 
     ticker: str = Field(..., description="Stock ticker")
-    period: str = Field(
-        default="5y", description="Data period: 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max"
+    period: Optional[str] = Field(
+        default=None,
+        description="Data period (optional): 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max. Use period OR start_date+end_date.",
+    )
+    start_date: Optional[str] = Field(
+        default=None,
+        description="Start date in YYYY-MM-DD format. Use with end_date for exact date range.",
+    )
+    end_date: Optional[str] = Field(
+        default=None,
+        description="End date in YYYY-MM-DD format. Defaults to today if not specified.",
     )
     investment_horizon: Optional[str] = Field(default="1y")
     risk_tolerance: Optional[str] = Field(default="moderate")

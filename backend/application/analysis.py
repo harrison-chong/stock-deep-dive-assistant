@@ -32,11 +32,19 @@ class StockAnalyzer:
         self.ai_service = AIService()
         self.advanced_service = AdvancedMetricsService()
 
-    async def analyze(self, ticker: str, period: str = "5y") -> StockAnalysisResponse:
+    async def analyze(
+        self,
+        ticker: str,
+        period: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> StockAnalysisResponse:
         """Perform complete stock analysis"""
         # Fetch data concurrently (OHLC in parallel with ticker info)
         ohlc, (fundamentals, company_info, info) = await asyncio.gather(
-            self.data_service.get_ohlc(ticker, period=period),
+            self.data_service.get_ohlc(
+                ticker, period=period, start_date=start_date, end_date=end_date
+            ),
             self.data_service.get_ticker_info(ticker),
         )
 
@@ -275,6 +283,15 @@ class StockAnalyzer:
             confidence_score=ai_interpretation.confidence_score,
         )
 
+        # Build chart data from OHLC
+        chart_data = [
+            {
+                "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),
+                "close": float(close),
+            }
+            for ts, close in zip(ohlc.timestamp, ohlc.close)
+        ]
+
         # Build response - include all available data
         return StockAnalysisResponse(
             ticker=ticker,
@@ -291,6 +308,7 @@ class StockAnalyzer:
             timestamp=datetime.now().isoformat(),
             data_start_date=ohlc.start_date.isoformat() if ohlc.start_date else None,
             data_end_date=ohlc.end_date.isoformat() if ohlc.end_date else None,
+            chart_data=chart_data,
             # Additional company info fields
             website=company_info.website,
             description=company_info.description,

@@ -170,18 +170,8 @@ class StockAnalysisResponse(BaseModel):
     # Date range of the OHLC data used for calculations
     data_start_date: Optional[str] = None  # ISO format
     data_end_date: Optional[str] = None  # ISO format
-    # Chart data availability flags for frontend
-    available_chart_periods: List[str] = [
-        "1d",
-        "5d",
-        "1m",
-        "3m",
-        "6m",
-        "1y",
-        "5y",
-        "10y",
-    ]
-    available_intervals: List[str] = ["1d", "1w", "1m", "3m"]
+    # Chart data - close prices for the selected period
+    chart_data: List[Dict[str, Any]] = []  # [{date: "2024-01-01", close: 150.25}, ...]
     # Additional company information
     website: Optional[str] = None
     description: Optional[str] = None
@@ -193,7 +183,7 @@ class StockAnalysisResponse(BaseModel):
     fax: Optional[str] = None
     # Raw yfinance info dict for maximum data exposure
     extra_info: Dict[str, Any] = {}
-    # Advanced metrics calculated from 10 years of OHLC data
+    # Advanced metrics calculated from OHLC data
     advanced_metrics: Optional[AdvancedMetrics] = None
 
 
