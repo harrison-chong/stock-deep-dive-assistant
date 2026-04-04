@@ -204,9 +204,16 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
         />
         <MetricsCard
           title="Liquidity & Valuation"
-          metrics={data.fundamental_overview.liquidity_valuation}
+          metrics={[
+            { name: 'Market Cap', value: data.market_cap },
+            ...data.fundamental_overview.liquidity_valuation,
+          ]}
           showInterpretation={true}
-          metricDefinitions={liquidityValuationDefinitions}
+          metricDefinitions={{
+            'Market Cap':
+              'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
+            ...liquidityValuationDefinitions,
+          }}
         />
         <MetricsCard
           title="Earnings"
