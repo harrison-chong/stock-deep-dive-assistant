@@ -10,6 +10,7 @@ from shared.requests import (
     PerformanceRequest,
     PortfolioEntryRequest,
     PortfolioSellRequest,
+    ChartDataRequest,
 )
 from shared.responses import (
     StockAnalysisResponse,
@@ -18,6 +19,10 @@ from shared.responses import (
     PortfolioListResponse,
     PortfolioPerformanceResponse,
     PortfolioSummaryResponse,
+    ChartDataResponse,
+    MarketSummaryResponse,
+    StockNewsResponse,
+    SectorPerformanceResponse,
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
@@ -56,7 +61,49 @@ async def analyze_stock(request: AnalysisRequest):
         raise HTTPException(status_code=500, detail="Analysis failed")
 
 
-@router.post("/performance", response_model=PerformanceResponse)
+@router.post("/chart-data", response_model=ChartDataResponse)
+async def get_chart_data(request: ChartDataRequest):
+    """
+    Lightweight endpoint to fetch only chart data (OHLC).
+    Does NOT calculate expensive advanced metrics.
+    """
+    ticker = request.ticker.upper()
+
+    from core.helpers import is_valid_ticker
+
+    if not is_valid_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        ohlc = await analyzer.data_service.get_ohlc(
+            ticker,
+            period=request.period,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+
+        chart_data = [
+            {
+                "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),
+                "close": float(close),
+            }
+            for ts, close in zip(ohlc.timestamp, ohlc.close)
+        ]
+
+        return ChartDataResponse(
+            ticker=ticker,
+            chart_data=chart_data,
+            data_start_date=ohlc.start_date.isoformat() if ohlc.start_date else None,
+            data_end_date=ohlc.end_date.isoformat() if ohlc.end_date else None,
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch chart data")
+
+
 async def calculate_performance(request: PerformanceRequest):
     """
     Calculate stock performance from purchase date to current date
@@ -230,3 +277,151 @@ async def get_portfolio_summary():
 async def health_check() -> dict:
     """Health check endpoint"""
     return {"status": "ok"}
+
+
+@router.get("/market/summary", response_model=MarketSummaryResponse)
+async def get_market_summary():
+    """
+    Get market summary with major indices (S&P 500, Dow, Nasdaq, Russell, VIX, Gold)
+    """
+    try:
+        import yfinance as yf
+
+        market = yf.Market("US")
+        summary = market.summary
+
+        indices = []
+        for symbol, data in summary.items():
+            if isinstance(data, dict):
+                indices.append(
+                    {
+                        "symbol": symbol,
+                        "name": data.get("shortName", symbol),
+                        "price": data.get("regularMarketPrice"),
+                        "change": data.get("regularMarketChange"),
+                        "change_percent": data.get("regularMarketChangePercent"),
+                    }
+                )
+
+        return MarketSummaryResponse(
+            indices=indices,
+            timestamp=datetime.now().isoformat(),
+        )
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch market summary")
+
+
+@router.get("/stock/{ticker}/news", response_model=StockNewsResponse)
+async def get_stock_news(ticker: str):
+    """
+    Get latest news for a specific stock ticker
+    """
+    try:
+        import yfinance as yf
+
+        ticker_obj = yf.Ticker(ticker.upper())
+        news = ticker_obj.get_news()
+
+        articles = []
+        for item in news[:10]:  # Limit to 10 articles
+            content = item.get("content", item)
+            thumbnail = content.get("thumbnail", {})
+            thumbnail_url = None
+            if isinstance(thumbnail, dict):
+                thumbnail_url = thumbnail.get("originalUrl")
+
+            articles.append(
+                {
+                    "title": content.get("title"),
+                    "description": content.get("summary"),
+                    "provider": (
+                        content.get("provider", {}).get("displayName")
+                        if isinstance(content.get("provider"), dict)
+                        else None
+                    ),
+                    "link": (
+                        content.get("canonicalUrl", {}).get("url")
+                        if isinstance(content.get("canonicalUrl"), dict)
+                        else None
+                    ),
+                    "pub_date": content.get("pubDate"),
+                    "thumbnail": thumbnail_url,
+                }
+            )
+
+        return StockNewsResponse(
+            ticker=ticker.upper(),
+            articles=articles,
+            timestamp=datetime.now().isoformat(),
+        )
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch stock news")
+
+
+# Sector ETF mapping for sector performance
+SECTOR_ETFS = {
+    "Technology": "XLK",
+    "Financial Services": "XLF",
+    "Healthcare": "XLV",
+    "Energy": "XLE",
+    "Consumer Discretionary": "XLY",
+    "Consumer Staples": "XLP",
+    "Materials": "XLB",
+    "Real Estate": "XLRE",
+    "Communication Services": "XLC",
+    "Utilities": "XLU",
+    "Industrials": "XLI",
+    "Basic Materials": "XLB",
+}
+
+
+@router.get("/stock/{ticker}/sector", response_model=SectorPerformanceResponse)
+async def get_sector_performance(ticker: str):
+    """
+    Get sector performance data for a stock based on its sector.
+    Returns sector ETF performance (price, change, 52-week range).
+    """
+    try:
+        import yfinance as yf
+
+        ticker_obj = yf.Ticker(ticker.upper())
+        info = ticker_obj.info
+        sector = info.get("sector")
+
+        if not sector:
+            raise HTTPException(
+                status_code=404, detail="Sector information not available"
+            )
+
+        etf_ticker = SECTOR_ETFS.get(sector)
+        if not etf_ticker:
+            raise HTTPException(
+                status_code=404, detail=f"No ETF mapping found for sector: {sector}"
+            )
+
+        etf = yf.Ticker(etf_ticker)
+        etf_info = etf.info
+
+        return SectorPerformanceResponse(
+            sector=sector,
+            etf_ticker=etf_ticker,
+            etf_name=etf_info.get("shortName"),
+            price=etf_info.get("regularMarketPrice"),
+            change=etf_info.get("regularMarketChange"),
+            change_percent=etf_info.get("regularMarketChangePercent"),
+            week_52_high=etf_info.get("fiftyTwoWeekHigh"),
+            week_52_low=etf_info.get("fiftyTwoWeekLow"),
+            timestamp=datetime.now().isoformat(),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch sector performance"
+        )

@@ -1,6 +1,8 @@
 import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
 import { PriceChart } from '../PriceChart';
+import { StockNews } from '../StockNews';
+import { SectorPerformance } from '../SectorPerformance';
 import { MetricDefinition } from '../shared/MetricDefinition';
 import { AlertCircle } from 'lucide-react';
 
@@ -72,7 +74,8 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
     Bid: 'Highest price a buyer will pay to purchase this stock (in price units). Higher bid = more buying interest.',
     Ask: 'Lowest price a seller will accept to sell this stock (in price units). Lower ask = more selling pressure.',
     Volume: 'Shares traded today (e.g., 5.2M = 5.2 million shares). Higher = more liquid.',
-    'Avg Volume': 'Average shares traded per day over recent period. 50-day average shown.',
+    'Avg Volume':
+      "Average shares traded per day over the last 50 trading days (e.g., 2.2M = 2.2 million shares/day). Use to gauge liquidity - stocks with higher volume are easier to buy/sell without moving the price much. Compare to today's volume to see if trading is above or below normal.",
     '52W High':
       'Highest price over past 52 weeks (in price units). Price near this = near peak valuation.',
     '52W Low':
@@ -124,20 +127,24 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
   return (
     <div className="space-y-8">
       {/* Company Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <div className="flex items-start justify-between gap-6 mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">{data.company_name}</h2>
-            <p className="text-sm text-gray-600 mt-1">{data.ticker}</p>
+            <div className="flex items-baseline gap-3">
+              <h2 className="text-2xl font-bold text-gray-900">{data.company_name}</h2>
+              <span className="text-sm text-gray-500">{data.ticker}</span>
+              {data.sector && <span className="text-sm text-gray-400">• {data.sector}</span>}
+            </div>
+            {data.industry && <p className="text-sm text-gray-500 mt-1">{data.industry}</p>}
           </div>
           <div className="text-right">
             <div className="flex items-baseline justify-end gap-2">
-              <p className="text-4xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
-              {data.currency && <p className="text-lg text-gray-600">{data.currency}</p>}
+              <p className="text-3xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
+              {data.currency && <p className="text-base text-gray-600">{data.currency}</p>}
             </div>
             {data.regular_market_change !== null && data.regular_market_change !== undefined && (
               <p
-                className={`text-sm font-medium mt-1 ${data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                className={`text-sm font-medium ${data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'}`}
               >
                 {data.regular_market_change >= 0 ? '+' : ''}
                 {data.regular_market_change.toFixed(2)} (
@@ -149,23 +156,18 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
               </p>
             )}
             {data.market_cap && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600">
                 Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
               </p>
             )}
             {data.data_start_date && data.data_end_date && (
-              <p className="text-xs text-gray-500 mt-1">
-                Data period: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
+              <p className="text-xs text-gray-500">
+                Data: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
                 {new Date(data.data_end_date).toLocaleDateString()}
               </p>
             )}
           </div>
         </div>
-        {data.sector && (
-          <p className="text-gray-700">
-            {data.sector} • {data.industry}
-          </p>
-        )}
       </div>
 
       {/* Price Chart */}
@@ -176,6 +178,12 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
         period={period}
         onPeriodChange={onPeriodChange}
       />
+
+      {/* Stock News */}
+      <StockNews ticker={data.ticker} />
+
+      {/* Sector Performance */}
+      <SectorPerformance ticker={data.ticker} />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -222,55 +230,34 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
           showInterpretation={true}
           metricDefinitions={growthDefinitions}
         />
-        <MetricsCard
-          title="Market Data"
-          metrics={[
-            ...data.fundamental_overview.market_data,
-            { name: 'Beta', value: data.beta },
-            { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
-            { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
-            { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
-            { name: 'Forward Dividend Yield', value: data.forward_dividend_yield, unit: '%' },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={marketDataDefinitions}
-        />
-        {/* Analyst Estimates Section */}
-        {(data.earnings_timestamp || data.target_mean_price || data.target_median_price) && (
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Analyst Estimates</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {data.earnings_timestamp && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Earnings Date</p>
-                  <p className="text-lg font-medium text-gray-900">
-                    {new Date(data.earnings_timestamp * 1000).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              )}
-              {data.target_mean_price && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">1Y Target (Mean)</p>
-                  <p className="text-lg font-medium text-gray-900">
-                    ${data.target_mean_price.toFixed(2)}
-                  </p>
-                </div>
-              )}
-              {data.target_median_price && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">1Y Target (Median)</p>
-                  <p className="text-lg font-medium text-gray-900">
-                    ${data.target_median_price.toFixed(2)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Market Data and Analyst Estimates side by side */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Market Data"
+            metrics={[
+              ...data.fundamental_overview.market_data,
+              { name: 'Beta', value: data.beta },
+              { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
+              { name: 'Forward Dividend Yield', value: data.forward_dividend_yield, unit: '%' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={marketDataDefinitions}
+          />
+          <MetricsCard
+            title="Analyst Estimates"
+            metrics={[
+              { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
+              { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={{
+              '1Y Target (Mean)':
+                'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+              '1Y Target (Median)':
+                'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
+            }}
+          />
+        </div>
         <MetricsCard
           title="Liquidity & Valuation"
           metrics={[

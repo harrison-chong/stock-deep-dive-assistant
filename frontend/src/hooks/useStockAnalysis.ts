@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { AnalysisData } from '../types/analysis';
-import { analyzeStock } from '../services/api';
+import { analyzeStock, getChartData } from '../services/api';
 import { ERROR_MESSAGES } from '../constants';
 
 export const useStockAnalysis = () => {
   const [ticker, setTicker] = useState('');
   const [period, setPeriod] = useState('5y');
   const [loading, setLoading] = useState(false);
+  const [loadingChart, setLoadingChart] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
 
@@ -31,14 +32,46 @@ export const useStockAnalysis = () => {
     }
   };
 
+  // Lightweight chart data update - does NOT recalculate expensive metrics
+  const updateChartData = async (dateRange: {
+    startDate?: string;
+    endDate?: string;
+    period?: string;
+  }) => {
+    if (!ticker.trim() || !data) return;
+
+    setLoadingChart(true);
+    try {
+      const chartResult = await getChartData(ticker, dateRange);
+      // Only update chart data, keep everything else from existing data
+      setData((prevData) => {
+        if (!prevData) return null;
+        return {
+          ...prevData,
+          chart_data: chartResult.chart_data,
+          data_start_date: chartResult.data_start_date,
+          data_end_date: chartResult.data_end_date,
+        };
+      });
+    } catch (err) {
+      console.error('Failed to update chart data:', err);
+      // On error, fall back to full analysis
+      handleAnalyze(undefined, dateRange);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
+
   return {
     ticker,
     setTicker,
     period,
     setPeriod,
     loading,
+    loadingChart,
     error,
     data,
     handleAnalyze,
+    updateChartData,
   };
 };

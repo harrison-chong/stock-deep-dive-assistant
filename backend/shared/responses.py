@@ -27,6 +27,65 @@ class ChartDataPoint(BaseModel):
     volume: int
 
 
+class ChartDataResponse(BaseModel):
+    """Lightweight chart data response (no metrics calculation)"""
+
+    ticker: str
+    chart_data: List[Dict[str, Any]]  # [{date: "2024-01-01", close: 150.25}, ...]
+    data_start_date: Optional[str] = None
+    data_end_date: Optional[str] = None
+
+
+class MarketSummaryIndex(BaseModel):
+    """Single market index data"""
+
+    symbol: str
+    name: str
+    price: float
+    change: float
+    change_percent: float
+
+
+class MarketSummaryResponse(BaseModel):
+    """Market summary with major indices"""
+
+    indices: List[MarketSummaryIndex]
+    timestamp: str
+
+
+class NewsArticle(BaseModel):
+    """Single news article"""
+
+    title: str
+    description: Optional[str] = None
+    provider: Optional[str] = None
+    link: Optional[str] = None
+    pub_date: Optional[str] = None
+    thumbnail: Optional[str] = None
+
+
+class StockNewsResponse(BaseModel):
+    """Stock news articles"""
+
+    ticker: str
+    articles: List[NewsArticle]
+    timestamp: str
+
+
+class SectorPerformanceResponse(BaseModel):
+    """Sector performance data via sector ETFs"""
+
+    sector: str
+    etf_ticker: str
+    etf_name: Optional[str] = None
+    price: Optional[float] = None
+    change: Optional[float] = None
+    change_percent: Optional[float] = None
+    week_52_high: Optional[float] = None
+    week_52_low: Optional[float] = None
+    timestamp: str
+
+
 class IndicatorPoint(BaseModel):
     """Single data point for technical indicator"""
 

@@ -80,18 +80,27 @@ function PeriodSelector({
 }
 
 function HomePage() {
-  const { ticker, setTicker, period, setPeriod, loading, error, data, handleAnalyze } =
-    useStockAnalysis();
+  const {
+    ticker,
+    setTicker,
+    period,
+    setPeriod,
+    loading,
+    error,
+    data,
+    handleAnalyze,
+    updateChartData,
+  } = useStockAnalysis();
 
   // Get date range for the selected period
   const dateRange = getDateRange(period);
 
-  // Handle period change from chart
+  // Handle period change from chart - lightweight chart-only update (no metrics recalculation)
   const handleChartPeriodChange = (newPeriod: string) => {
     setPeriod(newPeriod);
     if (ticker.trim()) {
       const newDateRange = getDateRange(newPeriod);
-      handleAnalyze(undefined, newDateRange);
+      updateChartData(newDateRange);
     }
   };
 
