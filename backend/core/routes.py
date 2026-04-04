@@ -5,8 +5,20 @@ API routes
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
 
-from shared.requests import AnalysisRequest, PerformanceRequest, PortfolioEntryRequest, PortfolioSellRequest
-from shared.responses import StockAnalysisResponse, PerformanceResponse, PortfolioEntryResponse, PortfolioListResponse, PortfolioPerformanceResponse, PortfolioSummaryResponse
+from shared.requests import (
+    AnalysisRequest,
+    PerformanceRequest,
+    PortfolioEntryRequest,
+    PortfolioSellRequest,
+)
+from shared.responses import (
+    StockAnalysisResponse,
+    PerformanceResponse,
+    PortfolioEntryResponse,
+    PortfolioListResponse,
+    PortfolioPerformanceResponse,
+    PortfolioSummaryResponse,
+)
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
 
@@ -28,8 +40,13 @@ async def analyze_stock(request: AnalysisRequest):
         raise HTTPException(status_code=400, detail="Invalid ticker format")
 
     try:
-        # Use the orchestrator to perform analysis
-        result = await analyzer.analyze(ticker)
+        # Use the orchestrator to perform analysis with period or start/end dates
+        result = await analyzer.analyze(
+            ticker,
+            period=request.period,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
         return result
 
     except ValueError as e:
@@ -52,8 +69,24 @@ async def calculate_performance(request: PerformanceRequest):
         raise HTTPException(status_code=400, detail="Invalid ticker format")
 
     try:
-        # Get current price
-        current_price = await analyzer.data_service.get_current_price(ticker)
+        # Get ticker info once to avoid multiple API calls
+        _, company_info, info = await analyzer.data_service.get_ticker_info(ticker)
+
+        # Extract current price from info
+        current_price = info.get("currentPrice")
+        if current_price is not None:
+            current_price = float(current_price)
+        else:
+            # Fallback to regularMarketPrice if currentPrice not available
+            regular_market_price = info.get("regularMarketPrice")
+            if regular_market_price is not None:
+                current_price = float(regular_market_price)
+            else:
+                # Last resort: fetch 1 day of data if price not in info
+                ohlc = await analyzer.data_service.get_ohlc(ticker, days=1)
+                if not ohlc.close:
+                    raise ValueError(f"No data found for {ticker}")
+                current_price = float(ohlc.close[-1])
 
         # Calculate performance metrics
         total_cost = request.quantity * request.purchase_price
@@ -80,9 +113,6 @@ async def calculate_performance(request: PerformanceRequest):
             else 0
         )
         annualized_return_percentage = annualized_return * 100
-
-        # Get company info
-        company_info = await analyzer.data_service.get_company_info(ticker)
 
         return PerformanceResponse(
             ticker=ticker,
@@ -145,7 +175,9 @@ async def sell_from_portfolio(request: PortfolioSellRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to sell stock from portfolio")
+        raise HTTPException(
+            status_code=500, detail="Failed to sell stock from portfolio"
+        )
 
 
 @router.get("/portfolio", response_model=PortfolioListResponse)
@@ -173,7 +205,9 @@ async def get_portfolio_performance():
 
     except Exception as e:
         print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to calculate portfolio performance")
+        raise HTTPException(
+            status_code=500, detail="Failed to calculate portfolio performance"
+        )
 
 
 @router.get("/portfolio/summary", response_model=PortfolioSummaryResponse)
@@ -187,7 +221,9 @@ async def get_portfolio_summary():
 
     except Exception as e:
         print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve portfolio summary")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve portfolio summary"
+        )
 
 
 @router.get("/health")

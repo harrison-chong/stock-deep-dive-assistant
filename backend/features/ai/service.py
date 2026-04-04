@@ -24,8 +24,113 @@ class AIService:
         technical_summary: str,
         fundamental_summary: str,
         news_summary: str,
+        advanced_metrics: dict | None = None,
     ) -> AIInterpretation:
         """Use LLM to generate holistic interpretation"""
+
+        # Format advanced metrics for the prompt
+        if advanced_metrics:
+            stat = advanced_metrics.get("statistical", {})
+            tech = advanced_metrics.get("technical", {})
+            seasonal = advanced_metrics.get("seasonal", {})
+
+            formatted_metrics = {
+                "statistical": {
+                    "total_return": f"{(stat.get('total_return') or 0) * 100:.2f}"
+                    if stat.get("total_return") is not None
+                    else "N/A",
+                    "annualized_return": f"{(stat.get('annualized_return') or 0) * 100:.2f}"
+                    if stat.get("annualized_return") is not None
+                    else "N/A",
+                    "volatility": f"{(stat.get('annualized_volatility') or 0) * 100:.2f}"
+                    if stat.get("annualized_volatility") is not None
+                    else "N/A",
+                    "sharpe_ratio": f"{stat.get('sharpe_ratio', 0):.2f}"
+                    if stat.get("sharpe_ratio") is not None
+                    else "N/A",
+                    "sortino_ratio": f"{stat.get('sortino_ratio', 0):.2f}"
+                    if stat.get("sortino_ratio") is not None
+                    else "N/A",
+                    "calmar_ratio": f"{stat.get('calmar_ratio', 0):.2f}"
+                    if stat.get("calmar_ratio") is not None
+                    else "N/A",
+                    "max_drawdown": f"{(stat.get('max_drawdown') or 0) * 100:.2f}"
+                    if stat.get("max_drawdown") is not None
+                    else "N/A",
+                    "var_95": f"{(stat.get('var_95') or 0) * 100:.2f}"
+                    if stat.get("var_95") is not None
+                    else "N/A",
+                    "ulcer_index": f"{stat.get('ulcer_index', 0):.2f}"
+                    if stat.get("ulcer_index") is not None
+                    else "N/A",
+                    "recovery_days": str(stat.get("recovery_days", "N/A"))
+                    if stat.get("recovery_days") is not None
+                    else "N/A",
+                    "skewness": f"{stat.get('skewness', 0):.2f}"
+                    if stat.get("skewness") is not None
+                    else "N/A",
+                    "kurtosis": f"{stat.get('kurtosis', 0):.2f}"
+                    if stat.get("kurtosis") is not None
+                    else "N/A",
+                },
+                "technical": {
+                    "returns_1m": f"{(tech.get('returns_1m') or 0) * 100:.2f}"
+                    if tech.get("returns_1m") is not None
+                    else "N/A",
+                    "returns_3m": f"{(tech.get('returns_3m') or 0) * 100:.2f}"
+                    if tech.get("returns_3m") is not None
+                    else "N/A",
+                    "returns_6m": f"{(tech.get('returns_6m') or 0) * 100:.2f}"
+                    if tech.get("returns_6m") is not None
+                    else "N/A",
+                    "returns_1y": f"{(tech.get('returns_1y') or 0) * 100:.2f}"
+                    if tech.get("returns_1y") is not None
+                    else "N/A",
+                    "price_vs_sma_50": f"{(tech.get('price_vs_sma_50') or 0) * 100:.2f}"
+                    if tech.get("price_vs_sma_50") is not None
+                    else "N/A",
+                    "price_vs_sma_200": f"{(tech.get('price_vs_sma_200') or 0) * 100:.2f}"
+                    if tech.get("price_vs_sma_200") is not None
+                    else "N/A",
+                    "golden_cross": "Yes"
+                    if tech.get("golden_cross_detected")
+                    else "No",
+                    "death_cross": "Yes" if tech.get("death_cross_detected") else "No",
+                    "pivot_resistance_1": f"{tech.get('pivot_resistance_1', 0):.2f}"
+                    if tech.get("pivot_resistance_1") is not None
+                    else "N/A",
+                    "pivot_resistance_2": f"{tech.get('pivot_resistance_2', 0):.2f}"
+                    if tech.get("pivot_resistance_2") is not None
+                    else "N/A",
+                    "pivot_support_1": f"{tech.get('pivot_support_1', 0):.2f}"
+                    if tech.get("pivot_support_1") is not None
+                    else "N/A",
+                    "pivot_support_2": f"{tech.get('pivot_support_2', 0):.2f}"
+                    if tech.get("pivot_support_2") is not None
+                    else "N/A",
+                    "volume_avg_50d": f"{tech.get('volume_avg_50d', 0):,.0f}"
+                    if tech.get("volume_avg_50d") is not None
+                    else "N/A",
+                    "volume_trend": tech.get("volume_trend", "N/A") or "N/A",
+                },
+                "seasonal": {
+                    "monthly_returns": seasonal.get("monthly_returns", {})
+                    if seasonal
+                    else {},
+                    "quarterly_returns": seasonal.get("quarterly_returns", {})
+                    if seasonal
+                    else {},
+                    "day_of_week_effect": seasonal.get("day_of_week_effect", {})
+                    if seasonal
+                    else {},
+                },
+            }
+        else:
+            formatted_metrics = {
+                "statistical": {},
+                "technical": {},
+                "seasonal": {},
+            }
 
         prompt = render_template(
             "prompts/stock_analysis.jinja2",
@@ -34,6 +139,7 @@ class AIService:
             technical_summary=technical_summary,
             fundamental_summary=fundamental_summary,
             news_summary=news_summary,
+            advanced_metrics=formatted_metrics,
         )
 
         try:

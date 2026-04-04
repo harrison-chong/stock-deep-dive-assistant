@@ -5,11 +5,19 @@ Portfolio management service.
 import json
 import os
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict
 
-from shared.domain import PortfolioEntry, PortfolioBenchmark, PortfolioPerformance, PortfolioSummary
+from shared.domain import (
+    PortfolioEntry,
+    PortfolioBenchmark,
+)
 from shared.requests import PortfolioEntryRequest, PortfolioSellRequest
-from shared.responses import PortfolioEntryResponse, PortfolioListResponse, PortfolioPerformanceResponse, PortfolioSummaryResponse
+from shared.responses import (
+    PortfolioEntryResponse,
+    PortfolioListResponse,
+    PortfolioPerformanceResponse,
+    PortfolioSummaryResponse,
+)
 from features.data.service import DataService
 
 
@@ -29,14 +37,14 @@ class PortfolioService:
                 id="sp500",
                 name="S&P 500",
                 ticker="^GSPC",
-                description="US Large-Cap Index"
+                description="US Large-Cap Index",
             ),
             PortfolioBenchmark(
                 id="asx200",
                 name="ASX 200",
                 ticker="^AXJO",
-                description="Australian Large-Cap Index"
-            )
+                description="Australian Large-Cap Index",
+            ),
         ]
 
     def _load_portfolio(self) -> List[PortfolioEntry]:
@@ -45,7 +53,7 @@ class PortfolioService:
             return []
 
         try:
-            with open(self.portfolio_file, 'r') as f:
+            with open(self.portfolio_file, "r") as f:
                 data = json.load(f)
             return [
                 PortfolioEntry(
@@ -56,8 +64,10 @@ class PortfolioService:
                     quantity=entry["quantity"],
                     purchase_price=entry["purchase_price"],
                     sold=entry.get("sold", False),
-                    sell_date=datetime.strptime(entry["sell_date"], "%Y-%m-%d") if entry.get("sell_date") else None,
-                    sell_price=entry.get("sell_price")
+                    sell_date=datetime.strptime(entry["sell_date"], "%Y-%m-%d")
+                    if entry.get("sell_date")
+                    else None,
+                    sell_price=entry.get("sell_price"),
                 )
                 for entry in data
             ]
@@ -76,14 +86,16 @@ class PortfolioService:
                 "quantity": entry.quantity,
                 "purchase_price": entry.purchase_price,
                 "sold": entry.sold,
-                "sell_date": entry.sell_date.strftime("%Y-%m-%d") if entry.sell_date else None,
-                "sell_price": entry.sell_price
+                "sell_date": entry.sell_date.strftime("%Y-%m-%d")
+                if entry.sell_date
+                else None,
+                "sell_price": entry.sell_price,
             }
             for entry in self.portfolio
         ]
 
         try:
-            with open(self.portfolio_file, 'w') as f:
+            with open(self.portfolio_file, "w") as f:
                 json.dump(portfolio_data, f, indent=2)
         except Exception as e:
             print(f"Error saving portfolio: {e}")
@@ -94,31 +106,43 @@ class PortfolioService:
         company_info = await self.data_service.get_company_info(request.ticker)
 
         # Check if we already have this stock on the same date and price (consolidate regardless of sold status)
-        existing_entry = next((
-            entry for entry in self.portfolio
-            if entry.ticker == request.ticker.upper()
-            and entry.purchase_date == datetime.strptime(request.purchase_date, "%Y-%m-%d")
-            and entry.purchase_price == request.purchase_price
-        ), None)
+        existing_entry = next(
+            (
+                entry
+                for entry in self.portfolio
+                if entry.ticker == request.ticker.upper()
+                and entry.purchase_date
+                == datetime.strptime(request.purchase_date, "%Y-%m-%d")
+                and entry.purchase_price == request.purchase_price
+            ),
+            None,
+        )
 
         if existing_entry:
             # Consolidate with existing entry
             existing_entry.quantity += request.quantity
             self._save_portfolio()
-            
+
             # Calculate current performance
-            current_price = await self.data_service.get_current_price(request.ticker)
+            current_price = self.data_service.get_current_price(request.ticker)
             total_cost = existing_entry.quantity * existing_entry.purchase_price
             current_value = existing_entry.quantity * current_price
             profit_loss = current_value - total_cost
-            profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+            profit_loss_percentage = (
+                (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+            )
 
             # Calculate annualized return
             purchase_date = existing_entry.purchase_date
             current_date = datetime.now()
             days_held = (current_date - purchase_date).days
             years_held = days_held / 365.25
-            annualized_return = ((current_price / existing_entry.purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+            annualized_return = (
+                ((current_price / existing_entry.purchase_price) ** (1 / years_held))
+                - 1
+                if years_held > 0
+                else 0
+            )
             annualized_return_percentage = annualized_return * 100
 
             return PortfolioEntryResponse(
@@ -134,7 +158,7 @@ class PortfolioService:
                 profit_loss_percentage=profit_loss_percentage,
                 annualized_return=annualized_return,
                 annualized_return_percentage=annualized_return_percentage,
-                status="active"
+                status="active",
             )
 
         # Create new portfolio entry
@@ -144,7 +168,7 @@ class PortfolioService:
             company_name=company_info.name,
             purchase_date=datetime.strptime(request.purchase_date, "%Y-%m-%d"),
             quantity=request.quantity,
-            purchase_price=request.purchase_price
+            purchase_price=request.purchase_price,
         )
 
         # Add to portfolio
@@ -152,18 +176,24 @@ class PortfolioService:
         self._save_portfolio()
 
         # Calculate current performance
-        current_price = await self.data_service.get_current_price(request.ticker)
+        current_price = self.data_service.get_current_price(request.ticker)
         total_cost = request.quantity * request.purchase_price
         current_value = request.quantity * current_price
         profit_loss = current_value - total_cost
-        profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+        profit_loss_percentage = (
+            (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+        )
 
         # Calculate annualized return
         purchase_date = datetime.strptime(request.purchase_date, "%Y-%m-%d")
         current_date = datetime.now()
         days_held = (current_date - purchase_date).days
         years_held = days_held / 365.25
-        annualized_return = ((current_price / request.purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+        annualized_return = (
+            ((current_price / request.purchase_price) ** (1 / years_held)) - 1
+            if years_held > 0
+            else 0
+        )
         annualized_return_percentage = annualized_return * 100
 
         return PortfolioEntryResponse(
@@ -179,7 +209,7 @@ class PortfolioService:
             profit_loss_percentage=profit_loss_percentage,
             annualized_return=annualized_return,
             annualized_return_percentage=annualized_return_percentage,
-            status="active"
+            status="active",
         )
 
     async def sell_stock(self, request: PortfolioSellRequest) -> PortfolioEntryResponse:
@@ -196,7 +226,7 @@ class PortfolioService:
         entry.sold = True
         entry.sell_date = datetime.strptime(request.sell_date, "%Y-%m-%d")
         entry.sell_price = request.sell_price
-        
+
         try:
             self._save_portfolio()
         except Exception as e:
@@ -208,14 +238,20 @@ class PortfolioService:
         total_cost = entry.quantity * entry.purchase_price
         sale_value = entry.quantity * request.sell_price
         profit_loss = sale_value - total_cost
-        profit_loss_percentage = (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+        profit_loss_percentage = (
+            (profit_loss / total_cost) * 100 if total_cost != 0 else 0
+        )
 
         # Calculate annualized return
         purchase_date = entry.purchase_date
         sell_date = entry.sell_date
         days_held = (sell_date - purchase_date).days
         years_held = days_held / 365.25
-        annualized_return = ((request.sell_price / entry.purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+        annualized_return = (
+            ((request.sell_price / entry.purchase_price) ** (1 / years_held)) - 1
+            if years_held > 0
+            else 0
+        )
         annualized_return_percentage = annualized_return * 100
 
         return PortfolioEntryResponse(
@@ -231,7 +267,7 @@ class PortfolioService:
             profit_loss_percentage=profit_loss_percentage,
             annualized_return=annualized_return,
             annualized_return_percentage=annualized_return_percentage,
-            status="sold"
+            status="sold",
         )
 
     def get_portfolio(self) -> PortfolioListResponse:
@@ -251,17 +287,20 @@ class PortfolioService:
                     profit_loss_percentage=0,
                     annualized_return=0,
                     annualized_return_percentage=0,
-                    status="sold" if entry.sold else "active"
+                    status="sold" if entry.sold else "active",
                 )
-                for entry in self.portfolio if not entry.sold
+                for entry in self.portfolio
+                if not entry.sold
             ],
-            summary=self._calculate_summary()
+            summary=self._calculate_summary(),
         )
 
     def _calculate_summary(self) -> Dict[str, float]:
         """Calculate portfolio summary"""
         active_holdings = [entry for entry in self.portfolio if not entry.sold]
-        total_investment = sum(entry.quantity * entry.purchase_price for entry in active_holdings)
+        total_investment = sum(
+            entry.quantity * entry.purchase_price for entry in active_holdings
+        )
         total_value = 0
         total_profit_loss = 0
         total_profit_loss_percentage = 0
@@ -275,10 +314,14 @@ class PortfolioService:
                     current_price = self.data_service.get_current_price(entry.ticker)
                     current_value = entry.quantity * current_price
                     total_value += current_value
-                    total_profit_loss += current_value - (entry.quantity * entry.purchase_price)
+                    total_profit_loss += current_value - (
+                        entry.quantity * entry.purchase_price
+                    )
 
                 if total_investment > 0:
-                    total_profit_loss_percentage = (total_profit_loss / total_investment) * 100
+                    total_profit_loss_percentage = (
+                        total_profit_loss / total_investment
+                    ) * 100
 
             except Exception as e:
                 print(f"Error calculating summary: {e}")
@@ -289,7 +332,7 @@ class PortfolioService:
             "total_profit_loss": total_profit_loss,
             "total_profit_loss_percentage": total_profit_loss_percentage,
             "annualized_return": annualized_return,
-            "annualized_return_percentage": annualized_return_percentage
+            "annualized_return_percentage": annualized_return_percentage,
         }
 
     async def get_performance(self) -> PortfolioPerformanceResponse:
@@ -309,33 +352,43 @@ class PortfolioService:
                 continue
 
             try:
-                current_price = await self.data_service.get_current_price(entry.ticker)
+                current_price = self.data_service.get_current_price(entry.ticker)
                 holding_cost = entry.quantity * entry.purchase_price
                 holding_value = entry.quantity * current_price
                 holding_profit_loss = holding_value - holding_cost
-                holding_profit_loss_percentage = (holding_profit_loss / holding_cost) * 100 if holding_cost != 0 else 0
+                holding_profit_loss_percentage = (
+                    (holding_profit_loss / holding_cost) * 100
+                    if holding_cost != 0
+                    else 0
+                )
 
                 # Calculate annualized return
                 purchase_date = entry.purchase_date
                 current_date = datetime.now()
                 days_held = (current_date - purchase_date).days
                 years_held = days_held / 365.25
-                holding_annualized_return = ((current_price / entry.purchase_price) ** (1 / years_held)) - 1 if years_held > 0 else 0
+                holding_annualized_return = (
+                    ((current_price / entry.purchase_price) ** (1 / years_held)) - 1
+                    if years_held > 0
+                    else 0
+                )
                 holding_annualized_return_percentage = holding_annualized_return * 100
 
-                holdings.append({
-                    "ticker": entry.ticker,
-                    "company_name": entry.company_name,
-                    "quantity": entry.quantity,
-                    "purchase_price": entry.purchase_price,
-                    "current_price": current_price,
-                    "cost_basis": holding_cost,
-                    "current_value": holding_value,
-                    "profit_loss": holding_profit_loss,
-                    "profit_loss_percentage": holding_profit_loss_percentage,
-                    "annualized_return": holding_annualized_return,
-                    "annualized_return_percentage": holding_annualized_return_percentage
-                })
+                holdings.append(
+                    {
+                        "ticker": entry.ticker,
+                        "company_name": entry.company_name,
+                        "quantity": entry.quantity,
+                        "purchase_price": entry.purchase_price,
+                        "current_price": current_price,
+                        "cost_basis": holding_cost,
+                        "current_value": holding_value,
+                        "profit_loss": holding_profit_loss,
+                        "profit_loss_percentage": holding_profit_loss_percentage,
+                        "annualized_return": holding_annualized_return,
+                        "annualized_return_percentage": holding_annualized_return_percentage,
+                    }
+                )
 
                 total_cost += holding_cost
                 current_value += holding_value
@@ -351,27 +404,43 @@ class PortfolioService:
             # Weighted average annualized return
             if holdings:
                 annualized_return = sum(
-                    h["annualized_return"] * (h["cost_basis"] / total_cost) for h in holdings
+                    h["annualized_return"] * (h["cost_basis"] / total_cost)
+                    for h in holdings
                 )
                 annualized_return_percentage = annualized_return * 100
 
         # Calculate benchmark comparisons
         for benchmark in self.benchmarks:
             try:
-                benchmark_data = await self.data_service.get_ohlc(benchmark.ticker, days=365)
+                benchmark_data = await self.data_service.get_ohlc(
+                    benchmark.ticker, period="1y"
+                )
                 if benchmark_data.close:
                     # Calculate benchmark return over the period of oldest holding
-                    oldest_holding_date = min(entry.purchase_date for entry in self.portfolio if not entry.sold)
-                    
-                    benchmark_start_price = next(
-                        (price for date, price in zip(benchmark_data.timestamp, benchmark_data.close) 
-                         if date.date() >= oldest_holding_date.date()),
-                        benchmark_data.close[0] if benchmark_data.close else 0
+                    oldest_holding_date = min(
+                        entry.purchase_date
+                        for entry in self.portfolio
+                        if not entry.sold
                     )
-                    benchmark_end_price = benchmark_data.close[-1] if benchmark_data.close else 0
-                    
+
+                    benchmark_start_price = next(
+                        (
+                            price
+                            for date, price in zip(
+                                benchmark_data.timestamp, benchmark_data.close
+                            )
+                            if date.date() >= oldest_holding_date.date()
+                        ),
+                        benchmark_data.close[0] if benchmark_data.close else 0,
+                    )
+                    benchmark_end_price = (
+                        benchmark_data.close[-1] if benchmark_data.close else 0
+                    )
+
                     if benchmark_start_price > 0 and benchmark_end_price > 0:
-                        benchmark_return = (benchmark_end_price - benchmark_start_price) / benchmark_start_price
+                        benchmark_return = (
+                            benchmark_end_price - benchmark_start_price
+                        ) / benchmark_start_price
                         benchmark_comparison[benchmark.name] = benchmark_return * 100
             except Exception as e:
                 print(f"Error fetching benchmark data for {benchmark.name}: {e}")
@@ -395,13 +464,15 @@ class PortfolioService:
             annualized_return_percentage=annualized_return_percentage,
             benchmark_comparison=benchmark_comparison,
             benchmark_monetary_comparison=benchmark_monetary_comparison,
-            holdings=holdings
+            holdings=holdings,
         )
 
     def get_summary(self) -> PortfolioSummaryResponse:
         """Get portfolio summary"""
         active_holdings = [entry for entry in self.portfolio if not entry.sold]
-        total_investment = sum(entry.quantity * entry.purchase_price for entry in active_holdings)
+        total_investment = sum(
+            entry.quantity * entry.purchase_price for entry in active_holdings
+        )
         total_value = 0
         total_profit_loss = 0
         total_profit_loss_percentage = 0
@@ -415,10 +486,14 @@ class PortfolioService:
                     current_price = self.data_service.get_current_price(entry.ticker)
                     current_value = entry.quantity * current_price
                     total_value += current_value
-                    total_profit_loss += current_value - (entry.quantity * entry.purchase_price)
+                    total_profit_loss += current_value - (
+                        entry.quantity * entry.purchase_price
+                    )
 
                 if total_investment > 0:
-                    total_profit_loss_percentage = (total_profit_loss / total_investment) * 100
+                    total_profit_loss_percentage = (
+                        total_profit_loss / total_investment
+                    ) * 100
 
             except Exception as e:
                 print(f"Error calculating summary: {e}")
@@ -431,6 +506,14 @@ class PortfolioService:
             holdings_count=len(active_holdings),
             annualized_return=annualized_return,
             annualized_return_percentage=annualized_return_percentage,
-            benchmarks=[{"id": b.id, "name": b.name, "ticker": b.ticker, "description": b.description} for b in self.benchmarks],
-            last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            benchmarks=[
+                {
+                    "id": b.id,
+                    "name": b.name,
+                    "ticker": b.ticker,
+                    "description": b.description,
+                }
+                for b in self.benchmarks
+            ],
+            last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )

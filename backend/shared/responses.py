@@ -2,19 +2,9 @@
 Response models for the API.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
-from shared.domain import (
-    OHLCData,
-    CompanyInfo,
-    FundamentalData,
-    TechnicalIndicators,
-    AIInterpretation,
-    PortfolioEntry,
-    PortfolioBenchmark,
-    PortfolioPerformance,
-    PortfolioSummary,
-)
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from shared.domain import AdvancedMetrics
 
 
 class MetricResponse(BaseModel):
@@ -24,6 +14,107 @@ class MetricResponse(BaseModel):
     value: Optional[float] = None
     interpretation: Optional[str] = None
     unit: str = ""
+
+
+class ChartDataPoint(BaseModel):
+    """Single OHLCV data point for charting"""
+
+    timestamp: str  # ISO format datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+
+
+class IndicatorPoint(BaseModel):
+    """Single data point for technical indicator"""
+
+    timestamp: str  # ISO format datetime
+    value: Optional[float] = None
+
+
+class ChartData(BaseModel):
+    """Complete chart data for a stock with configurable period and interval"""
+
+    ticker: str
+    period: str  # e.g., "1d", "1w", "1m", "3m", "6m", "1y", "5y", "10y"
+    interval: str  # e.g., "1d", "1wk", "1mo"
+    data_points: List[ChartDataPoint]
+    current_price: float
+
+
+class TechnicalIndicatorsSeries(BaseModel):
+    """Technical indicators as time series data for charting"""
+
+    ticker: str
+    period: str
+    sma_20: List[IndicatorPoint]
+    sma_50: List[IndicatorPoint]
+    sma_100: List[IndicatorPoint]
+    sma_200: List[IndicatorPoint]
+    ema_12: List[IndicatorPoint]
+    ema_26: List[IndicatorPoint]
+    bollinger_upper: List[IndicatorPoint]
+    bollinger_middle: List[IndicatorPoint]
+    bollinger_lower: List[IndicatorPoint]
+
+
+class RSISeries(BaseModel):
+    """RSI indicator time series"""
+
+    ticker: str
+    period: str
+    rsi_14: List[IndicatorPoint]
+    rsi_21: List[IndicatorPoint]
+
+
+class MacdSeries(BaseModel):
+    """MACD indicator time series"""
+
+    ticker: str
+    period: str
+    macd: List[IndicatorPoint]
+    signal: List[IndicatorPoint]
+    histogram: List[IndicatorPoint]
+
+
+class StochasticSeries(BaseModel):
+    """Stochastic oscillator time series"""
+
+    ticker: str
+    period: str
+    stoch_k: List[IndicatorPoint]
+    stoch_d: List[IndicatorPoint]
+
+
+class ATRSeries(BaseModel):
+    """Average True Range time series"""
+
+    ticker: str
+    period: str
+    atr_14: List[IndicatorPoint]
+    atr_21: List[IndicatorPoint]
+
+
+class VolatilitySeries(BaseModel):
+    """Volatility indicators time series"""
+
+    ticker: str
+    period: str
+    volatility_30d: List[IndicatorPoint]
+    volatility_90d: List[IndicatorPoint]
+    volatility_365d: List[IndicatorPoint]
+
+
+class VolumeSeries(BaseModel):
+    """Volume and volume-related indicators"""
+
+    ticker: str
+    period: str
+    volume: List[IndicatorPoint]
+    avg_volume_20d: List[IndicatorPoint]
+    avg_volume_90d: List[IndicatorPoint]
 
 
 class TechnicalOverviewResponse(BaseModel):
@@ -41,6 +132,11 @@ class FundamentalOverviewResponse(BaseModel):
     valuation: List[MetricResponse]
     financial_strength: List[MetricResponse]
     growth: List[MetricResponse]
+    # New categories for additional yfinance data
+    market_data: List[MetricResponse]  # price, volume, 52wk high/low
+    liquidity_valuation: List[MetricResponse]  # P/B, P/S, EV/EBITDA
+    earnings: List[MetricResponse]  # EPS growth, quarterly growth
+    margins: List[MetricResponse]  # gross, operating margins
 
 
 class AIOutlookResponse(BaseModel):
@@ -66,12 +162,29 @@ class StockAnalysisResponse(BaseModel):
     current_price: float
     currency: Optional[str]
     market_cap: Optional[float]
-    snapshot_summary: str
     technical_overview: TechnicalOverviewResponse
     fundamental_overview: FundamentalOverviewResponse
     ai_outlook: AIOutlookResponse
     disclaimer: str
     timestamp: str
+    # Date range of the OHLC data used for calculations
+    data_start_date: Optional[str] = None  # ISO format
+    data_end_date: Optional[str] = None  # ISO format
+    # Chart data - close prices for the selected period
+    chart_data: List[Dict[str, Any]] = []  # [{date: "2024-01-01", close: 150.25}, ...]
+    # Additional company information
+    website: Optional[str] = None
+    description: Optional[str] = None
+    full_time_employees: Optional[int] = None
+    country: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    fax: Optional[str] = None
+    # Raw yfinance info dict for maximum data exposure
+    extra_info: Dict[str, Any] = {}
+    # Advanced metrics calculated from OHLC data
+    advanced_metrics: Optional[AdvancedMetrics] = None
 
 
 class PerformanceResponse(BaseModel):

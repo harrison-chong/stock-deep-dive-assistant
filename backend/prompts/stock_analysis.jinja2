@@ -1,19 +1,78 @@
-Analyze this stock briefly ({{ ticker }} - {{ company_name }}):
+Analyze this stock ({{ ticker }} - {{ company_name }}) and provide a data-driven recommendation.
 
-Technical: {{ technical_summary }}
-Fundamental: {{ fundamental_summary }}
-News: {{ news_summary }}
+## Technical Indicators
+{{ technical_summary }}
+
+## Fundamental Metrics
+{{ fundamental_summary }}
+
+## Advanced Statistical Metrics
+- Total Return: {{ advanced_metrics.statistical.total_return }}%
+- Annualized Return (CAGR): {{ advanced_metrics.statistical.annualized_return }}%
+- Annualized Volatility: {{ advanced_metrics.statistical.volatility }}%
+- Sharpe Ratio: {{ advanced_metrics.statistical.sharpe_ratio }} (risk-adjusted return; >1 good, >2 very good)
+- Sortino Ratio: {{ advanced_metrics.statistical.sortino_ratio }} (downside risk-adjusted; >2 good)
+- Calmar Ratio: {{ advanced_metrics.statistical.calmar_ratio }} (return vs max drawdown; >1 favorable)
+- Maximum Drawdown: {{ advanced_metrics.statistical.max_drawdown }}% (worst peak-to-trough)
+- Value at Risk (95%, 1-day): {{ advanced_metrics.statistical.var_95 }}% (worst expected daily loss)
+- Ulcer Index: {{ advanced_metrics.statistical.ulcer_index }} (drawdown severity)
+- Recovery Days: {{ advanced_metrics.statistical.recovery_days }} days (days to recover from max drawdown)
+- Skewness: {{ advanced_metrics.statistical.skewness }} (>0.5 positive skew, <-0.5 negative skew)
+- Kurtosis: {{ advanced_metrics.statistical.kurtosis }} (>3 fat tails, <3 thin tails)
+
+## Advanced Technical Metrics
+Multi-Period Returns:
+- 1 Month: {{ advanced_metrics.technical.returns_1m }}%
+- 3 Month: {{ advanced_metrics.technical.returns_3m }}%
+- 6 Month: {{ advanced_metrics.technical.returns_6m }}%
+- 1 Year: {{ advanced_metrics.technical.returns_1y }}%
+
+Moving Average Analysis:
+- Price vs SMA 50: {{ advanced_metrics.technical.price_vs_sma_50 }}%
+- Price vs SMA 200: {{ advanced_metrics.technical.price_vs_sma_200 }}%
+- Golden Cross Detected: {{ advanced_metrics.technical.golden_cross }}
+- Death Cross Detected: {{ advanced_metrics.technical.death_cross }}
+
+Support/Resistance (Pivot Points):
+- Resistance 1: ${{ advanced_metrics.technical.pivot_resistance_1 }}
+- Resistance 2: ${{ advanced_metrics.technical.pivot_resistance_2 }}
+- Support 1: ${{ advanced_metrics.technical.pivot_support_1 }}
+- Support 2: ${{ advanced_metrics.technical.pivot_support_2 }}
+
+Volume Analysis:
+- 50-Day Average Volume: {{ advanced_metrics.technical.volume_avg_50d }}
+- Volume Trend: {{ advanced_metrics.technical.volume_trend }}
+
+## Seasonal & Cyclical Patterns (Average across all years in dataset)
+{% if advanced_metrics.seasonal %}
+Monthly Returns:
+{% for month, ret in advanced_metrics.seasonal.monthly_returns.items() %}- {{ month }}: {{ ret }}%
+{% endfor %}
+
+Quarterly Returns:
+{% for quarter, ret in advanced_metrics.seasonal.quarterly_returns.items() %}- {{ quarter }}: {{ ret }}%
+{% endfor %}
+
+Day of Week Effect:
+{% for day, ret in advanced_metrics.seasonal.day_of_week_effect.items() %}- {{ day }}: {{ ret }}%
+{% endfor %}
+{% endif %}
+
+## News
+{{ news_summary }}
+
+Based solely on the metrics above, analyze the data and provide your recommendation. Cite specific values from the metrics when explaining your reasoning. Do not introduce any external information or market sentiment. Focus purely on what the data shows.
 
 Respond in JSON format:
 {
-    "overall_summary": "1-2 sentences",
-    "bull_case": "Key reasons to be optimistic",
-    "bear_case": "Key risks",
+    "overall_summary": "1-2 sentences summarizing the data",
+    "bull_case": "Key reasons to be optimistic based on the metrics",
+    "bear_case": "Key risks from the metrics",
     "risk_factors": ["Risk 1", "Risk 2"],
-    "neutral_scenario": "Base case",
+    "neutral_scenario": "Base case scenario",
     "recommendation": "Avoid, Hold, or Consider",
-    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing specific technical and fundamental metrics. Explain the key factors influencing the decision and the risk-reward profile.",
+    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing SPECIFIC metric values from above. The recommendation must be driven purely by the data provided.",
     "confidence_score": 75
-}}
+}
 
 Not financial advice. For educational purposes only.

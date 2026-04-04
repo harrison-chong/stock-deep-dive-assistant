@@ -5,11 +5,15 @@ import { ERROR_MESSAGES } from '../constants';
 
 export const useStockAnalysis = () => {
   const [ticker, setTicker] = useState('');
+  const [period, setPeriod] = useState('5y');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
 
-  const handleAnalyze = async (e?: React.FormEvent) => {
+  const handleAnalyze = async (
+    e?: React.FormEvent,
+    dateRange?: { startDate?: string; endDate?: string; period?: string },
+  ) => {
     if (e) e.preventDefault();
     if (!ticker.trim()) return;
 
@@ -18,7 +22,7 @@ export const useStockAnalysis = () => {
     setData(null);
 
     try {
-      const result = await analyzeStock(ticker);
+      const result = await analyzeStock(ticker, dateRange);
       setData(result);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : ERROR_MESSAGES.ANALYSIS_FAILED);
@@ -30,6 +34,8 @@ export const useStockAnalysis = () => {
   return {
     ticker,
     setTicker,
+    period,
+    setPeriod,
     loading,
     error,
     data,

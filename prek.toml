@@ -7,7 +7,7 @@ repos = [
       {
         id = "ruff-check",
         name = "ruff check",
-        entry = "powershell -Command \"cd backend; uv run ruff check --fix .\"",
+        entry = "uv run --directory backend ruff check --fix .",
         language = "system",
         files = "^backend/.*\\.py$",
         pass_filenames = false
@@ -15,7 +15,7 @@ repos = [
       {
         id = "ruff-format",
         name = "ruff format",
-        entry = "powershell -Command \"cd backend; uv run ruff format .\"",
+        entry = "uv run --directory backend ruff format .",
         language = "system",
         files = "^backend/.*\\.py$",
         pass_filenames = false
