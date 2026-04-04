@@ -2,7 +2,6 @@ import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
 import { PriceChart } from '../PriceChart';
 import { StockNews } from '../StockNews';
-import { SectorPerformance } from '../SectorPerformance';
 import { MetricDefinition } from '../shared/MetricDefinition';
 import { AlertCircle } from 'lucide-react';
 
@@ -181,9 +180,6 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
 
       {/* Stock News */}
       <StockNews ticker={data.ticker} />
-
-      {/* Sector Performance */}
-      <SectorPerformance ticker={data.ticker} />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -675,15 +671,38 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
                 Seasonal & Cyclical Patterns
               </h4>
-              <p className="text-sm text-gray-600 mb-6">
-                Average return for each period, calculated across all years in the available dataset
-                (max 5 years)
+              <p className="text-sm text-gray-600 mb-4">
+                Based on data from{' '}
+                {data.data_start_date
+                  ? new Date(data.data_start_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '?'}{' '}
+                to{' '}
+                {data.data_end_date
+                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '?'}{' '}
+                (using max period for accuracy)
                 <MetricDefinition text="These show the historical AVERAGE return for each calendar period (e.g., January, Q1, Monday) computed across all occurrences in the available dataset (up to 5 years). This reveals if a stock tends to perform better/worse during specific times." />
               </p>
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
                   <h5 className="text-sm font-semibold text-gray-900 mb-3">
-                    Monthly Returns (Avg across all years)
+                    Monthly Returns (Avg across{' '}
+                    {data.data_start_date && data.data_end_date
+                      ? Math.round(
+                          (new Date(data.data_end_date).getTime() -
+                            new Date(data.data_start_date).getTime()) /
+                            (1000 * 60 * 60 * 24 * 365),
+                        )
+                      : '?'}{' '}
+                    years)
                   </h5>
                   {data.advanced_metrics.seasonal.monthly_returns && (
                     <div className="grid grid-cols-3 gap-3">
@@ -791,12 +810,39 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
 
           {/* AI Outlook - Moved to bottom */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              AI Analysis
-              <span className="text-sm font-normal text-gray-600">
-                Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
-              </span>
-            </h3>
+            <div className="flex items-start justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                AI Analysis for {data.ticker}
+                <span className="text-sm font-normal text-gray-600">
+                  Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
+                </span>
+              </h3>
+              <div className="text-right text-xs text-gray-500">
+                <p>
+                  Data:{' '}
+                  {data.data_start_date
+                    ? new Date(data.data_start_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '?'}{' '}
+                  -{' '}
+                  {data.data_end_date
+                    ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '?'}
+                </p>
+                {data.sector && (
+                  <p>
+                    {data.sector} {data.industry ? `• ${data.industry}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-6">
               <div>

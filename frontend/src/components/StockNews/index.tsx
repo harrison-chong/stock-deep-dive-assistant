@@ -5,7 +5,7 @@ interface StockNewsProps {
   ticker: string;
 }
 
-const INITIAL_COUNT = 5;
+const INITIAL_COUNT = 6;
 
 export function StockNews({ ticker }: StockNewsProps) {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -32,7 +32,7 @@ export function StockNews({ ticker }: StockNewsProps) {
   if (loading) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">News</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Latest News</h3>
         <p className="text-xs text-gray-500">Loading...</p>
       </div>
     );
@@ -41,7 +41,7 @@ export function StockNews({ ticker }: StockNewsProps) {
   if (articles.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">News</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Latest News</h3>
         <p className="text-xs text-gray-500">No news available</p>
       </div>
     );
@@ -70,21 +70,33 @@ export function StockNews({ ticker }: StockNewsProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4">
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Latest News</h3>
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-3">
         {displayedArticles.map((article, index) => (
           <a
             key={index}
             href={article.link || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="block group py-2 border-b border-gray-100 last:border-0"
+            className="group block"
           >
-            <h4 className="text-xs font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2 leading-snug">
+            {article.thumbnail && (
+              <div className="mb-2">
+                <img
+                  src={article.thumbnail}
+                  alt=""
+                  className="w-full h-24 object-cover rounded"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            <h4 className="text-xs font-medium text-gray-900 group-hover:text-blue-600 line-clamp-3 leading-snug">
               {article.title}
             </h4>
             <div className="flex items-center gap-2 mt-1">
               {article.provider && (
-                <span className="text-xs text-gray-500 truncate max-w-[120px]">
+                <span className="text-xs text-gray-500 truncate max-w-[100px]">
                   {article.provider}
                 </span>
               )}

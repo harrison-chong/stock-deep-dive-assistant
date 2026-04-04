@@ -72,20 +72,6 @@ class StockNewsResponse(BaseModel):
     timestamp: str
 
 
-class SectorPerformanceResponse(BaseModel):
-    """Sector performance data via sector ETFs"""
-
-    sector: str
-    etf_ticker: str
-    etf_name: Optional[str] = None
-    price: Optional[float] = None
-    change: Optional[float] = None
-    change_percent: Optional[float] = None
-    week_52_high: Optional[float] = None
-    week_52_low: Optional[float] = None
-    timestamp: str
-
-
 class IndicatorPoint(BaseModel):
     """Single data point for technical indicator"""
 

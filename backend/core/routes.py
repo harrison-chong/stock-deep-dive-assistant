@@ -22,7 +22,6 @@ from shared.responses import (
     ChartDataResponse,
     MarketSummaryResponse,
     StockNewsResponse,
-    SectorPerformanceResponse,
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
@@ -325,7 +324,7 @@ async def get_stock_news(ticker: str):
         news = ticker_obj.get_news()
 
         articles = []
-        for item in news[:10]:  # Limit to 10 articles
+        for item in news[:20]:  # Increased to 20 articles
             content = item.get("content", item)
             thumbnail = content.get("thumbnail", {})
             thumbnail_url = None
@@ -360,68 +359,3 @@ async def get_stock_news(ticker: str):
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch stock news")
-
-
-# Sector ETF mapping for sector performance
-SECTOR_ETFS = {
-    "Technology": "XLK",
-    "Financial Services": "XLF",
-    "Healthcare": "XLV",
-    "Energy": "XLE",
-    "Consumer Discretionary": "XLY",
-    "Consumer Staples": "XLP",
-    "Materials": "XLB",
-    "Real Estate": "XLRE",
-    "Communication Services": "XLC",
-    "Utilities": "XLU",
-    "Industrials": "XLI",
-    "Basic Materials": "XLB",
-}
-
-
-@router.get("/stock/{ticker}/sector", response_model=SectorPerformanceResponse)
-async def get_sector_performance(ticker: str):
-    """
-    Get sector performance data for a stock based on its sector.
-    Returns sector ETF performance (price, change, 52-week range).
-    """
-    try:
-        import yfinance as yf
-
-        ticker_obj = yf.Ticker(ticker.upper())
-        info = ticker_obj.info
-        sector = info.get("sector")
-
-        if not sector:
-            raise HTTPException(
-                status_code=404, detail="Sector information not available"
-            )
-
-        etf_ticker = SECTOR_ETFS.get(sector)
-        if not etf_ticker:
-            raise HTTPException(
-                status_code=404, detail=f"No ETF mapping found for sector: {sector}"
-            )
-
-        etf = yf.Ticker(etf_ticker)
-        etf_info = etf.info
-
-        return SectorPerformanceResponse(
-            sector=sector,
-            etf_ticker=etf_ticker,
-            etf_name=etf_info.get("shortName"),
-            price=etf_info.get("regularMarketPrice"),
-            change=etf_info.get("regularMarketChange"),
-            change_percent=etf_info.get("regularMarketChangePercent"),
-            week_52_high=etf_info.get("fiftyTwoWeekHigh"),
-            week_52_low=etf_info.get("fiftyTwoWeekLow"),
-            timestamp=datetime.now().isoformat(),
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Failed to fetch sector performance"
-        )

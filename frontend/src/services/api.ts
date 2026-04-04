@@ -92,19 +92,3 @@ export const getStockNews = async (ticker: string): Promise<StockNewsResponse> =
   const response = await axios.get(`${API_BASE_URL}/api/stock/${ticker}/news`);
   return response.data;
 };
-
-export interface SectorPerformance {
-  sector: string;
-  etf_ticker: string;
-  etf_name: string | null;
-  price: number | null;
-  change: number | null;
-  change_percent: number | null;
-  week_52_high: number | null;
-  week_52_low: number | null;
-}
-
-export const getSectorPerformance = async (ticker: string): Promise<SectorPerformance> => {
-  const response = await axios.get(`${API_BASE_URL}/api/stock/${ticker}/sector`);
-  return response.data;
-};
