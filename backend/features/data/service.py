@@ -121,7 +121,7 @@ class DataService:
         return []
 
     @staticmethod
-    async def get_current_price(ticker: str) -> float:
+    def get_current_price(ticker: str) -> float:
         """
         Get the current price for a ticker
         """

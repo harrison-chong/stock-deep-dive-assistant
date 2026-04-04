@@ -124,7 +124,7 @@ class PortfolioService:
             self._save_portfolio()
 
             # Calculate current performance
-            current_price = await self.data_service.get_current_price(request.ticker)
+            current_price = self.data_service.get_current_price(request.ticker)
             total_cost = existing_entry.quantity * existing_entry.purchase_price
             current_value = existing_entry.quantity * current_price
             profit_loss = current_value - total_cost
@@ -176,7 +176,7 @@ class PortfolioService:
         self._save_portfolio()
 
         # Calculate current performance
-        current_price = await self.data_service.get_current_price(request.ticker)
+        current_price = self.data_service.get_current_price(request.ticker)
         total_cost = request.quantity * request.purchase_price
         current_value = request.quantity * current_price
         profit_loss = current_value - total_cost
@@ -352,7 +352,7 @@ class PortfolioService:
                 continue
 
             try:
-                current_price = await self.data_service.get_current_price(entry.ticker)
+                current_price = self.data_service.get_current_price(entry.ticker)
                 holding_cost = entry.quantity * entry.purchase_price
                 holding_value = entry.quantity * current_price
                 holding_profit_loss = holding_value - holding_cost
@@ -413,7 +413,7 @@ class PortfolioService:
         for benchmark in self.benchmarks:
             try:
                 benchmark_data = await self.data_service.get_ohlc(
-                    benchmark.ticker, days=365
+                    benchmark.ticker, period="1y"
                 )
                 if benchmark_data.close:
                     # Calculate benchmark return over the period of oldest holding
