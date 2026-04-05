@@ -21,6 +21,7 @@ from shared.responses import (
     PortfolioSummaryResponse,
     ChartDataResponse,
     MarketSummaryResponse,
+    AIOutlookResponse,
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
@@ -33,7 +34,7 @@ portfolio_service = PortfolioService()
 @router.post("/analyze", response_model=StockAnalysisResponse)
 async def analyze_stock(request: AnalysisRequest):
     """
-    Comprehensive stock analysis endpoint
+    Comprehensive stock analysis endpoint (without AI - AI loaded on-demand via /analyze/ai)
     """
     ticker = request.ticker.upper()
 
@@ -57,6 +58,35 @@ async def analyze_stock(request: AnalysisRequest):
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Analysis failed")
+
+
+@router.post("/analyze/ai", response_model=AIOutlookResponse)
+async def generate_ai_analysis(request: AnalysisRequest):
+    """
+    Generate AI analysis on-demand (after initial analysis loads).
+    Re-fetches data and generates AI interpretation via OpenRouter.
+    """
+    ticker = request.ticker.upper()
+
+    from core.helpers import is_valid_ticker
+
+    if not is_valid_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        result = await analyzer.generate_ai_outlook(
+            ticker,
+            period=request.period,
+            start_date=request.start_date,
+            end_date=request.end_date,
+        )
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"AI Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="AI analysis failed")
 
 
 @router.post("/chart-data", response_model=ChartDataResponse)

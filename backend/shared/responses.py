@@ -210,7 +210,7 @@ class StockAnalysisResponse(BaseModel):
     market_cap: float | None
     technical_overview: TechnicalOverviewResponse
     fundamental_overview: FundamentalOverviewResponse
-    ai_outlook: AIOutlookResponse
+    ai_outlook: AIOutlookResponse | None = None
     disclaimer: str
     timestamp: str
     # Date range of the OHLC data used for calculations
