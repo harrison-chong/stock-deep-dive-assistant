@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
+import { PERIODS } from '../../constants';
 
 interface PriceChartProps {
   ticker: string;
@@ -22,18 +23,6 @@ interface PriceChartProps {
   period: string;
   onPeriodChange: (period: string) => void;
 }
-
-const PERIODS = [
-  { value: '1mo', label: '1M' },
-  { value: '3mo', label: '3M' },
-  { value: '6mo', label: '6M' },
-  { value: '1y', label: '1Y' },
-  { value: '2y', label: '2Y' },
-  { value: '5y', label: '5Y' },
-  { value: '10y', label: '10Y' },
-  { value: 'ytd', label: 'YTD' },
-  { value: 'max', label: 'Max' },
-];
 
 export function PriceChart({
   ticker,

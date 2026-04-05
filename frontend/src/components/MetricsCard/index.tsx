@@ -100,7 +100,7 @@ export function MetricsCard({
       <div className="space-y-4">
         {metrics.map((metric, i) => (
           <div key={i}>
-            <div className="flex justify-between items-baseline gap-2 mb-1">
+            <div className="flex justify-between items-center gap-2 mb-1">
               <span className="text-gray-700 text-sm flex items-center">
                 {metric.name}
                 {metricDefinitions?.[metric.name] && (
