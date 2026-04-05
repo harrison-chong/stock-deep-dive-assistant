@@ -26,7 +26,28 @@ export const useStockAnalysis = () => {
       const result = await analyzeStock(ticker, dateRange);
       setData(result);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : ERROR_MESSAGES.ANALYSIS_FAILED);
+      // Handle axios error response
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { detail?: string }; status?: number } };
+        const status = axiosError.response?.status;
+        const detail = axiosError.response?.data?.detail;
+
+        if (status === 404) {
+          setError(
+            `No data found for "${ticker.toUpperCase()}". Please check the ticker and try again.`,
+          );
+        } else if (status === 400) {
+          setError(`Invalid ticker format. Please enter a valid stock ticker.`);
+        } else if (detail) {
+          setError(detail);
+        } else {
+          setError(ERROR_MESSAGES.ANALYSIS_FAILED);
+        }
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(ERROR_MESSAGES.ANALYSIS_FAILED);
+      }
     } finally {
       setLoading(false);
     }

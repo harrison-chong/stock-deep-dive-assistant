@@ -21,7 +21,6 @@ from shared.responses import (
     PortfolioSummaryResponse,
     ChartDataResponse,
     MarketSummaryResponse,
-    StockNewsResponse,
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
@@ -81,12 +80,33 @@ async def get_chart_data(request: ChartDataRequest):
             end_date=request.end_date,
         )
 
+        # Calculate SMAs for the chart
+        closes = list(ohlc.close)
+        timestamps = list(ohlc.timestamp)
+
+        def calculate_sma(values: list, period: int) -> list:
+            result = []
+            for i in range(len(values)):
+                if i < period - 1:
+                    result.append(None)
+                else:
+                    sma = sum(values[i - period + 1 : i + 1]) / period
+                    result.append(round(sma, 2))
+            return result
+
+        sma20 = calculate_sma(closes, 20)
+        sma50 = calculate_sma(closes, 50)
+        sma200 = calculate_sma(closes, 200)
+
         chart_data = [
             {
                 "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),
                 "close": float(close),
+                "sma20": sma20[i],
+                "sma50": sma50[i],
+                "sma200": sma200[i],
             }
-            for ts, close in zip(ohlc.timestamp, ohlc.close)
+            for i, (ts, close) in enumerate(zip(timestamps, closes))
         ]
 
         return ChartDataResponse(
@@ -310,52 +330,3 @@ async def get_market_summary():
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch market summary")
-
-
-@router.get("/stock/{ticker}/news", response_model=StockNewsResponse)
-async def get_stock_news(ticker: str):
-    """
-    Get latest news for a specific stock ticker
-    """
-    try:
-        import yfinance as yf
-
-        ticker_obj = yf.Ticker(ticker.upper())
-        news = ticker_obj.get_news()
-
-        articles = []
-        for item in news[:20]:  # Increased to 20 articles
-            content = item.get("content", item)
-            thumbnail = content.get("thumbnail", {})
-            thumbnail_url = None
-            if isinstance(thumbnail, dict):
-                thumbnail_url = thumbnail.get("originalUrl")
-
-            articles.append(
-                {
-                    "title": content.get("title"),
-                    "description": content.get("summary"),
-                    "provider": (
-                        content.get("provider", {}).get("displayName")
-                        if isinstance(content.get("provider"), dict)
-                        else None
-                    ),
-                    "link": (
-                        content.get("canonicalUrl", {}).get("url")
-                        if isinstance(content.get("canonicalUrl"), dict)
-                        else None
-                    ),
-                    "pub_date": content.get("pubDate"),
-                    "thumbnail": thumbnail_url,
-                }
-            )
-
-        return StockNewsResponse(
-            ticker=ticker.upper(),
-            articles=articles,
-            timestamp=datetime.now().isoformat(),
-        )
-
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to fetch stock news")

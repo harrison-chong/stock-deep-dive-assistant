@@ -44,20 +44,21 @@ class FundamentalData:
     """Company fundamental metrics"""
 
     ticker: str
-    market_cap: float | None
-    pe_ratio: float | None
-    forward_pe: float | None
-    eps: float | None
-    revenue: float | None
-    revenue_growth: float | None
-    roe: float | None
-    debt_to_equity: float | None
-    free_cash_flow: float | None
-    dividend_yield: float | None
-    profit_margin: float | None
-    peg_ratio: float | None
-    industry: str | None
-    sector: str | None
+    market_cap: float | None = None
+    pe_ratio: float | None = None
+    forward_pe: float | None = None
+    eps: float | None = None
+    revenue: float | None = None
+    revenue_growth: float | None = None
+    roe: float | None = None
+    debt_to_equity: float | None = None
+    free_cash_flow: float | None = None
+    operating_cash_flow: float | None = None
+    dividend_yield: float | None = None
+    profit_margin: float | None = None
+    peg_ratio: float | None = None
+    industry: str | None = None
+    sector: str | None = None
     previous_close: float | None = None
     day_high: float | None = None
     day_low: float | None = None
@@ -82,14 +83,59 @@ class FundamentalData:
     earnings_quarterly_growth: float | None = None
     earnings_growth: float | None = None
     # Additional Yahoo Finance fields
-    regular_market_change: float | None = None  # Daily price change
-    regular_market_change_percent: float | None = None  # Daily change %
-    beta: float | None = None  # Beta vs market
-    earnings_timestamp: int | None = None  # Earnings date timestamp
-    target_mean_price: float | None = None  # 1Y mean target price
-    target_median_price: float | None = None  # 1Y median target price
-    dividend_rate: float | None = None  # Annual dividend rate
-    forward_dividend_yield: float | None = None  # Forward dividend yield
+    regular_market_change: float | None = None
+    regular_market_change_percent: float | None = None
+    beta: float | None = None
+    earnings_timestamp: int | None = None
+    target_mean_price: float | None = None
+    target_median_price: float | None = None
+    dividend_rate: float | None = None
+    forward_dividend_yield: float | None = None
+    # Additional yfinance fields - Valuation & Earnings
+    ebitda: float | None = None
+    revenue_per_share: float | None = None
+    payout_ratio: float | None = None
+    total_cash: float | None = None
+    total_debt: float | None = None
+    total_cash_per_share: float | None = None
+    current_ratio: float | None = None
+    quick_ratio: float | None = None
+    # Share structure
+    shares_outstanding: int | None = None
+    float_shares: int | None = None
+    implied_shares_outstanding: int | None = None
+    # Ownership
+    held_percent_insiders: float | None = None
+    held_percent_institutions: float | None = None
+    # Analyst data
+    number_of_analyst_opinions: int | None = None
+    recommendation_key: str | None = None
+    recommendation_mean: float | None = None
+    average_analyst_rating: str | None = None
+    # Price targets
+    target_high_price: float | None = None
+    target_low_price: float | None = None
+    # Moving averages
+    fifty_day_average: float | None = None
+    two_hundred_day_average: float | None = None
+    # 52-week change
+    fifty_two_week_change: float | None = None
+    s_and_p_fifty_two_week_change: float | None = None
+    # All-time high/low
+    all_time_high: float | None = None
+    all_time_low: float | None = None
+    # Short interest
+    shares_short: int | None = None
+    short_ratio: float | None = None
+    short_percent_of_float: float | None = None
+    # Dividend details
+    trailing_annual_dividend_rate: float | None = None
+    trailing_annual_dividend_yield: float | None = None
+    five_year_avg_dividend_yield: float | None = None
+    ex_dividend_date: int | None = None
+    dividend_date: int | None = None
+    last_dividend_date: int | None = None
+    last_dividend_value: float | None = None
 
 
 @dataclass

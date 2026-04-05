@@ -12,7 +12,13 @@ import {
 interface PriceChartProps {
   ticker: string;
   currentPrice: number;
-  chartData: { date: string; close: number }[];
+  chartData: {
+    date: string;
+    close: number;
+    sma20?: number | null;
+    sma50?: number | null;
+    sma200?: number | null;
+  }[];
   period: string;
   onPeriodChange: (period: string) => void;
 }
@@ -37,6 +43,14 @@ export function PriceChart({
   onPeriodChange,
 }: PriceChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
+  const [showSMA20, setShowSMA20] = useState(false);
+  const [showSMA50, setShowSMA50] = useState(false);
+  const [showSMA200, setShowSMA200] = useState(false);
+
+  // Check if SMA data is available
+  const hasSMAData = chartData.some(
+    (point) => point.sma20 !== null || point.sma50 !== null || point.sma200 !== null,
+  );
 
   // Sync with parent period when it changes
   useEffect(() => {
@@ -51,6 +65,9 @@ export function PriceChart({
       year: 'numeric',
     }),
     price: point.close,
+    sma20: point.sma20 ?? undefined,
+    sma50: point.sma50 ?? undefined,
+    sma200: point.sma200 ?? undefined,
   }));
 
   const latestPrice = data[data.length - 1]?.price ?? currentPrice;
@@ -65,7 +82,7 @@ export function PriceChart({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Price Chart</h3>
           <p className="text-sm text-gray-500">
@@ -84,6 +101,42 @@ export function PriceChart({
           </div>
         </div>
       </div>
+
+      {/* SMA Toggles */}
+      {hasSMAData && (
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={() => setShowSMA20(!showSMA20)}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+              showSMA20
+                ? 'bg-blue-100 border-blue-300 text-blue-700'
+                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            SMA 20
+          </button>
+          <button
+            onClick={() => setShowSMA50(!showSMA50)}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+              showSMA50
+                ? 'bg-orange-100 border-orange-300 text-orange-700'
+                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            SMA 50
+          </button>
+          <button
+            onClick={() => setShowSMA200(!showSMA200)}
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+              showSMA200
+                ? 'bg-purple-100 border-purple-300 text-purple-700'
+                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            SMA 200
+          </button>
+        </div>
+      )}
 
       {/* Period Selector */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
@@ -131,7 +184,17 @@ export function PriceChart({
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               }}
               labelStyle={{ color: '#374151', fontWeight: 600 }}
-              formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Price']}
+              formatter={(value, name) => {
+                const labelMap: Record<string, string> = {
+                  price: 'Price',
+                  sma20: 'SMA 20',
+                  sma50: 'SMA 50',
+                  sma200: 'SMA 200',
+                };
+                const label =
+                  typeof name === 'string' ? labelMap[name] || name.toUpperCase() : String(name);
+                return [`$${Number(value).toFixed(2)}`, label];
+              }}
             />
             <Line
               type="monotone"
@@ -141,6 +204,36 @@ export function PriceChart({
               dot={false}
               activeDot={{ r: 4, fill: priceChange >= 0 ? '#16a34a' : '#dc2626' }}
             />
+            {showSMA20 && (
+              <Line
+                type="monotone"
+                dataKey="sma20"
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="5 5"
+              />
+            )}
+            {showSMA50 && (
+              <Line
+                type="monotone"
+                dataKey="sma50"
+                stroke="#f97316"
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="5 5"
+              />
+            )}
+            {showSMA200 && (
+              <Line
+                type="monotone"
+                dataKey="sma200"
+                stroke="#a855f7"
+                strokeWidth={1.5}
+                dot={false}
+                strokeDasharray="5 5"
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>

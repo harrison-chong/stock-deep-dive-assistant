@@ -1,7 +1,6 @@
 import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
 import { PriceChart } from '../PriceChart';
-import { StockNews } from '../StockNews';
 import { MetricDefinition } from '../shared/MetricDefinition';
 import { AlertCircle } from 'lucide-react';
 
@@ -66,28 +65,6 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
       "Year-over-year % change in total revenue. >10% = strong growth. Varies by company stage (startups may grow faster but aren't profitable).",
   };
 
-  const marketDataDefinitions: Record<string, string> = {
-    'Previous Close': 'Closing price from previous trading day (in price units, e.g., $150.00).',
-    'Day High': 'Highest trading price today (in price units).',
-    'Day Low': 'Lowest trading price today (in price units).',
-    Bid: 'Highest price a buyer will pay to purchase this stock (in price units). Higher bid = more buying interest.',
-    Ask: 'Lowest price a seller will accept to sell this stock (in price units). Lower ask = more selling pressure.',
-    Volume: 'Shares traded today (e.g., 5.2M = 5.2 million shares). Higher = more liquid.',
-    'Avg Volume':
-      "Average shares traded per day over the last 50 trading days (e.g., 2.2M = 2.2 million shares/day). Use to gauge liquidity - stocks with higher volume are easier to buy/sell without moving the price much. Compare to today's volume to see if trading is above or below normal.",
-    '52W High':
-      'Highest price over past 52 weeks (in price units). Price near this = near peak valuation.',
-    '52W Low':
-      'Lowest price over past 52 weeks (in price units). Price near this = near minimum valuation.',
-    Beta: 'Measure of stock volatility vs the market (S&P 500). Beta of 1 = same volatility as market. >1 = more volatile, <1 = less volatile.',
-    '1Y Target':
-      'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
-    'Earnings Date':
-      'Upcoming earnings announcement date. When the company will report quarterly results.',
-    'Forward Dividend':
-      'Expected annual dividend per share (in dollars). Based on recent dividend payments.',
-  };
-
   const liquidityValuationDefinitions: Record<string, string> = {
     'Enterprise Value':
       'Market Cap + Debt - Cash (in billions, e.g., $50B). What it would cost to buy the whole company.',
@@ -123,6 +100,80 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
       'Operating income / Revenue (shown as %). Profitability from core ops. 15-20% = healthy.',
   };
 
+  const financialHealthDefinitions: Record<string, string> = {
+    EBITDA:
+      'Earnings Before Interest, Taxes, Depreciation & Amortization (in billions). Shows operating cash flow. Higher = more profitable core business.',
+    'Total Cash': 'Total cash on hand (in billions). Buffer for emergencies or acquisitions.',
+    'Total Debt': 'Total debt outstanding (in billions). Higher debt = more financial risk.',
+    'Current Ratio':
+      'Current Assets / Current Liabilities. >1.5 = healthy liquidity, <1 = may struggle to pay bills.',
+    'Quick Ratio':
+      '(Current Assets - Inventory) / Current Liabilities. Strict liquidity measure without relying on inventory.',
+    'Payout Ratio':
+      'Dividends paid / Earnings (shown as %). High (>80%) may be unsustainable. Low (<30%) suggests room to increase dividends.',
+    'Cash/Share':
+      'Total cash divided by shares outstanding (in dollars). Cash per share indicates financial flexibility.',
+    'Operating Cash Flow':
+      'Cash generated from core business operations (in billions). Includes all operating expenses but NOT capital expenditures.',
+    'Free Cash Flow':
+      'Operating Cash Flow minus Capital Expenditures (in billions). What remains after investing in assets. Higher = more value generated for shareholders.',
+  };
+
+  const analystDefinitions: Record<string, string> = {
+    'Analyst Opinions':
+      'Number of Wall Street analysts covering this stock. More opinions = more coverage.',
+    Recommendation: 'Wall Street consensus: Strong Buy, Buy, Hold, Underperform, Sell.',
+    'Rec. Mean':
+      'Average analyst rating (1=Strong Buy, 2=Buy, 3=Hold, 4=Underperform, 5=Sell). Lower = more bullish.',
+    'Avg Analyst Rating': 'Human-readable analyst consensus (e.g., "1.9 - Buy").',
+    'Target High':
+      'Highest price target from analysts (in dollars). Upside potential if targets are met.',
+    'Target Low':
+      'Lowest price target from analysts (in dollars). Downside risk if targets are missed.',
+    '50D Avg':
+      '50-day moving average price. Short-term trend line. Price above = short-term bullish.',
+    '200D Avg':
+      '200-day moving average price. Long-term trend line. Price above = long-term bullish.',
+  };
+
+  const shortInterestDefinitions: Record<string, string> = {
+    'Shares Short':
+      'Number of shares currently sold short (e.g., 229M = 229 million shares). High short interest = bearish bets against stock.',
+    'Short Ratio':
+      'Days to cover short positions (shares short / avg daily volume). Higher = harder to close shorts, potential squeeze.',
+    'Short % of Float':
+      'Percentage of float shares that are shorted. High % = significant bearish sentiment, risk of short squeeze.',
+    'Float Shares':
+      'Shares available for public trading (in millions). Excludes insider/restricted shares.',
+    'Trailing Ann. Div. Rate':
+      'Sum of dividends paid over the past 12 months (in $/share). Actual dividends received.',
+    'Trailing Ann. Div. Yield':
+      'Trailing 12-month dividends / current price (in %). Actual dividend return received (NVDA: 0.04/177.39 = 0.023%).',
+    '5Y Avg Div. Yield':
+      '5-year average dividend yield (in %). Useful for comparing current yield to historical yield.',
+  };
+
+  const performanceDefinitions: Record<string, string> = {
+    '52W Change': 'Percentage price change over the past 52 weeks. Positive = price appreciation.',
+    'S&P 52W Change':
+      'S&P 500 index percentage change over the same 52-week period. Compare stock performance vs market.',
+    'All-Time High':
+      'Highest price this stock has ever traded at (historical). Current price is X% below ATH.',
+    'All-Time Low':
+      'Lowest price this stock has ever traded at (historical). Current price is X% above ATL.',
+  };
+
+  const ownershipDefinitions: Record<string, string> = {
+    'Shares Outstanding':
+      'Total shares currently in existence (in millions). Used to calculate market cap.',
+    'Revenue/Share':
+      'Total revenue / shares outstanding (in dollars). Higher = more efficient at generating revenue.',
+    'Insider Ownership':
+      'Percentage of shares held by company insiders (executives, directors). High = insiders confident.',
+    'Institutional Ownership':
+      'Percentage of shares held by funds/pension plans. High = professional confidence.',
+  };
+
   return (
     <div className="space-y-8">
       {/* Company Header */}
@@ -132,9 +183,19 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
             <div className="flex items-baseline gap-3">
               <h2 className="text-2xl font-bold text-gray-900">{data.company_name}</h2>
               <span className="text-sm text-gray-500">{data.ticker}</span>
-              {data.sector && <span className="text-sm text-gray-400">• {data.sector}</span>}
             </div>
-            {data.industry && <p className="text-sm text-gray-500 mt-1">{data.industry}</p>}
+            <div className="flex gap-4 mt-2 text-xs text-gray-500">
+              {data.sector && (
+                <div>
+                  <span className="font-medium text-gray-600">Sector:</span> {data.sector}
+                </div>
+              )}
+              {data.industry && (
+                <div>
+                  <span className="font-medium text-gray-600">Industry:</span> {data.industry}
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-right">
             <div className="flex items-baseline justify-end gap-2">
@@ -177,9 +238,6 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
         period={period}
         onPeriodChange={onPeriodChange}
       />
-
-      {/* Stock News */}
-      <StockNews ticker={data.ticker} />
 
       {/* Technical Overview */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -226,47 +284,95 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
           showInterpretation={true}
           metricDefinitions={growthDefinitions}
         />
-        {/* Market Data and Analyst Estimates side by side */}
+        {/* Market Data, Liquidity & Valuation, Analyst Estimates - 2 column layout */}
         <div className="grid md:grid-cols-2 gap-6">
-          <MetricsCard
-            title="Market Data"
-            metrics={[
-              ...data.fundamental_overview.market_data,
-              { name: 'Beta', value: data.beta },
-              { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
-              { name: 'Forward Dividend Yield', value: data.forward_dividend_yield, unit: '%' },
-            ]}
-            showInterpretation={true}
-            metricDefinitions={marketDataDefinitions}
-          />
-          <MetricsCard
-            title="Analyst Estimates"
-            metrics={[
-              { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
-              { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
-            ]}
-            showInterpretation={true}
-            metricDefinitions={{
-              '1Y Target (Mean)':
-                'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
-              '1Y Target (Median)':
-                'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
-            }}
-          />
+          {/* Left column: Market Data */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Market Data</h3>
+            <div className="space-y-4">
+              {data.fundamental_overview.market_data.map((metric, i) => (
+                <div key={i} className="flex justify-between items-baseline gap-2">
+                  <span className="text-gray-700 text-sm flex items-center">{metric.name}</span>
+                  <span className="font-medium text-gray-900 text-sm">
+                    {metric.value != null
+                      ? metric.unit === '$'
+                        ? `$${Number(metric.value).toLocaleString()}`
+                        : metric.unit === 'shares'
+                          ? Number(metric.value).toLocaleString()
+                          : `${Number(metric.value).toFixed(2)}`
+                      : 'N/A'}
+                  </span>
+                </div>
+              ))}
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-gray-700 text-sm flex items-center">Beta</span>
+                <span className="font-medium text-gray-900 text-sm">
+                  {data.beta != null ? data.beta.toFixed(2) : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-gray-700 text-sm flex items-center">
+                  Forward Dividend
+                  <MetricDefinition text="Annual dividend rate in dollars per share. This is the projected annual dividend based on recent payouts (e.g., $0.04 means $0.01 per quarter = $0.04/year)." />
+                </span>
+                <span className="font-medium text-gray-900 text-sm">
+                  {data.dividend_rate != null ? `$${data.dividend_rate.toFixed(2)}` : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-gray-700 text-sm flex items-center">
+                  Fwd Div Yield
+                  <MetricDefinition text="Forward dividend yield as percentage of current price. Annual dividend / stock price. NVDA pays ~$0.04/year, giving ~0.02% yield at ~$177 price." />
+                </span>
+                <span className="font-medium text-gray-900 text-sm">
+                  {data.forward_dividend_yield != null ? `${data.forward_dividend_yield}%` : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-gray-700 text-sm flex items-center">Earnings Date</span>
+                <span className="font-medium text-gray-900 text-sm">
+                  {data.earnings_timestamp
+                    ? new Date(data.earnings_timestamp * 1000).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Right column: Liquidity & Valuation stacked above Analyst Estimates */}
+          <div className="space-y-6">
+            <MetricsCard
+              title="Liquidity & Valuation"
+              metrics={[
+                { name: 'Market Cap', value: data.market_cap },
+                ...data.fundamental_overview.liquidity_valuation,
+              ]}
+              showInterpretation={true}
+              metricDefinitions={{
+                'Market Cap':
+                  'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
+                ...liquidityValuationDefinitions,
+              }}
+            />
+            <MetricsCard
+              title="Analyst Estimates"
+              metrics={[
+                { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
+                { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
+              ]}
+              showInterpretation={true}
+              metricDefinitions={{
+                '1Y Target (Mean)':
+                  'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+                '1Y Target (Median)':
+                  'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
+              }}
+            />
+          </div>
         </div>
-        <MetricsCard
-          title="Liquidity & Valuation"
-          metrics={[
-            { name: 'Market Cap', value: data.market_cap },
-            ...data.fundamental_overview.liquidity_valuation,
-          ]}
-          showInterpretation={true}
-          metricDefinitions={{
-            'Market Cap':
-              'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
-            ...liquidityValuationDefinitions,
-          }}
-        />
         <MetricsCard
           title="Earnings"
           metrics={data.fundamental_overview.earnings}
@@ -279,6 +385,84 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
           showInterpretation={true}
           metricDefinitions={marginsDefinitions}
         />
+        {/* Financial Health - new yfinance data */}
+        <MetricsCard
+          title="Financial Health"
+          metrics={[
+            { name: 'EBITDA', value: data.ebitda },
+            { name: 'Total Cash', value: data.total_cash },
+            { name: 'Total Debt', value: data.total_debt },
+            { name: 'Current Ratio', value: data.current_ratio },
+            { name: 'Quick Ratio', value: data.quick_ratio },
+            { name: 'Payout Ratio', value: data.payout_ratio, unit: '%' },
+            { name: 'Cash/Share', value: data.total_cash_per_share, unit: '$' },
+            { name: 'Operating Cash Flow', value: data.operating_cash_flow },
+            { name: 'Free Cash Flow', value: data.free_cash_flow },
+          ]}
+          showInterpretation={true}
+          metricDefinitions={financialHealthDefinitions}
+        />
+        {/* Analyst Ratings - new yfinance data */}
+        <MetricsCard
+          title="Analyst Ratings"
+          metrics={[
+            { name: 'Analyst Opinions', value: data.number_of_analyst_opinions },
+            { name: 'Rec. Mean', value: data.recommendation_mean },
+            { name: 'Target High', value: data.target_high_price, unit: '$' },
+            { name: 'Target Low', value: data.target_low_price, unit: '$' },
+            { name: '50D Avg', value: data.fifty_day_average, unit: '$' },
+            { name: '200D Avg', value: data.two_hundred_day_average, unit: '$' },
+          ]}
+          showInterpretation={true}
+          metricDefinitions={analystDefinitions}
+        />
+        {/* Ownership & Share Structure - new yfinance data */}
+        <MetricsCard
+          title="Ownership & Structure"
+          metrics={[
+            { name: 'Shares Outstanding', value: data.shares_outstanding },
+            { name: 'Revenue/Share', value: data.revenue_per_share, unit: '$' },
+            { name: 'Insider Ownership', value: data.held_percent_insiders, unit: '%' },
+            { name: 'Institutional Ownership', value: data.held_percent_institutions, unit: '%' },
+          ]}
+          showInterpretation={true}
+          metricDefinitions={ownershipDefinitions}
+        />
+        {/* Short Interest & Dividends - new yfinance data */}
+        <MetricsCard
+          title="Short Interest & Dividends"
+          metrics={[
+            { name: 'Shares Short', value: data.shares_short },
+            { name: 'Short Ratio', value: data.short_ratio },
+            { name: 'Short % of Float', value: data.short_percent_of_float, unit: '%' },
+            { name: 'Float Shares', value: data.float_shares },
+            {
+              name: 'Trailing Ann. Div. Rate',
+              value: data.trailing_annual_dividend_rate,
+              unit: '$',
+            },
+            {
+              name: 'Trailing Ann. Div. Yield',
+              value: data.trailing_annual_dividend_yield,
+              unit: '%',
+            },
+            { name: '5Y Avg Div. Yield', value: data.five_year_avg_dividend_yield },
+          ]}
+          showInterpretation={true}
+          metricDefinitions={shortInterestDefinitions}
+        />
+        {/* Performance - 52 week and all-time */}
+        <MetricsCard
+          title="Price Performance"
+          metrics={[
+            { name: '52W Change', value: data.fifty_two_week_change, unit: '%' },
+            { name: 'S&P 52W Change', value: data.s_and_p_fifty_two_week_change, unit: '%' },
+            { name: 'All-Time High', value: data.all_time_high, unit: '$' },
+            { name: 'All-Time Low', value: data.all_time_low, unit: '$' },
+          ]}
+          showInterpretation={true}
+          metricDefinitions={performanceDefinitions}
+        />
       </div>
 
       {/* Advanced Metrics - Statistical & Risk-Adjusted Returns */}
@@ -286,9 +470,26 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
         <div className="space-y-8">
           {/* Statistical & Risk-Adjusted Returns */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
-              Statistical & Risk-Adjusted Returns
-            </h4>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">
+                Statistical & Risk-Adjusted Returns
+              </h4>
+              <p className="text-xs text-gray-500 mt-1">
+                Trailing total returns as of{' '}
+                {data.data_end_date
+                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'latest'}{' '}
+                · Based on{' '}
+                {data.data_start_date && data.data_end_date
+                  ? `${Math.round((new Date(data.data_end_date).getTime() - new Date(data.data_start_date).getTime()) / (1000 * 60 * 60 * 24 * 365))} years`
+                  : 'selected'}{' '}
+                of data
+              </p>
+            </div>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">
@@ -485,9 +686,20 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
 
           {/* Technical Performance */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">
-              Multi-Period Returns & Technical Signals
-            </h4>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Trailing Total Returns</h4>
+              <p className="text-xs text-gray-500 mt-1">
+                As of{' '}
+                {data.data_end_date
+                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'latest'}{' '}
+                · Price returns including dividends
+              </p>
+            </div>
             <div className="grid md:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">
