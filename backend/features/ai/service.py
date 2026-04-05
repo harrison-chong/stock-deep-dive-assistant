@@ -25,6 +25,7 @@ class AIService:
         fundamental_summary: str,
         news_summary: str,
         advanced_metrics: dict | None = None,
+        additional_fundamentals: dict | None = None,
     ) -> AIInterpretation:
         """Use LLM to generate holistic interpretation"""
 
@@ -140,6 +141,7 @@ class AIService:
             fundamental_summary=fundamental_summary,
             news_summary=news_summary,
             advanced_metrics=formatted_metrics,
+            additional_fundamentals=additional_fundamentals or {},
         )
 
         try:

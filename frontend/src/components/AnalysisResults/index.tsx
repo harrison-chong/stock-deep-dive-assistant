@@ -1077,92 +1077,252 @@ export function AnalysisResults({
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg p-8">
+              {/* Header */}
               <div className="flex items-start justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  AI Analysis for {data.ticker}
-                  <span className="text-sm font-normal text-gray-600">
-                    Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
-                  </span>
-                </h3>
-                <div className="text-right text-xs text-gray-500">
-                  <p>
-                    Data:{' '}
-                    {data.data_start_date
-                      ? new Date(data.data_start_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '?'}{' '}
-                    -{' '}
-                    {data.data_end_date
-                      ? new Date(data.data_end_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '?'}
-                  </p>
-                  {data.sector && (
-                    <p>
-                      {data.sector} {data.industry ? `• ${data.industry}` : ''}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">AI Analysis</h3>
+                    <p className="text-sm text-gray-500">
+                      {data.ticker} · {data.company_name}
                     </p>
-                  )}
+                  </div>
+                </div>
+                {/* Confidence Badge */}
+                <div className="text-right">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-gray-500">Confidence</span>
+                    <span
+                      className={`text-sm font-semibold ${
+                        data.ai_outlook.confidence_score >= 70
+                          ? 'text-green-600'
+                          : data.ai_outlook.confidence_score >= 40
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
+                      }`}
+                    >
+                      {data.ai_outlook.confidence_score.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        data.ai_outlook.confidence_score >= 70
+                          ? 'bg-green-500'
+                          : data.ai_outlook.confidence_score >= 40
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                      }`}
+                      style={{ width: `${data.ai_outlook.confidence_score}%` }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
-                </div>
+              {/* Overall Summary */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
+              </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="border border-gray-200 rounded-lg p-6 bg-green-50">
-                    <h4 className="font-semibold text-gray-900 mb-3">Bull Case</h4>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {data.ai_outlook.bull_case}
+              {/* Recommendation Banner */}
+              <div
+                className={`mb-6 p-4 rounded-lg border-2 ${
+                  data.ai_outlook.recommendation === 'Consider'
+                    ? 'bg-green-50 border-green-200'
+                    : data.ai_outlook.recommendation === 'Avoid'
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-yellow-50 border-yellow-200'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      data.ai_outlook.recommendation === 'Consider'
+                        ? 'bg-green-100'
+                        : data.ai_outlook.recommendation === 'Avoid'
+                          ? 'bg-red-100'
+                          : 'bg-yellow-100'
+                    }`}
+                  >
+                    <span
+                      className={`text-xl font-bold ${
+                        data.ai_outlook.recommendation === 'Consider'
+                          ? 'text-green-600'
+                          : data.ai_outlook.recommendation === 'Avoid'
+                            ? 'text-red-600'
+                            : 'text-yellow-600'
+                      }`}
+                    >
+                      {data.ai_outlook.recommendation.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      AI Recommendation
+                    </p>
+                    <p
+                      className={`text-xl font-bold ${
+                        data.ai_outlook.recommendation === 'Consider'
+                          ? 'text-green-700'
+                          : data.ai_outlook.recommendation === 'Avoid'
+                            ? 'text-red-700'
+                            : 'text-yellow-700'
+                      }`}
+                    >
+                      {data.ai_outlook.recommendation}
                     </p>
                   </div>
-                  <div className="border border-gray-200 rounded-lg p-6 bg-red-50">
-                    <h4 className="font-semibold text-gray-900 mb-3">Bear Case</h4>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {data.ai_outlook.bear_case}
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Rationale</p>
+                    <p className="text-sm text-gray-700">
+                      {data.ai_outlook.recommendation_rationale}
                     </p>
                   </div>
                 </div>
+              </div>
 
+              {/* Bull/Bear Cards */}
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="border border-gray-200 rounded-lg p-5 bg-gradient-to-br from-green-50 to-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-green-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 10l7-7m0 0l7 7m-7-7v18"
+                        />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-green-800">Bull Case</h4>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {data.ai_outlook.bull_case}
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-5 bg-gradient-to-br from-red-50 to-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-red-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                        />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-red-800">Bear Case</h4>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {data.ai_outlook.bear_case}
+                  </p>
+                </div>
+              </div>
+
+              {/* Risk Factors & Neutral Side by Side */}
+              <div className="grid md:grid-cols-2 gap-6">
                 {data.ai_outlook.risk_factors.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Risk Factors</h4>
+                  <div className="border border-gray-200 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-4 h-4 text-orange-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold text-gray-900">Risk Factors</h4>
+                    </div>
                     <ul className="space-y-2">
                       {data.ai_outlook.risk_factors.map((risk, i) => (
-                        <li key={i} className="text-gray-700 text-sm flex gap-3">
-                          <span className="text-gray-400">•</span>
-                          {risk}
+                        <li key={i} className="text-gray-700 text-sm flex gap-2">
+                          <span className="text-orange-400 mt-0.5">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                          <span>{risk}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
-                  <h4 className="font-semibold text-gray-900 mb-3">Neutral Scenario</h4>
+                <div className="border border-gray-200 rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-gray-900">Neutral Scenario</h4>
+                  </div>
                   <p className="text-gray-700 text-sm leading-relaxed">
                     {data.ai_outlook.neutral_scenario}
                   </p>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
-                    <p className="text-xl font-semibold text-gray-900 mt-1">
-                      {data.ai_outlook.recommendation}
-                    </p>
-                    <p className="text-gray-700 text-sm mt-3 leading-relaxed">
-                      {data.ai_outlook.recommendation_rationale}
-                    </p>
-                  </div>
-                </div>
+              {/* Footer info */}
+              <div className="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500 flex justify-between">
+                <span>
+                  Data:{' '}
+                  {data.data_start_date ? new Date(data.data_start_date).toLocaleDateString() : '?'}{' '}
+                  - {data.data_end_date ? new Date(data.data_end_date).toLocaleDateString() : '?'}
+                </span>
+                {data.sector && (
+                  <span>
+                    {data.sector} {data.industry ? `· ${data.industry}` : ''}
+                  </span>
+                )}
               </div>
             </div>
           )}

@@ -361,6 +361,55 @@ class StockAnalyzer:
         fundamental_summary = f"P/E Ratio: {fundamentals.pe_ratio}, Forward P/E: {fundamentals.forward_pe}, ROE: {fundamentals.roe}%, Debt-to-Equity: {fundamentals.debt_to_equity}, Profit Margin: {fundamentals.profit_margin}%, Revenue Growth: {fundamentals.revenue_growth}%"
         news_summary = "News integration pending"
 
+        # Prepare additional fundamentals for AI analysis (new metrics not in existing summary)
+        additional_fundamentals = {
+            "market_cap": fundamentals.market_cap,
+            "ebitda": fundamentals.ebitda,
+            "enterprise_value": fundamentals.enterprise_value,
+            "price_to_book": fundamentals.price_to_book,
+            "price_to_sales": fundamentals.price_to_sales,
+            "ev_ebitda": fundamentals.enterprise_to_ebitda,
+            "total_cash": fundamentals.total_cash,
+            "total_debt": fundamentals.total_debt,
+            "current_ratio": fundamentals.current_ratio,
+            "quick_ratio": fundamentals.quick_ratio,
+            "payout_ratio": fundamentals.payout_ratio,
+            "cash_per_share": fundamentals.total_cash_per_share,
+            "free_cash_flow": fundamentals.free_cash_flow,
+            "operating_cash_flow": fundamentals.operating_cash_flow,
+            "eps": fundamentals.eps,
+            "forward_eps": fundamentals.forward_eps,
+            "book_value": fundamentals.book_value,
+            "return_on_assets": fundamentals.return_on_assets,
+            "return_on_investment": fundamentals.return_on_investment,
+            "gross_margins": fundamentals.gross_margins,
+            "operating_margins": fundamentals.operating_margins,
+            "number_of_analyst_opinions": fundamentals.number_of_analyst_opinions,
+            "recommendation_mean": fundamentals.recommendation_mean,
+            "target_high_price": fundamentals.target_high_price,
+            "target_low_price": fundamentals.target_low_price,
+            "fifty_day_average": fundamentals.fifty_day_average,
+            "two_hundred_day_average": fundamentals.two_hundred_day_average,
+            "shares_outstanding": fundamentals.shares_outstanding,
+            "float_shares": fundamentals.float_shares,
+            "insider_ownership": fundamentals.held_percent_insiders,
+            "institutional_ownership": fundamentals.held_percent_institutions,
+            "shares_short": fundamentals.shares_short,
+            "short_ratio": fundamentals.short_ratio,
+            "short_percent_of_float": fundamentals.short_percent_of_float,
+            "trailing_annual_dividend_rate": fundamentals.trailing_annual_dividend_rate,
+            "trailing_annual_dividend_yield": fundamentals.trailing_annual_dividend_yield,
+            "dividend_rate": fundamentals.dividend_rate,
+            "dividend_yield": fundamentals.dividend_yield,
+            "beta": fundamentals.beta,
+            "fifty_two_week_change": fundamentals.fifty_two_week_change,
+            "s_and_p_fifty_two_week_change": fundamentals.s_and_p_fifty_two_week_change,
+            "all_time_high": fundamentals.all_time_high,
+            "all_time_low": fundamentals.all_time_low,
+            "fifty_two_week_high": fundamentals.fifty_two_week_high,
+            "fifty_two_week_low": fundamentals.fifty_two_week_low,
+        }
+
         # Prepare advanced metrics for AI analysis
         advanced_metrics_dict = {
             "statistical": {
@@ -413,6 +462,7 @@ class StockAnalyzer:
             fundamental_summary=fundamental_summary,
             news_summary=news_summary,
             advanced_metrics=advanced_metrics_dict,
+            additional_fundamentals=additional_fundamentals,
         )
 
         return AIOutlookResponse(
