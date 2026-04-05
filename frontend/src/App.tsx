@@ -176,7 +176,7 @@ function HomePage() {
           {import.meta.env.VITE_API_BASE_URL &&
             !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
               <p className="text-xs text-gray-400 mt-1">
-                Note: Backend may take ~60s to wake up if idle.
+                Note: Initial load may take ~60s if service was inactive.
               </p>
             )}
           {error && (
