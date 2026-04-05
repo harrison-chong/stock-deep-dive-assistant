@@ -16,7 +16,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        # "https://your-frontend.onrender.com",  # Uncomment after deploying frontend to Render
+        "https://stock-deep-dive-api.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
