@@ -15,20 +15,16 @@ def retry_with_backoff(func, max_retries=3, base_delay=5.0):
     for attempt in range(max_retries):
         try:
             return func()
-        except Exception as e:
-            is_rate_limit = isinstance(e, YFRateLimitError)
-            if is_rate_limit:
-                if attempt == max_retries - 1:
-                    raise YFRateLimitError(
-                        "Yahoo Finance is rate limited. Please try again in a few minutes."
-                    ) from e
-                delay = base_delay * (2**attempt)
-                print(
-                    f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
-                )
-                time.sleep(delay)
-            else:
+        except YFRateLimitError:
+            if attempt == max_retries - 1:
                 raise
+            delay = base_delay * (2**attempt)
+            print(
+                f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(delay)
+        except Exception:
+            raise
 
 
 class DataService:
@@ -44,7 +40,6 @@ class DataService:
         """Fetch OHLC data from yfinance using period OR start/end dates"""
 
         def fetch():
-            # Use start/end dates if provided, otherwise fall back to period
             if start_date and end_date:
                 return yf.download(
                     ticker, start=start_date, end=end_date, progress=False, repair=True
@@ -54,33 +49,7 @@ class DataService:
             else:
                 return yf.download(ticker, period="5y", progress=False, repair=True)
 
-        try:
-            data = retry_with_backoff(fetch)
-        except YFRateLimitError:
-            raise  # Re-raise with original message
-        except Exception as e:
-            error_msg = str(e)
-            # Preserve original yfinance error if it has useful info
-            if (
-                "rate limit" in error_msg.lower()
-                or "yfratelimiterror" in error_msg.lower()
-            ):
-                raise YFRateLimitError(
-                    "Yahoo Finance rate limit exceeded. Please try again in a few minutes."
-                )
-            if (
-                "possibly delisted" in error_msg.lower()
-                or "not found" in error_msg.lower()
-            ):
-                raise ValueError(
-                    f"Ticker '{ticker}' not found or may be delisted. Please check the ticker symbol."
-                )
-            if "no data found" in error_msg.lower():
-                raise ValueError(
-                    f"No data found for '{ticker}'. Please check the ticker and try a different period."
-                )
-            raise ValueError(f"Failed to fetch data for '{ticker}': {error_msg}")
-
+        data = retry_with_backoff(fetch)
         if data.empty:
             raise ValueError(
                 f"No data found for {ticker}. This may be an invalid ticker or data is unavailable."
@@ -89,8 +58,6 @@ class DataService:
         # Flatten multi-level columns if needed
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = data.columns.get_level_values(0)
-
-        # Ensure we have the right columns
         data.columns = [col.strip() for col in data.columns]
 
         return OHLCData(
@@ -116,27 +83,7 @@ class DataService:
             ticker_obj = yf.Ticker(ticker)
             return ticker_obj.info
 
-        try:
-            info = retry_with_backoff(fetch)
-        except YFRateLimitError:
-            raise  # Re-raise with original message
-        except Exception as e:
-            error_msg = str(e)
-            if (
-                "rate limit" in error_msg.lower()
-                or "yfratelimiterror" in error_msg.lower()
-            ):
-                raise YFRateLimitError(
-                    "Yahoo Finance rate limit exceeded. Please try again in a few minutes."
-                )
-            if (
-                "possibly delisted" in error_msg.lower()
-                or "not found" in error_msg.lower()
-            ):
-                raise ValueError(
-                    f"Ticker '{ticker}' not found or may be delisted. Please check the ticker symbol."
-                )
-            raise ValueError(f"Failed to fetch ticker info for '{ticker}': {error_msg}")
+        info = retry_with_backoff(fetch)
 
         fundamentals = FundamentalData(
             ticker=ticker,
@@ -266,30 +213,7 @@ class DataService:
         def fetch():
             return yf.download(ticker, period="1d", progress=False, repair=True)
 
-        try:
-            data = retry_with_backoff(fetch)
-        except YFRateLimitError:
-            raise  # Re-raise with original message
-        except Exception as e:
-            error_msg = str(e)
-            if (
-                "rate limit" in error_msg.lower()
-                or "yfratelimiterror" in error_msg.lower()
-            ):
-                raise YFRateLimitError(
-                    "Yahoo Finance rate limit exceeded. Please try again in a few minutes."
-                )
-            if (
-                "possibly delisted" in error_msg.lower()
-                or "not found" in error_msg.lower()
-            ):
-                raise ValueError(f"Ticker '{ticker}' not found or may be delisted.")
-            if "no data found" in error_msg.lower():
-                raise ValueError(f"No data found for '{ticker}'.")
-            raise ValueError(
-                f"Failed to fetch current price for '{ticker}': {error_msg}"
-            )
-
+        data = retry_with_backoff(fetch)
         if data.empty:
             raise ValueError(f"No data found for '{ticker}'.")
         return float(data["Close"].iloc[-1].item())
