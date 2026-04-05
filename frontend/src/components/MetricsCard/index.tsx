@@ -59,15 +59,44 @@ function formatMetricValue(value: number | null, unit?: string, name?: string): 
   return value.toFixed(2);
 }
 
+// Small badge to indicate data source
+function SourceBadge({ source }: { source: 'yahoo' | 'calculated' }) {
+  if (source === 'calculated') {
+    return (
+      <span
+        title="Calculated from historical price data (not from Yahoo Finance)"
+        className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-purple-700 bg-purple-100 rounded cursor-help"
+      >
+        Calc
+      </span>
+    );
+  }
+  return (
+    <span
+      title="Data sourced from Yahoo Finance"
+      className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded cursor-help"
+    >
+      Y! Finance
+    </span>
+  );
+}
+
 export function MetricsCard({
   title,
   metrics,
   showInterpretation,
   metricDefinitions,
-}: MetricsCardProps & { metricDefinitions?: Record<string, string> }) {
+  source = 'yahoo',
+}: MetricsCardProps & {
+  metricDefinitions?: Record<string, string>;
+  source?: 'yahoo' | 'calculated';
+}) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">{title}</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <SourceBadge source={source} />
+      </div>
       <div className="space-y-4">
         {metrics.map((metric, i) => (
           <div key={i}>
@@ -75,7 +104,7 @@ export function MetricsCard({
               <span className="text-gray-700 text-sm flex items-center">
                 {metric.name}
                 {metricDefinitions?.[metric.name] && (
-                  <MetricDefinition text={metricDefinitions[metric.name]} />
+                  <MetricDefinition text={metricDefinitions?.[metric.name]} />
                 )}
               </span>
               <span className="font-medium text-gray-900">
