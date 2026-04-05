@@ -312,8 +312,8 @@ class PerformanceResponse(BaseModel):
     current_value: float
     profit_loss: float
     profit_loss_percentage: float
-    annualized_return: float
-    annualized_return_percentage: float
+    annualized_return: float | None
+    annualized_return_percentage: float | None
     disclaimer: str
     timestamp: str
 

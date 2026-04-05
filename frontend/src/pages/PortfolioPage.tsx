@@ -193,14 +193,16 @@ function PortfolioPage() {
                       performance.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
-                    {formatPercentage(performance.total_profit_loss_percentage)}
+                    {formatPercentage(performance.total_profit_loss_percentage / 100)}
                   </p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
                   <h3 className="font-semibold text-orange-900 mb-2">Annualized Return</h3>
                   <p className="text-2xl font-bold text-orange-900">
-                    {formatPercentage(performance.annualized_return_percentage)}
+                    {performance.annualized_return_percentage !== null
+                      ? formatPercentage(performance.annualized_return_percentage / 100)
+                      : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -241,7 +243,7 @@ function PortfolioPage() {
                                   <p className="text-xs text-gray-600">Benchmark</p>
                                 </div>
                                 <p className="text-sm font-medium text-gray-900">
-                                  {formatPercentage(returnPercentage)}
+                                  {formatPercentage(returnPercentage / 100)}
                                 </p>
                               </div>
                               <div className="flex justify-between items-center">
@@ -332,11 +334,13 @@ function PortfolioPage() {
                         >
                           {entry.profit_loss >= 0 ? '↑' : '↓'}{' '}
                           {formatCurrency(entry.profit_loss || 0)} (
-                          {formatPercentage(entry.profit_loss_percentage || 0)})
+                          {formatPercentage((entry.profit_loss_percentage || 0) / 100)})
                         </div>
                         <div className="text-sm text-gray-500 mt-2">
                           Annualized Return:{' '}
-                          {formatPercentage(entry.annualized_return_percentage || 0)}
+                          {entry.annualized_return_percentage !== null
+                            ? formatPercentage(entry.annualized_return_percentage / 100)
+                            : 'N/A'}
                         </div>
                       </div>
                     </div>
