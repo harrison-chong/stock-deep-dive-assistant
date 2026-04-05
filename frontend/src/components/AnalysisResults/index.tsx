@@ -55,7 +55,7 @@ export function AnalysisResults({
   };
 
   const valuationDefinitions: Record<string, string> = {
-    'P/E Ratio':
+    'P/E Ratio (TTM)':
       'Price / Earnings per share (ratio, e.g., 20x means you pay $20 for $1 of earnings). Lower may = undervalued, higher may = overvalued. Varies by industry.',
     'Forward P/E':
       'Price / Expected future EPS (ratio). Uses analyst estimates for next 12 months. Lower = potentially cheaper vs future earnings.',
@@ -299,229 +299,181 @@ export function AnalysisResults({
       </div>
 
       {/* Fundamental Overview */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <MetricsCard
-          title="Profitability"
-          metrics={data.fundamental_overview.profitability}
-          showInterpretation={true}
-          metricDefinitions={profitabilityDefinitions}
-        />
-        <MetricsCard
-          title="Valuation"
-          metrics={data.fundamental_overview.valuation}
-          showInterpretation={true}
-          metricDefinitions={valuationDefinitions}
-        />
-        <MetricsCard
-          title="Financial Strength"
-          metrics={data.fundamental_overview.financial_strength}
-          showInterpretation={true}
-          metricDefinitions={financialStrengthDefinitions}
-        />
-        <MetricsCard
-          title="Growth"
-          metrics={data.fundamental_overview.growth}
-          showInterpretation={true}
-          metricDefinitions={growthDefinitions}
-        />
-        {/* Market Data, Liquidity & Valuation, Analyst Estimates - 2 column layout */}
+      <div className="space-y-6">
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left column: Market Data */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="font-semibold text-gray-900">Market Data</h3>
-              <span
-                title="Data sourced from Yahoo Finance"
-                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded cursor-help"
-              >
-                Y! Finance
-              </span>
-            </div>
-            <div className="space-y-4">
-              {data.fundamental_overview.market_data.map((metric, i) => (
-                <div key={i} className="flex justify-between items-baseline gap-2">
-                  <span className="text-gray-700 text-sm flex items-center">
-                    {metric.name}
-                    {marketDataDefinitions[metric.name] && (
-                      <MetricDefinition text={marketDataDefinitions[metric.name]} />
-                    )}
-                  </span>
-                  <span className="font-medium text-gray-900 text-sm">
-                    {metric.value != null
-                      ? metric.unit === '$'
-                        ? `$${Number(metric.value).toLocaleString()}`
-                        : metric.unit === 'shares'
-                          ? Number(metric.value).toLocaleString()
-                          : `${Number(metric.value).toFixed(2)}`
-                      : 'N/A'}
-                  </span>
-                </div>
-              ))}
-              <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">
-                  Beta
-                  <MetricDefinition text="Measure of stock volatility vs the market. >1 = more volatile than market, <1 = less volatile." />
-                </span>
-                <span className="font-medium text-gray-900 text-sm">
-                  {data.beta != null ? data.beta.toFixed(2) : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">
-                  Forward Dividend
-                  <MetricDefinition text="Annual dividend rate in dollars per share. This is the projected annual dividend based on recent payouts (e.g., $0.04 means $0.01 per quarter = $0.04/year)." />
-                </span>
-                <span className="font-medium text-gray-900 text-sm">
-                  {data.dividend_rate != null ? `$${data.dividend_rate.toFixed(2)}` : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">
-                  Fwd Div Yield
-                  <MetricDefinition text="Forward dividend yield as percentage of current price. Annual dividend / stock price. NVDA pays ~$0.04/year, giving ~0.02% yield at ~$177 price." />
-                </span>
-                <span className="font-medium text-gray-900 text-sm">
-                  {data.forward_dividend_yield != null ? `${data.forward_dividend_yield}%` : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">
-                  Earnings Date
-                  <MetricDefinition text="Upcoming date when the company will report earnings. Stock may be more volatile around this time." />
-                </span>
-                <span className="font-medium text-gray-900 text-sm">
-                  {data.earnings_timestamp
-                    ? new Date(data.earnings_timestamp * 1000).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : 'N/A'}
-                </span>
-              </div>
-            </div>
-          </div>
-          {/* Right column: Liquidity & Valuation stacked above Analyst Estimates */}
-          <div className="space-y-6">
-            <MetricsCard
-              title="Liquidity & Valuation"
-              metrics={[
-                { name: 'Market Cap', value: data.market_cap },
-                ...data.fundamental_overview.liquidity_valuation,
-              ]}
-              showInterpretation={true}
-              metricDefinitions={{
-                'Market Cap':
-                  'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
-                ...liquidityValuationDefinitions,
-              }}
-            />
-            <MetricsCard
-              title="Analyst Estimates"
-              metrics={[
-                { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
-                { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
-              ]}
-              showInterpretation={true}
-              metricDefinitions={{
-                '1Y Target (Mean)':
-                  'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
-                '1Y Target (Median)':
-                  'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
-              }}
-            />
-          </div>
+          <MetricsCard
+            title="Profitability"
+            metrics={data.fundamental_overview.profitability}
+            showInterpretation={true}
+            metricDefinitions={profitabilityDefinitions}
+          />
+          <MetricsCard
+            title="Liquidity & Valuation"
+            metrics={[
+              { name: 'Market Cap', value: data.market_cap },
+              ...data.fundamental_overview.liquidity_valuation,
+            ]}
+            showInterpretation={true}
+            metricDefinitions={{
+              'Market Cap':
+                'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
+              ...liquidityValuationDefinitions,
+            }}
+          />
         </div>
-        <MetricsCard
-          title="Earnings"
-          metrics={data.fundamental_overview.earnings}
-          showInterpretation={true}
-          metricDefinitions={earningsDefinitions}
-        />
-        <MetricsCard
-          title="Margins"
-          metrics={data.fundamental_overview.margins}
-          showInterpretation={true}
-          metricDefinitions={marginsDefinitions}
-        />
-        {/* Financial Health - new yfinance data */}
-        <MetricsCard
-          title="Financial Health"
-          metrics={[
-            { name: 'EBITDA', value: data.ebitda },
-            { name: 'Total Cash', value: data.total_cash },
-            { name: 'Total Debt', value: data.total_debt },
-            { name: 'Current Ratio', value: data.current_ratio },
-            { name: 'Quick Ratio', value: data.quick_ratio },
-            { name: 'Payout Ratio', value: data.payout_ratio, unit: '%' },
-            { name: 'Cash/Share', value: data.total_cash_per_share, unit: '$' },
-            { name: 'Operating Cash Flow', value: data.operating_cash_flow },
-            { name: 'Free Cash Flow', value: data.free_cash_flow },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={financialHealthDefinitions}
-        />
-        {/* Analyst Ratings - new yfinance data */}
-        <MetricsCard
-          title="Analyst Ratings"
-          metrics={[
-            { name: 'Analyst Opinions', value: data.number_of_analyst_opinions },
-            { name: 'Rec. Mean', value: data.recommendation_mean },
-            { name: 'Target High', value: data.target_high_price, unit: '$' },
-            { name: 'Target Low', value: data.target_low_price, unit: '$' },
-            { name: '50D Avg', value: data.fifty_day_average, unit: '$' },
-            { name: '200D Avg', value: data.two_hundred_day_average, unit: '$' },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={analystDefinitions}
-        />
-        {/* Ownership & Share Structure - new yfinance data */}
-        <MetricsCard
-          title="Ownership & Structure"
-          metrics={[
-            { name: 'Shares Outstanding', value: data.shares_outstanding },
-            { name: 'Revenue/Share', value: data.revenue_per_share, unit: '$' },
-            { name: 'Insider Ownership', value: data.held_percent_insiders, unit: '%' },
-            { name: 'Institutional Ownership', value: data.held_percent_institutions, unit: '%' },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={ownershipDefinitions}
-        />
-        {/* Short Interest & Dividends - new yfinance data */}
-        <MetricsCard
-          title="Short Interest & Dividends"
-          metrics={[
-            { name: 'Shares Short', value: data.shares_short },
-            { name: 'Short Ratio', value: data.short_ratio },
-            { name: 'Short % of Float', value: data.short_percent_of_float, unit: '%' },
-            { name: 'Float Shares', value: data.float_shares },
-            {
-              name: 'Trailing Ann. Div. Rate',
-              value: data.trailing_annual_dividend_rate,
-              unit: '$',
-            },
-            {
-              name: 'Trailing Ann. Div. Yield',
-              value: data.trailing_annual_dividend_yield,
-              unit: '%',
-            },
-            { name: '5Y Avg Div. Yield', value: data.five_year_avg_dividend_yield, unit: '%' },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={shortInterestDefinitions}
-        />
-        {/* Performance - 52 week and all-time */}
-        <MetricsCard
-          title="Price Performance"
-          metrics={[
-            { name: '52W Change', value: data.fifty_two_week_change, unit: '%' },
-            { name: 'S&P 52W Change', value: data.s_and_p_fifty_two_week_change, unit: '%' },
-            { name: 'All-Time High', value: data.all_time_high, unit: '$' },
-            { name: 'All-Time Low', value: data.all_time_low, unit: '$' },
-          ]}
-          showInterpretation={true}
-          metricDefinitions={performanceDefinitions}
-        />
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Valuation"
+            metrics={data.fundamental_overview.valuation}
+            showInterpretation={true}
+            metricDefinitions={valuationDefinitions}
+          />
+          <MetricsCard
+            title="Margins"
+            metrics={data.fundamental_overview.margins}
+            showInterpretation={true}
+            metricDefinitions={marginsDefinitions}
+          />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Financial Strength"
+            metrics={[
+              ...data.fundamental_overview.financial_strength,
+              ...data.fundamental_overview.growth,
+            ]}
+            showInterpretation={true}
+            metricDefinitions={{
+              ...financialStrengthDefinitions,
+              ...growthDefinitions,
+            }}
+          />
+          <MetricsCard
+            title="Earnings"
+            metrics={data.fundamental_overview.earnings}
+            showInterpretation={true}
+            metricDefinitions={earningsDefinitions}
+          />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Market Data"
+            metrics={[
+              ...data.fundamental_overview.market_data,
+              { name: 'Beta', value: data.beta },
+              { name: 'Forward Dividend', value: data.dividend_rate, unit: '$' },
+              { name: 'Fwd Div Yield', value: data.forward_dividend_yield, unit: '%' },
+              { name: 'Earnings Date', value: data.earnings_timestamp },
+            ]}
+            showInterpretation={false}
+            metricDefinitions={{
+              ...marketDataDefinitions,
+              Beta: 'Measure of stock volatility vs the market. >1 = more volatile than market, <1 = less volatile.',
+              'Forward Dividend':
+                'Annual dividend rate in dollars per share. This is the projected annual dividend based on recent payouts (e.g., $0.04 means $0.01 per quarter = $0.04/year).',
+              'Fwd Div Yield':
+                'Forward dividend yield as percentage of current price. Annual dividend / stock price.',
+              'Earnings Date':
+                'Upcoming date when the company will report earnings. Stock may be more volatile around this time.',
+            }}
+            source="yahoo"
+          />
+          <MetricsCard
+            title="Analyst Ratings"
+            metrics={[
+              { name: '1Y Target (Mean)', value: data.target_mean_price, unit: '$' },
+              { name: '1Y Target (Median)', value: data.target_median_price, unit: '$' },
+              { name: 'Analyst Opinions', value: data.number_of_analyst_opinions },
+              { name: 'Rec. Mean', value: data.recommendation_mean },
+              { name: 'Target High', value: data.target_high_price, unit: '$' },
+              { name: 'Target Low', value: data.target_low_price, unit: '$' },
+              { name: '50D Avg', value: data.fifty_day_average, unit: '$' },
+              { name: '200D Avg', value: data.two_hundred_day_average, unit: '$' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={{
+              '1Y Target (Mean)':
+                'Analyst consensus 1-year price target (in dollars). Where analysts expect the stock to go. Not guaranteed.',
+              '1Y Target (Median)':
+                'Median of analyst 1-year price targets. Less influenced by outliers than the mean.',
+              'Analyst Opinions':
+                'Number of analysts who have published research on this stock. More analysts = more coverage.',
+              'Rec. Mean':
+                'Analyst recommendation mean (1=Strong Buy, 2=Buy, 3=Hold, 4=Underperform, 5=Sell). Lower is better.',
+              'Target High':
+                'Highest analyst 1-year price target. Represents the most optimistic analyst outlook.',
+              'Target Low':
+                'Lowest analyst 1-year price target. Represents the most pessimistic analyst outlook.',
+              '50D Avg': '50-day moving average price. Short-term trend indicator.',
+              '200D Avg': '200-day moving average price. Long-term trend indicator.',
+              ...analystDefinitions,
+            }}
+          />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Financial Health"
+            metrics={[
+              { name: 'EBITDA', value: data.ebitda },
+              { name: 'Total Cash', value: data.total_cash },
+              { name: 'Total Debt', value: data.total_debt },
+              { name: 'Current Ratio', value: data.current_ratio },
+              { name: 'Quick Ratio', value: data.quick_ratio },
+              { name: 'Payout Ratio', value: data.payout_ratio, unit: '%' },
+              { name: 'Cash/Share', value: data.total_cash_per_share, unit: '$' },
+              { name: 'Operating Cash Flow', value: data.operating_cash_flow },
+              { name: 'Free Cash Flow', value: data.free_cash_flow },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={financialHealthDefinitions}
+          />
+          <MetricsCard
+            title="Short Interest & Dividends"
+            metrics={[
+              { name: 'Shares Short', value: data.shares_short },
+              { name: 'Short Ratio', value: data.short_ratio },
+              { name: 'Short % of Float', value: data.short_percent_of_float, unit: '%' },
+              { name: 'Float Shares', value: data.float_shares, unit: 'shares' },
+              {
+                name: 'Trailing Ann. Div. Rate',
+                value: data.trailing_annual_dividend_rate,
+                unit: '$',
+              },
+              {
+                name: 'Trailing Ann. Div. Yield',
+                value: data.trailing_annual_dividend_yield,
+                unit: '%',
+              },
+              { name: '5Y Avg Div. Yield', value: data.five_year_avg_dividend_yield, unit: '%' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={shortInterestDefinitions}
+          />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <MetricsCard
+            title="Ownership & Structure"
+            metrics={[
+              { name: 'Shares Outstanding', value: data.shares_outstanding, unit: 'shares' },
+              { name: 'Revenue/Share', value: data.revenue_per_share, unit: '$' },
+              { name: 'Insider Ownership', value: data.held_percent_insiders, unit: '%' },
+              { name: 'Institutional Ownership', value: data.held_percent_institutions, unit: '%' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={ownershipDefinitions}
+          />
+          <MetricsCard
+            title="Price Performance"
+            metrics={[
+              { name: '52W Change', value: data.fifty_two_week_change, unit: '%' },
+              { name: 'S&P 52W Change', value: data.s_and_p_fifty_two_week_change, unit: '%' },
+              { name: 'All-Time High', value: data.all_time_high, unit: '$' },
+              { name: 'All-Time Low', value: data.all_time_low, unit: '$' },
+            ]}
+            showInterpretation={true}
+            metricDefinitions={performanceDefinitions}
+          />
+        </div>
       </div>
 
       {/* Advanced Metrics - Statistical & Risk-Adjusted Returns */}
@@ -1152,35 +1104,6 @@ export function AnalysisResults({
                     <p className="text-sm text-gray-500">
                       {data.ticker} · {data.company_name}
                     </p>
-                  </div>
-                </div>
-                {/* Confidence Badge */}
-                <div className="text-right">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-gray-500">Confidence</span>
-                    <span
-                      className={`text-sm font-semibold ${
-                        data.ai_outlook.confidence_score >= 70
-                          ? 'text-green-600'
-                          : data.ai_outlook.confidence_score >= 40
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
-                      }`}
-                    >
-                      {data.ai_outlook.confidence_score.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        data.ai_outlook.confidence_score >= 70
-                          ? 'bg-green-500'
-                          : data.ai_outlook.confidence_score >= 40
-                            ? 'bg-yellow-500'
-                            : 'bg-red-500'
-                      }`}
-                      style={{ width: `${data.ai_outlook.confidence_score}%` }}
-                    />
                   </div>
                 </div>
               </div>

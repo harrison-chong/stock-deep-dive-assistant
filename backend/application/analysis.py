@@ -473,7 +473,6 @@ class StockAnalyzer:
             neutral_scenario=ai_interpretation.neutral_scenario,
             recommendation=ai_interpretation.recommendation,
             recommendation_rationale=ai_interpretation.recommendation_rationale,
-            confidence_score=ai_interpretation.confidence_score,
         )
 
     async def calculate_performance(

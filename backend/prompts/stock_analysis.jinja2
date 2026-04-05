@@ -6,122 +6,124 @@ Analyze this stock ({{ ticker }} - {{ company_name }}) and provide a data-driven
 ## Fundamental Metrics
 {{ fundamental_summary }}
 
-## Fundamental Metrics
+## Additional Fundamental Metrics
 {% if additional_fundamentals %}
 ### Valuation
-{% if additional_fundamentals.ebitda %}- EBITDA: ${{ "%.2f"|format(additional_fundamentals.ebitda) }}B
+{% if additional_fundamentals.ebitda %}- EBITDA: {{ additional_fundamentals.ebitda }}
 {% endif %}
-{% if additional_fundamentals.market_cap %}- Market Cap: ${{ "%.2f"|format(additional_fundamentals.market_cap / 1e9) }}B
+{% if additional_fundamentals.market_cap %}- Market Cap: {{ additional_fundamentals.market_cap }}
 {% endif %}
-{% if additional_fundamentals.enterprise_value %}- Enterprise Value: ${{ "%.2f"|format(additional_fundamentals.enterprise_value / 1e9) }}B
+{% if additional_fundamentals.enterprise_value %}- Enterprise Value: {{ additional_fundamentals.enterprise_value }}
 {% endif %}
-{% if additional_fundamentals.price_to_book %}- Price/Book: {{ "%.2f"|format(additional_fundamentals.price_to_book) }}x
+{% if additional_fundamentals.price_to_book %}- Price/Book: {{ additional_fundamentals.price_to_book }}x
 {% endif %}
-{% if additional_fundamentals.price_to_sales %}- Price/Sales: {{ "%.2f"|format(additional_fundamentals.price_to_sales) }}x
+{% if additional_fundamentals.price_to_sales %}- Price/Sales: {{ additional_fundamentals.price_to_sales }}x
 {% endif %}
-{% if additional_fundamentals.ev_ebitda %}- EV/EBITDA: {{ "%.2f"|format(additional_fundamentals.ev_ebitda) }}x
+{% if additional_fundamentals.ev_ebitda %}- EV/EBITDA: {{ additional_fundamentals.ev_ebitda }}x
 {% endif %}
 
 ### Financial Health
-{% if additional_fundamentals.total_cash %}- Total Cash: ${{ "%.2f"|format(additional_fundamentals.total_cash / 1e9) }}B
+{% if additional_fundamentals.total_cash %}- Total Cash: {{ additional_fundamentals.total_cash }}
 {% endif %}
-{% if additional_fundamentals.total_debt %}- Total Debt: ${{ "%.2f"|format(additional_fundamentals.total_debt / 1e9) }}B
+{% if additional_fundamentals.total_debt %}- Total Debt: {{ additional_fundamentals.total_debt }}
 {% endif %}
-{% if additional_fundamentals.current_ratio %}- Current Ratio: {{ "%.2f"|format(additional_fundamentals.current_ratio) }}
+{% if additional_fundamentals.current_ratio %}- Current Ratio: {{ additional_fundamentals.current_ratio }}
 {% endif %}
-{% if additional_fundamentals.quick_ratio %}- Quick Ratio: {{ "%.2f"|format(additional_fundamentals.quick_ratio) }}
+{% if additional_fundamentals.quick_ratio %}- Quick Ratio: {{ additional_fundamentals.quick_ratio }}
 {% endif %}
-{% if additional_fundamentals.payout_ratio %}- Payout Ratio: {{ "%.2f"|format(additional_fundamentals.payout_ratio * 100) }}%
+{% if additional_fundamentals.payout_ratio %}- Payout Ratio: {{ additional_fundamentals.payout_ratio }}
 {% endif %}
-{% if additional_fundamentals.cash_per_share %}- Cash/Share: ${{ "%.2f"|format(additional_fundamentals.cash_per_share) }}
+{% if additional_fundamentals.cash_per_share %}- Cash/Share: {{ additional_fundamentals.cash_per_share }}
 {% endif %}
-{% if additional_fundamentals.free_cash_flow %}- Free Cash Flow: ${{ "%.2f"|format(additional_fundamentals.free_cash_flow / 1e9) }}B
+{% if additional_fundamentals.free_cash_flow %}- Free Cash Flow: {{ additional_fundamentals.free_cash_flow }}
 {% endif %}
-{% if additional_fundamentals.operating_cash_flow %}- Operating Cash Flow: ${{ "%.2f"|format(additional_fundamentals.operating_cash_flow / 1e9) }}B
+{% if additional_fundamentals.operating_cash_flow %}- Operating Cash Flow: {{ additional_fundamentals.operating_cash_flow }}
 {% endif %}
 
 ### Earnings & Profitability
-{% if additional_fundamentals.eps %}- EPS (TTM): ${{ "%.2f"|format(additional_fundamentals.eps) }}
+{% if additional_fundamentals.eps %}- EPS (TTM): {{ additional_fundamentals.eps }}
 {% endif %}
-{% if additional_fundamentals.forward_eps %}- Forward EPS: ${{ "%.2f"|format(additional_fundamentals.forward_eps) }}
+{% if additional_fundamentals.forward_eps %}- Forward EPS: {{ additional_fundamentals.forward_eps }}
 {% endif %}
-{% if additional_fundamentals.book_value %}- Book Value: ${{ "%.2f"|format(additional_fundamentals.book_value) }}
+{% if additional_fundamentals.book_value %}- Book Value: {{ additional_fundamentals.book_value }}
 {% endif %}
-{% if additional_fundamentals.return_on_assets %}- Return on Assets: {{ "%.2f"|format(additional_fundamentals.return_on_assets * 100) }}%
+{% if additional_fundamentals.return_on_assets %}- Return on Assets: {{ additional_fundamentals.return_on_assets }}
 {% endif %}
-{% if additional_fundamentals.return_on_investment %}- Return on Investment: {{ "%.2f"|format(additional_fundamentals.return_on_investment * 100) }}%
+{% if additional_fundamentals.return_on_investment %}- Return on Investment: {{ additional_fundamentals.return_on_investment }}
 {% endif %}
-{% if additional_fundamentals.gross_margins %}- Gross Margins: {{ "%.2f"|format(additional_fundamentals.gross_margins * 100) }}%
+{% if additional_fundamentals.gross_margins %}- Gross Margins: {{ additional_fundamentals.gross_margins }}
 {% endif %}
-{% if additional_fundamentals.operating_margins %}- Operating Margins: {{ "%.2f"|format(additional_fundamentals.operating_margins * 100) }}%
+{% if additional_fundamentals.operating_margins %}- Operating Margins: {{ additional_fundamentals.operating_margins }}
 {% endif %}
 
 ### Analyst & Price Targets
 {% if additional_fundamentals.number_of_analyst_opinions %}- Analyst Opinions: {{ additional_fundamentals.number_of_analyst_opinions }}
 {% endif %}
-{% if additional_fundamentals.recommendation_mean %}- Recommendation Mean: {{ "%.2f"|format(additional_fundamentals.recommendation_mean) }} (1=Strong Buy, 5=Sell)
+{% if additional_fundamentals.recommendation_mean %}- Recommendation Mean: {{ additional_fundamentals.recommendation_mean }} (1=Strong Buy, 5=Sell)
 {% endif %}
-{% if additional_fundamentals.target_high_price %}- Target High Price: ${{ "%.2f"|format(additional_fundamentals.target_high_price) }}
+{% if additional_fundamentals.target_high_price %}- Target High Price: {{ additional_fundamentals.target_high_price }}
 {% endif %}
-{% if additional_fundamentals.target_low_price %}- Target Low Price: ${{ "%.2f"|format(additional_fundamentals.target_low_price) }}
+{% if additional_fundamentals.target_low_price %}- Target Low Price: {{ additional_fundamentals.target_low_price }}
 {% endif %}
-{% if additional_fundamentals.fifty_day_average %}- 50-Day Average: ${{ "%.2f"|format(additional_fundamentals.fifty_day_average) }}
+{% if additional_fundamentals.fifty_day_average %}- 50-Day Average: {{ additional_fundamentals.fifty_day_average }}
 {% endif %}
-{% if additional_fundamentals.two_hundred_day_average %}- 200-Day Average: ${{ "%.2f"|format(additional_fundamentals.two_hundred_day_average) }}
+{% if additional_fundamentals.two_hundred_day_average %}- 200-Day Average: {{ additional_fundamentals.two_hundred_day_average }}
 {% endif %}
 
 ### Ownership & Share Structure
-{% if additional_fundamentals.shares_outstanding %}- Shares Outstanding: {{ "%.2f"|format(additional_fundamentals.shares_outstanding / 1e6) }}M
+{% if additional_fundamentals.shares_outstanding %}- Shares Outstanding: {{ additional_fundamentals.shares_outstanding }}
 {% endif %}
-{% if additional_fundamentals.float_shares %}- Float Shares: {{ "%.2f"|format(additional_fundamentals.float_shares / 1e6) }}M
+{% if additional_fundamentals.float_shares %}- Float Shares: {{ additional_fundamentals.float_shares }}
 {% endif %}
-{% if additional_fundamentals.insider_ownership %}- Insider Ownership: {{ "%.2f"|format(additional_fundamentals.insider_ownership * 100) }}%
+{% if additional_fundamentals.insider_ownership %}- Insider Ownership: {{ additional_fundamentals.insider_ownership }}
 {% endif %}
-{% if additional_fundamentals.institutional_ownership %}- Institutional Ownership: {{ "%.2f"|format(additional_fundamentals.institutional_ownership * 100) }}%
+{% if additional_fundamentals.institutional_ownership %}- Institutional Ownership: {{ additional_fundamentals.institutional_ownership }}
 {% endif %}
 
 ### Short Interest & Dividends
-{% if additional_fundamentals.shares_short %}- Shares Short: {{ "%.2f"|format(additional_fundamentals.shares_short / 1e6) }}M
+{% if additional_fundamentals.shares_short %}- Shares Short: {{ additional_fundamentals.shares_short }}
 {% endif %}
-{% if additional_fundamentals.short_ratio %}- Short Ratio: {{ "%.2f"|format(additional_fundamentals.short_ratio) }} days
+{% if additional_fundamentals.short_ratio %}- Short Ratio: {{ additional_fundamentals.short_ratio }}
 {% endif %}
-{% if additional_fundamentals.short_percent_of_float %}- Short % of Float: {{ "%.2f"|format(additional_fundamentals.short_percent_of_float * 100) }}%
+{% if additional_fundamentals.short_percent_of_float %}- Short % of Float: {{ additional_fundamentals.short_percent_of_float }}
 {% endif %}
-{% if additional_fundamentals.trailing_annual_dividend_rate %}- Trailing Ann. Div. Rate: ${{ "%.2f"|format(additional_fundamentals.trailing_annual_dividend_rate) }}
+{% if additional_fundamentals.trailing_annual_dividend_rate %}- Trailing Ann. Div. Rate: {{ additional_fundamentals.trailing_annual_dividend_rate }}
 {% endif %}
-{% if additional_fundamentals.trailing_annual_dividend_yield %}- Trailing Ann. Div. Yield: {{ "%.2f"|format(additional_fundamentals.trailing_annual_dividend_yield * 100) }}%
+{% if additional_fundamentals.trailing_annual_dividend_yield %}- Trailing Ann. Div. Yield: {{ additional_fundamentals.trailing_annual_dividend_yield }}
 {% endif %}
-{% if additional_fundamentals.dividend_rate %}- Dividend Rate: ${{ "%.2f"|format(additional_fundamentals.dividend_rate) }}
+{% if additional_fundamentals.dividend_rate %}- Dividend Rate: {{ additional_fundamentals.dividend_rate }}
 {% endif %}
-{% if additional_fundamentals.dividend_yield %}- Dividend Yield: {{ "%.2f"|format(additional_fundamentals.dividend_yield * 100) }}%
+{% if additional_fundamentals.dividend_yield %}- Dividend Yield: {{ additional_fundamentals.dividend_yield }}
 {% endif %}
 
 ### Performance Metrics
-{% if additional_fundamentals.beta %}- Beta: {{ "%.2f"|format(additional_fundamentals.beta) }}
+{% if additional_fundamentals.beta %}- Beta: {{ additional_fundamentals.beta }}
 {% endif %}
-{% if additional_fundamentals.fifty_two_week_change %}- 52W Change: {{ "%.2f"|format(additional_fundamentals.fifty_two_week_change * 100) }}%
+{% if additional_fundamentals.fifty_two_week_change %}- 52W Change: {{ additional_fundamentals.fifty_two_week_change }}
 {% endif %}
-{% if additional_fundamentals.s_and_p_fifty_two_week_change %}- S&P 52W Change: {{ "%.2f"|format(additional_fundamentals.s_and_p_fifty_two_week_change * 100) }}%
+{% if additional_fundamentals.s_and_p_fifty_two_week_change %}- S&P 52W Change: {{ additional_fundamentals.s_and_p_fifty_two_week_change }}
 {% endif %}
-{% if additional_fundamentals.all_time_high %}- All-Time High: ${{ "%.2f"|format(additional_fundamentals.all_time_high) }}
+{% if additional_fundamentals.all_time_high %}- All-Time High: {{ additional_fundamentals.all_time_high }}
 {% endif %}
-{% if additional_fundamentals.all_time_low %}- All-Time Low: ${{ "%.2f"|format(additional_fundamentals.all_time_low) }}
+{% if additional_fundamentals.all_time_low %}- All-Time Low: {{ additional_fundamentals.all_time_low }}
 {% endif %}
-{% if additional_fundamentals.fifty_two_week_high %}- 52W High: ${{ "%.2f"|format(additional_fundamentals.fifty_two_week_high) }}
+{% if additional_fundamentals.fifty_two_week_high %}- 52W High: {{ additional_fundamentals.fifty_two_week_high }}
 {% endif %}
-{% if additional_fundamentals.fifty_two_week_low %}- 52W Low: ${{ "%.2f"|format(additional_fundamentals.fifty_two_week_low) }}
+{% if additional_fundamentals.fifty_two_week_low %}- 52W Low: {{ additional_fundamentals.fifty_two_week_low }}
+{% endif %}
+{% if additional_fundamentals.five_year_avg_dividend_yield %}- 5Y Avg Div Yield: {{ additional_fundamentals.five_year_avg_dividend_yield }}
 {% endif %}
 {% endif %}
 
 ## Advanced Statistical Metrics
-- Total Return: {{ advanced_metrics.statistical.total_return }}%
-- Annualized Return (CAGR): {{ advanced_metrics.statistical.annualized_return }}%
-- Annualized Volatility: {{ advanced_metrics.statistical.volatility }}%
+- Total Return: {{ advanced_metrics.statistical.total_return }}
+- Annualized Return (CAGR): {{ advanced_metrics.statistical.annualized_return }}
+- Annualized Volatility: {{ advanced_metrics.statistical.volatility }}
 - Sharpe Ratio: {{ advanced_metrics.statistical.sharpe_ratio }} (risk-adjusted return; >1 good, >2 very good)
 - Sortino Ratio: {{ advanced_metrics.statistical.sortino_ratio }} (downside risk-adjusted; >2 good)
 - Calmar Ratio: {{ advanced_metrics.statistical.calmar_ratio }} (return vs max drawdown; >1 favorable)
-- Maximum Drawdown: {{ advanced_metrics.statistical.max_drawdown }}% (worst peak-to-trough)
-- Value at Risk (95%, 1-day): {{ advanced_metrics.statistical.var_95 }}% (worst expected daily loss)
+- Maximum Drawdown: {{ advanced_metrics.statistical.max_drawdown }} (worst peak-to-trough)
+- Value at Risk (95%, 1-day): {{ advanced_metrics.statistical.var_95 }} (worst expected daily loss)
 - Ulcer Index: {{ advanced_metrics.statistical.ulcer_index }} (drawdown severity)
 - Recovery Days: {{ advanced_metrics.statistical.recovery_days }} days (days to recover from max drawdown)
 - Skewness: {{ advanced_metrics.statistical.skewness }} (>0.5 positive skew, <-0.5 negative skew)
@@ -129,22 +131,22 @@ Analyze this stock ({{ ticker }} - {{ company_name }}) and provide a data-driven
 
 ## Advanced Technical Metrics
 Multi-Period Returns:
-- 1 Month: {{ advanced_metrics.technical.returns_1m }}%
-- 3 Month: {{ advanced_metrics.technical.returns_3m }}%
-- 6 Month: {{ advanced_metrics.technical.returns_6m }}%
-- 1 Year: {{ advanced_metrics.technical.returns_1y }}%
+- 1 Month: {{ advanced_metrics.technical.returns_1m }}
+- 3 Month: {{ advanced_metrics.technical.returns_3m }}
+- 6 Month: {{ advanced_metrics.technical.returns_6m }}
+- 1 Year: {{ advanced_metrics.technical.returns_1y }}
 
 Moving Average Analysis:
-- Price vs SMA 50: {{ advanced_metrics.technical.price_vs_sma_50 }}%
-- Price vs SMA 200: {{ advanced_metrics.technical.price_vs_sma_200 }}%
+- Price vs SMA 50: {{ advanced_metrics.technical.price_vs_sma_50 }}
+- Price vs SMA 200: {{ advanced_metrics.technical.price_vs_sma_200 }}
 - Golden Cross Detected: {{ advanced_metrics.technical.golden_cross }}
 - Death Cross Detected: {{ advanced_metrics.technical.death_cross }}
 
 Support/Resistance (Pivot Points):
-- Resistance 1: ${{ advanced_metrics.technical.pivot_resistance_1 }}
-- Resistance 2: ${{ advanced_metrics.technical.pivot_resistance_2 }}
-- Support 1: ${{ advanced_metrics.technical.pivot_support_1 }}
-- Support 2: ${{ advanced_metrics.technical.pivot_support_2 }}
+- Resistance 1: {{ advanced_metrics.technical.pivot_resistance_1 }}
+- Resistance 2: {{ advanced_metrics.technical.pivot_resistance_2 }}
+- Support 1: {{ advanced_metrics.technical.pivot_support_1 }}
+- Support 2: {{ advanced_metrics.technical.pivot_support_2 }}
 
 Volume Analysis:
 - 50-Day Average Volume: {{ advanced_metrics.technical.volume_avg_50d }}
@@ -153,15 +155,15 @@ Volume Analysis:
 ## Seasonal & Cyclical Patterns (Average across all years in dataset)
 {% if advanced_metrics.seasonal %}
 Monthly Returns:
-{% for month, ret in advanced_metrics.seasonal.monthly_returns.items() %}- {{ month }}: {{ ret }}%
+{% for month, ret in advanced_metrics.seasonal.monthly_returns.items() %}- {{ month }}: {{ ret }}
 {% endfor %}
 
 Quarterly Returns:
-{% for quarter, ret in advanced_metrics.seasonal.quarterly_returns.items() %}- {{ quarter }}: {{ ret }}%
+{% for quarter, ret in advanced_metrics.seasonal.quarterly_returns.items() %}- {{ quarter }}: {{ ret }}
 {% endfor %}
 
 Day of Week Effect:
-{% for day, ret in advanced_metrics.seasonal.day_of_week_effect.items() %}- {{ day }}: {{ ret }}%
+{% for day, ret in advanced_metrics.seasonal.day_of_week_effect.items() %}- {{ day }}: {{ ret }}
 {% endfor %}
 {% endif %}
 
@@ -178,8 +180,7 @@ Respond in JSON format:
     "risk_factors": ["Risk 1", "Risk 2"],
     "neutral_scenario": "Base case scenario",
     "recommendation": "Avoid, Hold, or Consider",
-    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing SPECIFIC metric values from above. The recommendation must be driven purely by the data provided.",
-    "confidence_score": 75
+    "recommendation_rationale": "Provide a detailed 3-4 sentence explanation of why this recommendation was chosen, citing SPECIFIC metric values from above. The recommendation must be driven purely by the data provided."
 }
 
 Not financial advice. For educational purposes only.
