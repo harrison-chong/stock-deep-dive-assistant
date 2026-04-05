@@ -8,9 +8,17 @@ interface AnalysisResultsProps {
   data: AnalysisData;
   period: string;
   onPeriodChange: (period: string) => void;
+  loadingAI?: boolean;
+  onGenerateAI?: () => void;
 }
 
-export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResultsProps) {
+export function AnalysisResults({
+  data,
+  period,
+  onPeriodChange,
+  loadingAI = false,
+  onGenerateAI,
+}: AnalysisResultsProps) {
   // Metric definitions for Technical Overview
   const movingAverageDefinitions: Record<string, string> = {
     'SMA 20':
@@ -1045,96 +1053,119 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
             </div>
           )}
 
-          {/* AI Outlook - Moved to bottom */}
-          <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <div className="flex items-start justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                AI Analysis for {data.ticker}
-                <span className="text-sm font-normal text-gray-600">
-                  Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
-                </span>
-              </h3>
-              <div className="text-right text-xs text-gray-500">
-                <p>
-                  Data:{' '}
-                  {data.data_start_date
-                    ? new Date(data.data_start_date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : '?'}{' '}
-                  -{' '}
-                  {data.data_end_date
-                    ? new Date(data.data_end_date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : '?'}
-                </p>
-                {data.sector && (
-                  <p>
-                    {data.sector} {data.industry ? `• ${data.industry}` : ''}
-                  </p>
+          {/* AI Outlook - On-demand loading */}
+          {data.ai_outlook === null ? (
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Analysis</h3>
+              <p className="text-gray-600 mb-6">
+                Get AI-powered insights including bull/bear cases, risk factors, and recommendation
+              </p>
+              <button
+                onClick={onGenerateAI}
+                disabled={loadingAI}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loadingAI ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                    Generating...
+                  </span>
+                ) : (
+                  'Generate AI Analysis'
                 )}
-              </div>
+              </button>
             </div>
-
-            <div className="space-y-6">
-              <div>
-                <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg p-8">
+              <div className="flex items-start justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  AI Analysis for {data.ticker}
+                  <span className="text-sm font-normal text-gray-600">
+                    Confidence: {data.ai_outlook.confidence_score.toFixed(0)}%
+                  </span>
+                </h3>
+                <div className="text-right text-xs text-gray-500">
+                  <p>
+                    Data:{' '}
+                    {data.data_start_date
+                      ? new Date(data.data_start_date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '?'}{' '}
+                    -{' '}
+                    {data.data_end_date
+                      ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '?'}
+                  </p>
+                  {data.sector && (
+                    <p>
+                      {data.sector} {data.industry ? `• ${data.industry}` : ''}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="border border-gray-200 rounded-lg p-6 bg-green-50">
-                  <h4 className="font-semibold text-gray-900 mb-3">Bull Case</h4>
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    {data.ai_outlook.bull_case}
-                  </p>
-                </div>
-                <div className="border border-gray-200 rounded-lg p-6 bg-red-50">
-                  <h4 className="font-semibold text-gray-900 mb-3">Bear Case</h4>
-                  <p className="text-gray-700 text-sm leading-relaxed">
-                    {data.ai_outlook.bear_case}
-                  </p>
-                </div>
-              </div>
-
-              {data.ai_outlook.risk_factors.length > 0 && (
+              <div className="space-y-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Risk Factors</h4>
-                  <ul className="space-y-2">
-                    {data.ai_outlook.risk_factors.map((risk, i) => (
-                      <li key={i} className="text-gray-700 text-sm flex gap-3">
-                        <span className="text-gray-400">•</span>
-                        {risk}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
                 </div>
-              )}
 
-              <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
-                <h4 className="font-semibold text-gray-900 mb-3">Neutral Scenario</h4>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  {data.ai_outlook.neutral_scenario}
-                </p>
-              </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="border border-gray-200 rounded-lg p-6 bg-green-50">
+                    <h4 className="font-semibold text-gray-900 mb-3">Bull Case</h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {data.ai_outlook.bull_case}
+                    </p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-6 bg-red-50">
+                    <h4 className="font-semibold text-gray-900 mb-3">Bear Case</h4>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {data.ai_outlook.bear_case}
+                    </p>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-                <div className="flex-1">
-                  <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
-                  <p className="text-xl font-semibold text-gray-900 mt-1">
-                    {data.ai_outlook.recommendation}
+                {data.ai_outlook.risk_factors.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Risk Factors</h4>
+                    <ul className="space-y-2">
+                      {data.ai_outlook.risk_factors.map((risk, i) => (
+                        <li key={i} className="text-gray-700 text-sm flex gap-3">
+                          <span className="text-gray-400">•</span>
+                          {risk}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="border border-gray-200 rounded-lg p-6 bg-blue-50">
+                  <h4 className="font-semibold text-gray-900 mb-3">Neutral Scenario</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {data.ai_outlook.neutral_scenario}
                   </p>
-                  <p className="text-gray-700 text-sm mt-3 leading-relaxed">
-                    {data.ai_outlook.recommendation_rationale}
-                  </p>
+                </div>
+
+                <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-600 uppercase tracking-wide">Recommendation</p>
+                    <p className="text-xl font-semibold text-gray-900 mt-1">
+                      {data.ai_outlook.recommendation}
+                    </p>
+                    <p className="text-gray-700 text-sm mt-3 leading-relaxed">
+                      {data.ai_outlook.recommendation_rationale}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

@@ -86,10 +86,12 @@ function HomePage() {
     period,
     setPeriod,
     loading,
+    loadingAI,
     error,
     data,
     handleAnalyze,
     updateChartData,
+    handleGenerateAI,
   } = useStockAnalysis();
 
   // Get date range for the selected period
@@ -181,7 +183,13 @@ function HomePage() {
 
         {/* Analysis Results */}
         {data && (
-          <AnalysisResults data={data} period={period} onPeriodChange={handleChartPeriodChange} />
+          <AnalysisResults
+            data={data}
+            period={period}
+            onPeriodChange={handleChartPeriodChange}
+            loadingAI={loadingAI}
+            onGenerateAI={handleGenerateAI}
+          />
         )}
       </div>
     </div>

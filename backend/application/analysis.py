@@ -39,7 +39,7 @@ class StockAnalyzer:
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> StockAnalysisResponse:
-        """Perform complete stock analysis"""
+        """Perform complete stock analysis without AI (AI is loaded on-demand)"""
         # Fetch data concurrently (OHLC in parallel with ticker info)
         ohlc, (fundamentals, company_info, info) = await asyncio.gather(
             self.data_service.get_ohlc(
@@ -220,75 +220,8 @@ class StockAnalyzer:
             ],
         )
 
-        # AI interpretation
-        tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, MACD Signal: {tech_indicators.macd_signal}, SMA20: {tech_indicators.sma_20}, SMA50: {tech_indicators.sma_50}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
-        fundamental_summary = f"P/E Ratio: {fundamentals.pe_ratio}, Forward P/E: {fundamentals.forward_pe}, ROE: {fundamentals.roe}%, Debt-to-Equity: {fundamentals.debt_to_equity}, Profit Margin: {fundamentals.profit_margin}%, Revenue Growth: {fundamentals.revenue_growth}%"
-        news_summary = "News integration pending"
-
-        # Prepare advanced metrics for AI analysis
-        advanced_metrics_dict = {
-            "statistical": {
-                "total_return": advanced_metrics.statistical.total_return,
-                "annualized_return": advanced_metrics.statistical.annualized_return,
-                "annualized_volatility": advanced_metrics.statistical.annualized_volatility,
-                "sharpe_ratio": advanced_metrics.statistical.sharpe_ratio,
-                "sortino_ratio": advanced_metrics.statistical.sortino_ratio,
-                "calmar_ratio": advanced_metrics.statistical.calmar_ratio,
-                "max_drawdown": advanced_metrics.statistical.max_drawdown,
-                "var_95": advanced_metrics.statistical.var_95,
-                "ulcer_index": advanced_metrics.statistical.ulcer_index,
-                "recovery_days": advanced_metrics.statistical.recovery_days,
-                "skewness": advanced_metrics.statistical.skewness,
-                "kurtosis": advanced_metrics.statistical.kurtosis,
-            },
-            "technical": {
-                "returns_1m": advanced_metrics.technical.returns_1m,
-                "returns_3m": advanced_metrics.technical.returns_3m,
-                "returns_6m": advanced_metrics.technical.returns_6m,
-                "returns_1y": advanced_metrics.technical.returns_1y,
-                "price_vs_sma_50": advanced_metrics.technical.price_vs_sma_50,
-                "price_vs_sma_200": advanced_metrics.technical.price_vs_sma_200,
-                "golden_cross_detected": advanced_metrics.technical.golden_cross_detected,
-                "death_cross_detected": advanced_metrics.technical.death_cross_detected,
-                "pivot_resistance_1": advanced_metrics.technical.pivot_resistance_1,
-                "pivot_resistance_2": advanced_metrics.technical.pivot_resistance_2,
-                "pivot_support_1": advanced_metrics.technical.pivot_support_1,
-                "pivot_support_2": advanced_metrics.technical.pivot_support_2,
-                "volume_avg_50d": advanced_metrics.technical.volume_avg_50d,
-                "volume_trend": advanced_metrics.technical.volume_trend,
-            },
-            "seasonal": {
-                "monthly_returns": advanced_metrics.seasonal.monthly_returns
-                if advanced_metrics.seasonal
-                else None,
-                "quarterly_returns": advanced_metrics.seasonal.quarterly_returns
-                if advanced_metrics.seasonal
-                else None,
-                "day_of_week_effect": advanced_metrics.seasonal.day_of_week_effect
-                if advanced_metrics.seasonal
-                else None,
-            },
-        }
-
-        ai_interpretation = self.ai_service.interpret(
-            ticker=ticker,
-            company_name=company_info.name,
-            technical_summary=tech_summary,
-            fundamental_summary=fundamental_summary,
-            news_summary=news_summary,
-            advanced_metrics=advanced_metrics_dict,
-        )
-
-        ai_outlook = AIOutlookResponse(
-            overall_summary=ai_interpretation.overall_summary,
-            bull_case=ai_interpretation.bull_case,
-            bear_case=ai_interpretation.bear_case,
-            risk_factors=ai_interpretation.risk_factors,
-            neutral_scenario=ai_interpretation.neutral_scenario,
-            recommendation=ai_interpretation.recommendation,
-            recommendation_rationale=ai_interpretation.recommendation_rationale,
-            confidence_score=ai_interpretation.confidence_score,
-        )
+        # AI is NOT generated here - only returned as None (loaded on-demand via /analyze/ai)
+        ai_outlook = None
 
         # Build chart data from OHLC with SMA calculations
         closes = list(ohlc.close)
@@ -388,6 +321,109 @@ class StockAnalyzer:
             trailing_annual_dividend_rate=fundamentals.trailing_annual_dividend_rate,
             trailing_annual_dividend_yield=fundamentals.trailing_annual_dividend_yield,
             five_year_avg_dividend_yield=fundamentals.five_year_avg_dividend_yield,
+        )
+
+    async def generate_ai_outlook(
+        self,
+        ticker: str,
+        period: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> AIOutlookResponse:
+        """Generate AI outlook on-demand (re-fetches data and generates AI analysis)"""
+        # Fetch data concurrently
+        ohlc, (fundamentals, company_info, info) = await asyncio.gather(
+            self.data_service.get_ohlc(
+                ticker, period=period, start_date=start_date, end_date=end_date
+            ),
+            self.data_service.get_ticker_info(ticker),
+        )
+
+        # Convert OHLC to DataFrame
+        df = pd.DataFrame(
+            {
+                "open": ohlc.open,
+                "high": ohlc.high,
+                "low": ohlc.low,
+                "close": ohlc.close,
+                "volume": ohlc.volume,
+            },
+            index=ohlc.timestamp,
+        )
+
+        # Calculate indicators
+        tech_indicators = self.technical_service.calculate_all(df)
+        current_price = get_current_price(df)
+        advanced_metrics = self.advanced_service.calculate_all(df)
+
+        # Build summaries
+        tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, MACD Signal: {tech_indicators.macd_signal}, SMA20: {tech_indicators.sma_20}, SMA50: {tech_indicators.sma_50}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
+        fundamental_summary = f"P/E Ratio: {fundamentals.pe_ratio}, Forward P/E: {fundamentals.forward_pe}, ROE: {fundamentals.roe}%, Debt-to-Equity: {fundamentals.debt_to_equity}, Profit Margin: {fundamentals.profit_margin}%, Revenue Growth: {fundamentals.revenue_growth}%"
+        news_summary = "News integration pending"
+
+        # Prepare advanced metrics for AI analysis
+        advanced_metrics_dict = {
+            "statistical": {
+                "total_return": advanced_metrics.statistical.total_return,
+                "annualized_return": advanced_metrics.statistical.annualized_return,
+                "annualized_volatility": advanced_metrics.statistical.annualized_volatility,
+                "sharpe_ratio": advanced_metrics.statistical.sharpe_ratio,
+                "sortino_ratio": advanced_metrics.statistical.sortino_ratio,
+                "calmar_ratio": advanced_metrics.statistical.calmar_ratio,
+                "max_drawdown": advanced_metrics.statistical.max_drawdown,
+                "var_95": advanced_metrics.statistical.var_95,
+                "ulcer_index": advanced_metrics.statistical.ulcer_index,
+                "recovery_days": advanced_metrics.statistical.recovery_days,
+                "skewness": advanced_metrics.statistical.skewness,
+                "kurtosis": advanced_metrics.statistical.kurtosis,
+            },
+            "technical": {
+                "returns_1m": advanced_metrics.technical.returns_1m,
+                "returns_3m": advanced_metrics.technical.returns_3m,
+                "returns_6m": advanced_metrics.technical.returns_6m,
+                "returns_1y": advanced_metrics.technical.returns_1y,
+                "price_vs_sma_50": advanced_metrics.technical.price_vs_sma_50,
+                "price_vs_sma_200": advanced_metrics.technical.price_vs_sma_200,
+                "golden_cross_detected": advanced_metrics.technical.golden_cross_detected,
+                "death_cross_detected": advanced_metrics.technical.death_cross_detected,
+                "pivot_resistance_1": advanced_metrics.technical.pivot_resistance_1,
+                "pivot_resistance_2": advanced_metrics.technical.pivot_resistance_2,
+                "pivot_support_1": advanced_metrics.technical.pivot_support_1,
+                "pivot_support_2": advanced_metrics.technical.pivot_support_2,
+                "volume_avg_50d": advanced_metrics.technical.volume_avg_50d,
+                "volume_trend": advanced_metrics.technical.volume_trend,
+            },
+            "seasonal": {
+                "monthly_returns": advanced_metrics.seasonal.monthly_returns
+                if advanced_metrics.seasonal
+                else None,
+                "quarterly_returns": advanced_metrics.seasonal.quarterly_returns
+                if advanced_metrics.seasonal
+                else None,
+                "day_of_week_effect": advanced_metrics.seasonal.day_of_week_effect
+                if advanced_metrics.seasonal
+                else None,
+            },
+        }
+
+        ai_interpretation = self.ai_service.interpret(
+            ticker=ticker,
+            company_name=company_info.name,
+            technical_summary=tech_summary,
+            fundamental_summary=fundamental_summary,
+            news_summary=news_summary,
+            advanced_metrics=advanced_metrics_dict,
+        )
+
+        return AIOutlookResponse(
+            overall_summary=ai_interpretation.overall_summary,
+            bull_case=ai_interpretation.bull_case,
+            bear_case=ai_interpretation.bear_case,
+            risk_factors=ai_interpretation.risk_factors,
+            neutral_scenario=ai_interpretation.neutral_scenario,
+            recommendation=ai_interpretation.recommendation,
+            recommendation_rationale=ai_interpretation.recommendation_rationale,
+            confidence_score=ai_interpretation.confidence_score,
         )
 
     async def calculate_performance(

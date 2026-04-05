@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnalysisData } from '../types/analysis';
-import { analyzeStock, getChartData } from '../services/api';
+import { analyzeStock, getChartData, generateAIAnalysis } from '../services/api';
 import { ERROR_MESSAGES } from '../constants';
 
 export const useStockAnalysis = () => {
@@ -8,6 +8,7 @@ export const useStockAnalysis = () => {
   const [period, setPeriod] = useState('5y');
   const [loading, setLoading] = useState(false);
   const [loadingChart, setLoadingChart] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
 
@@ -83,6 +84,30 @@ export const useStockAnalysis = () => {
     }
   };
 
+  const handleGenerateAI = async (dateRange?: {
+    startDate?: string;
+    endDate?: string;
+    period?: string;
+  }) => {
+    if (!ticker.trim()) return;
+
+    setLoadingAI(true);
+    try {
+      const aiResult = await generateAIAnalysis(ticker, dateRange);
+      setData((prevData) => {
+        if (!prevData) return null;
+        return {
+          ...prevData,
+          ai_outlook: aiResult,
+        };
+      });
+    } catch (err) {
+      console.error('AI analysis failed:', err);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   return {
     ticker,
     setTicker,
@@ -90,9 +115,11 @@ export const useStockAnalysis = () => {
     setPeriod,
     loading,
     loadingChart,
+    loadingAI,
     error,
     data,
     handleAnalyze,
     updateChartData,
+    handleGenerateAI,
   };
 };

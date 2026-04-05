@@ -71,7 +71,7 @@ export interface AnalysisData {
     recommendation: string;
     recommendation_rationale: string;
     confidence_score: number;
-  };
+  } | null;
   timestamp: string;
   // Additional company information from yfinance
   website: string | null;

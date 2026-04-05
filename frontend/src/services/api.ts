@@ -73,6 +73,39 @@ export const getMarketSummary = async (): Promise<MarketSummaryResponse> => {
   return response.data;
 };
 
+export interface AIOutlookData {
+  overall_summary: string;
+  bull_case: string;
+  bear_case: string;
+  risk_factors: string[];
+  neutral_scenario: string;
+  recommendation: string;
+  recommendation_rationale: string;
+  confidence_score: number;
+}
+
+export const generateAIAnalysis = async (
+  ticker: string,
+  dateRange?: { startDate?: string; endDate?: string; period?: string },
+): Promise<AIOutlookData> => {
+  const payload: Record<string, string> = {
+    ticker: ticker.toUpperCase(),
+  };
+
+  if (dateRange?.period) {
+    payload.period = dateRange.period;
+  }
+  if (dateRange?.startDate) {
+    payload.start_date = dateRange.startDate;
+  }
+  if (dateRange?.endDate) {
+    payload.end_date = dateRange.endDate;
+  }
+
+  const response = await axios.post(`${API_BASE_URL}/api/analyze/ai`, payload);
+  return response.data;
+};
+
 export interface NewsArticle {
   title: string;
   description: string | null;
