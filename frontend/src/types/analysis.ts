@@ -70,7 +70,6 @@ export interface AnalysisData {
     neutral_scenario: string;
     recommendation: string;
     recommendation_rationale: string;
-    confidence_score: number;
   } | null;
   timestamp: string;
   // Additional company information from yfinance

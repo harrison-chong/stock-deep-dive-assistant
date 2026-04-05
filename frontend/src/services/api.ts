@@ -81,7 +81,6 @@ export interface AIOutlookData {
   neutral_scenario: string;
   recommendation: string;
   recommendation_rationale: string;
-  confidence_score: number;
 }
 
 export const generateAIAnalysis = async (

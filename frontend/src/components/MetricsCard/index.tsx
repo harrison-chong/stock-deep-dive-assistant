@@ -100,14 +100,14 @@ export function MetricsCard({
       <div className="space-y-4">
         {metrics.map((metric, i) => (
           <div key={i}>
-            <div className="flex justify-between items-center gap-2 mb-1">
-              <span className="text-gray-700 text-sm flex items-center">
-                {metric.name}
+            <div className="flex justify-between items-start gap-2 mb-1">
+              <span className="text-gray-700 text-sm flex flex-wrap items-center gap-1">
+                <span className="whitespace-nowrap">{metric.name}</span>
                 {metricDefinitions?.[metric.name] && (
                   <MetricDefinition text={metricDefinitions?.[metric.name]} />
                 )}
               </span>
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-gray-900 text-sm whitespace-nowrap">
                 {formatMetricValue(metric.value, metric.unit, metric.name)}
               </span>
             </div>

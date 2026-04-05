@@ -133,6 +133,97 @@ class AIService:
                 "seasonal": {},
             }
 
+        # Format additional_fundamentals - values from database are already percentages (multiplied by 100)
+        # But we need to format them properly so AI doesn't multiply again
+        formatted_additional = {}
+        if additional_fundamentals:
+            for key, value in additional_fundamentals.items():
+                if value is None:
+                    formatted_additional[key] = "N/A"
+                elif key in (
+                    "gross_margins",
+                    "operating_margins",
+                    "profit_margin",
+                    "payout_ratio",
+                    "return_on_assets",
+                    "return_on_investment",
+                    "revenue_growth",
+                    "earnings_growth",
+                    "earnings_quarterly_growth",
+                    "held_percent_insiders",
+                    "held_percent_institutions",
+                    "short_percent_of_float",
+                    "trailing_annual_dividend_yield",
+                    "fifty_two_week_change",
+                    "s_and_p_fifty_two_week_change",
+                    "five_year_avg_dividend_yield",
+                ):
+                    # These are already percentages (e.g., 45.85 = 45.85%)
+                    formatted_additional[key] = f"{value:.2f}%"
+                elif key in (
+                    "market_cap",
+                    "enterprise_value",
+                    "ebitda",
+                    "total_cash",
+                    "total_debt",
+                    "free_cash_flow",
+                    "operating_cash_flow",
+                ):
+                    # Format large numbers with B/M suffix
+                    if value is not None:
+                        if abs(value) >= 1e9:
+                            formatted_additional[key] = f"${value / 1e9:.2f}B"
+                        elif abs(value) >= 1e6:
+                            formatted_additional[key] = f"${value / 1e6:.2f}M"
+                        else:
+                            formatted_additional[key] = f"${value:.2f}"
+                    else:
+                        formatted_additional[key] = "N/A"
+                elif key in (
+                    "eps",
+                    "forward_eps",
+                    "book_value",
+                    "dividend_rate",
+                    "trailing_annual_dividend_rate",
+                    "target_high_price",
+                    "target_low_price",
+                    "fifty_day_average",
+                    "two_hundred_day_average",
+                    "total_cash_per_share",
+                    "price_to_book",
+                    "price_to_sales",
+                    "enterprise_to_ebitda",
+                ):
+                    # Dollar values
+                    formatted_additional[key] = (
+                        f"${value:.2f}" if value is not None else "N/A"
+                    )
+                elif key in ("beta",):
+                    # Ratio, no formatting
+                    formatted_additional[key] = (
+                        f"{value:.2f}" if value is not None else "N/A"
+                    )
+                elif key in ("current_ratio", "quick_ratio"):
+                    formatted_additional[key] = (
+                        f"{value:.2f}" if value is not None else "N/A"
+                    )
+                elif key in ("shares_outstanding", "float_shares", "shares_short"):
+                    formatted_additional[key] = (
+                        f"{value:,.0f}" if value is not None else "N/A"
+                    )
+                elif key in ("short_ratio",):
+                    formatted_additional[key] = (
+                        f"{value:.2f}" if value is not None else "N/A"
+                    )
+                elif key in ("number_of_analyst_opinions", "recommendation_mean"):
+                    formatted_additional[key] = (
+                        f"{value:.0f}" if value is not None else "N/A"
+                    )
+                else:
+                    formatted_additional[key] = (
+                        str(value) if value is not None else "N/A"
+                    )
+
         prompt = render_template(
             "prompts/stock_analysis.jinja2",
             ticker=ticker,
@@ -141,7 +232,7 @@ class AIService:
             fundamental_summary=fundamental_summary,
             news_summary=news_summary,
             advanced_metrics=formatted_metrics,
-            additional_fundamentals=additional_fundamentals or {},
+            additional_fundamentals=formatted_additional,
         )
 
         try:
@@ -168,7 +259,6 @@ class AIService:
                 neutral_scenario=parsed.get("neutral_scenario", ""),
                 recommendation=parsed.get("recommendation", "Hold"),
                 recommendation_rationale=parsed.get("recommendation_rationale", ""),
-                confidence_score=float(parsed.get("confidence_score", 50)),
             )
 
         except Exception as e:
@@ -181,5 +271,4 @@ class AIService:
                 neutral_scenario="Pending",
                 recommendation="Hold",
                 recommendation_rationale="Unable to generate recommendation explanation due to service unavailability.",
-                confidence_score=0,
             )
