@@ -9,6 +9,7 @@ interface AnalysisResultsProps {
   period: string;
   onPeriodChange: (period: string) => void;
   loadingAI?: boolean;
+  errorAI?: string;
   onGenerateAI?: () => void;
 }
 
@@ -17,6 +18,7 @@ export function AnalysisResults({
   period,
   onPeriodChange,
   loadingAI = false,
+  errorAI,
   onGenerateAI,
 }: AnalysisResultsProps) {
   // Metric definitions for Technical Overview
@@ -266,7 +268,6 @@ export function AnalysisResults({
 
       {/* Price Chart */}
 
-      {/* Price Chart */}
       <PriceChart
         ticker={data.ticker}
         currentPrice={data.current_price}
@@ -504,7 +505,7 @@ export function AnalysisResults({
               value: data.trailing_annual_dividend_yield,
               unit: '%',
             },
-            { name: '5Y Avg Div. Yield', value: data.five_year_avg_dividend_yield },
+            { name: '5Y Avg Div. Yield', value: data.five_year_avg_dividend_yield, unit: '%' },
           ]}
           showInterpretation={true}
           metricDefinitions={shortInterestDefinitions}
@@ -1119,6 +1120,12 @@ export function AnalysisResults({
                   'Generate AI Analysis'
                 )}
               </button>
+              {errorAI && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">{errorAI}</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg p-8">

@@ -88,6 +88,7 @@ function HomePage() {
     loading,
     loadingAI,
     error,
+    errorAI,
     data,
     handleAnalyze,
     updateChartData,
@@ -196,6 +197,7 @@ function HomePage() {
             period={period}
             onPeriodChange={handleChartPeriodChange}
             loadingAI={loadingAI}
+            errorAI={errorAI}
             onGenerateAI={handleGenerateAI}
           />
         )}

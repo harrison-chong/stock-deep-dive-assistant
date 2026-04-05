@@ -70,14 +70,14 @@ class StockAnalyzer:
         # Technical overview
         technical_overview = TechnicalOverviewResponse(
             moving_averages=[
-                MetricResponse(name="SMA 20", value=tech_indicators.sma_20),
-                MetricResponse(name="SMA 50", value=tech_indicators.sma_50),
-                MetricResponse(name="SMA 100", value=tech_indicators.sma_100),
-                MetricResponse(name="SMA 200", value=tech_indicators.sma_200),
+                MetricResponse(name="SMA 20", value=tech_indicators.sma_20, unit="$"),
+                MetricResponse(name="SMA 50", value=tech_indicators.sma_50, unit="$"),
+                MetricResponse(name="SMA 100", value=tech_indicators.sma_100, unit="$"),
+                MetricResponse(name="SMA 200", value=tech_indicators.sma_200, unit="$"),
             ],
             momentum=[
-                MetricResponse(name="RSI 14", value=tech_indicators.rsi_14),
-                MetricResponse(name="MACD", value=tech_indicators.macd),
+                MetricResponse(name="RSI 14", value=tech_indicators.rsi_14, unit=""),
+                MetricResponse(name="MACD", value=tech_indicators.macd, unit="$"),
             ],
             volatility=[
                 MetricResponse(name="ATR 14", value=tech_indicators.atr_14, unit="$"),
@@ -509,7 +509,7 @@ class StockAnalyzer:
             annualized_return_percentage = annualized_return * 100
 
             # Get company info
-            company_info = await self.data_service.get_company_info(ticker)
+            _, company_info, _ = await self.data_service.get_ticker_info(ticker)
 
             return PerformanceResponse(
                 ticker=ticker,

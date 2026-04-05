@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AlertCircle, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AutocompleteInput } from '../components/AutocompleteInput';
+import { API_BASE_URL } from '../constants';
 
 interface PerformanceData {
   ticker: string;
@@ -30,7 +31,6 @@ function PerformanceCalculatorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<PerformanceData | null>(null);
-  const [apiUrl] = useState('http://localhost:8000');
   const navigate = useNavigate();
 
   const handleCalculate = async (e?: React.FormEvent) => {
@@ -42,7 +42,7 @@ function PerformanceCalculatorPage() {
     setData(null);
 
     try {
-      const response = await axios.post(`${apiUrl}/api/performance`, {
+      const response = await axios.post(`${API_BASE_URL}/api/performance`, {
         ticker: ticker.toUpperCase(),
         purchase_date: purchaseDate,
         quantity: parseFloat(quantity),
@@ -74,7 +74,7 @@ function PerformanceCalculatorPage() {
       style: 'percent',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value / 100);
+    }).format(value);
   };
 
   const handleBack = () => {

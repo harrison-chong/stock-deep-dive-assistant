@@ -9,6 +9,7 @@ export const useStockAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [loadingChart, setLoadingChart] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [errorAI, setErrorAI] = useState('');
   const [error, setError] = useState('');
   const [data, setData] = useState<AnalysisData | null>(null);
 
@@ -21,6 +22,7 @@ export const useStockAnalysis = () => {
 
     setLoading(true);
     setError('');
+    setErrorAI('');
     setData(null);
 
     try {
@@ -103,6 +105,7 @@ export const useStockAnalysis = () => {
       });
     } catch (err) {
       console.error('AI analysis failed:', err);
+      setErrorAI('AI analysis failed. Please try again.');
     } finally {
       setLoadingAI(false);
     }
@@ -116,6 +119,7 @@ export const useStockAnalysis = () => {
     loading,
     loadingChart,
     loadingAI,
+    errorAI,
     error,
     data,
     handleAnalyze,
