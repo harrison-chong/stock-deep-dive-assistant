@@ -103,19 +103,19 @@ class TechnicalService:
             else None
         )
 
-        # Volatility calculations
+        # Volatility calculations (annualized, in %)
         vol_30d = (
-            close.pct_change().rolling(window=30).std().iloc[-1] * np.sqrt(252)
+            close.pct_change().rolling(window=30).std().iloc[-1] * np.sqrt(252) * 100
             if len(close) >= 30
             else None
         )
         vol_90d = (
-            close.pct_change().rolling(window=90).std().iloc[-1] * np.sqrt(252)
+            close.pct_change().rolling(window=90).std().iloc[-1] * np.sqrt(252) * 100
             if len(close) >= 90
             else None
         )
         vol_365d = (
-            close.pct_change().rolling(window=365).std().iloc[-1] * np.sqrt(252)
+            close.pct_change().rolling(window=365).std().iloc[-1] * np.sqrt(252) * 100
             if len(close) >= 365
             else None
         )

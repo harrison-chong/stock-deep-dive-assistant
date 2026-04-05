@@ -252,6 +252,20 @@ export function AnalysisResults({
         </div>
       </div>
 
+      {/* Data Source Legend */}
+      <div className="flex items-center gap-6 text-xs text-gray-500">
+        <div className="flex items-center gap-1.5">
+          <span className="px-1.5 py-0.5 bg-gray-100 rounded">Y! Finance</span>
+          <span>Sourced from Yahoo Finance</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">Calc</span>
+          <span>Calculated from historical price data</span>
+        </div>
+      </div>
+
+      {/* Price Chart */}
+
       {/* Price Chart */}
       <PriceChart
         ticker={data.ticker}
@@ -267,16 +281,19 @@ export function AnalysisResults({
           title="Moving Averages"
           metrics={data.technical_overview.moving_averages}
           metricDefinitions={movingAverageDefinitions}
+          source="calculated"
         />
         <MetricsCard
           title="Momentum"
           metrics={data.technical_overview.momentum}
           metricDefinitions={momentumDefinitions}
+          source="calculated"
         />
         <MetricsCard
           title="Volatility"
           metrics={data.technical_overview.volatility || []}
           metricDefinitions={volatilityDefinitions}
+          source="calculated"
         />
       </div>
 
@@ -310,7 +327,15 @@ export function AnalysisResults({
         <div className="grid md:grid-cols-2 gap-6">
           {/* Left column: Market Data */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Market Data</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="font-semibold text-gray-900">Market Data</h3>
+              <span
+                title="Data sourced from Yahoo Finance"
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded cursor-help"
+              >
+                Y! Finance
+              </span>
+            </div>
             <div className="space-y-4">
               {data.fundamental_overview.market_data.map((metric, i) => (
                 <div key={i} className="flex justify-between items-baseline gap-2">
@@ -503,26 +528,32 @@ export function AnalysisResults({
         <div className="space-y-8">
           {/* Statistical & Risk-Adjusted Returns */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <h4 className="text-lg font-semibold text-gray-900">
                 Statistical & Risk-Adjusted Returns
               </h4>
-              <p className="text-xs text-gray-500 mt-1">
-                Trailing total returns as of{' '}
-                {data.data_end_date
-                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : 'latest'}{' '}
-                · Based on{' '}
-                {data.data_start_date && data.data_end_date
-                  ? `${Math.round((new Date(data.data_end_date).getTime() - new Date(data.data_start_date).getTime()) / (1000 * 60 * 60 * 24 * 365))} years`
-                  : 'selected'}{' '}
-                of data
-              </p>
+              <span
+                title="Calculated from historical price data (not from Yahoo Finance)"
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-purple-700 bg-purple-100 rounded cursor-help"
+              >
+                Calc
+              </span>
             </div>
+            <p className="text-xs text-gray-500 mt-1 mb-6">
+              Trailing total returns as of{' '}
+              {data.data_end_date
+                ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'latest'}{' '}
+              · Based on{' '}
+              {data.data_start_date && data.data_end_date
+                ? `${Math.round((new Date(data.data_end_date).getTime() - new Date(data.data_start_date).getTime()) / (1000 * 60 * 60 * 24 * 365))} years`
+                : 'selected'}{' '}
+              of data
+            </p>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">
@@ -719,20 +750,26 @@ export function AnalysisResults({
 
           {/* Technical Performance */}
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <h4 className="text-lg font-semibold text-gray-900">Trailing Total Returns</h4>
-              <p className="text-xs text-gray-500 mt-1">
-                As of{' '}
-                {data.data_end_date
-                  ? new Date(data.data_end_date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : 'latest'}{' '}
-                · Price returns including dividends
-              </p>
+              <span
+                title="Calculated from historical price data (not from Yahoo Finance)"
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-purple-700 bg-purple-100 rounded cursor-help"
+              >
+                Calc
+              </span>
             </div>
+            <p className="text-xs text-gray-500 mt-1 mb-6">
+              As of{' '}
+              {data.data_end_date
+                ? new Date(data.data_end_date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'latest'}{' '}
+              · Price returns including dividends
+            </p>
             <div className="grid md:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">
@@ -913,9 +950,17 @@ export function AnalysisResults({
           {/* Seasonal & Cyclical Patterns */}
           {data.advanced_metrics.seasonal && (
             <div className="bg-white border border-gray-200 rounded-lg p-8">
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                Seasonal & Cyclical Patterns
-              </h4>
+              <div className="flex items-center gap-2 mb-2">
+                <h4 className="text-lg font-semibold text-gray-900">
+                  Seasonal & Cyclical Patterns
+                </h4>
+                <span
+                  title="Calculated from historical price data (not from Yahoo Finance)"
+                  className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-purple-700 bg-purple-100 rounded cursor-help"
+                >
+                  Calc
+                </span>
+              </div>
               <p className="text-sm text-gray-600 mb-4">
                 Based on data from{' '}
                 {data.data_start_date
