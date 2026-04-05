@@ -25,7 +25,7 @@ from shared.responses import (
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
-from features.data.service import RateLimitError
+from features.data.service import YFRateLimitError
 
 router = APIRouter()
 analyzer = StockAnalyzer()
@@ -54,7 +54,7 @@ async def analyze_stock(request: AnalysisRequest):
         )
         return result
 
-    except RateLimitError as e:
+    except YFRateLimitError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -85,7 +85,7 @@ async def generate_ai_analysis(request: AnalysisRequest):
         )
         return result
 
-    except RateLimitError as e:
+    except YFRateLimitError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -151,7 +151,7 @@ async def get_chart_data(request: ChartDataRequest):
             data_end_date=ohlc.end_date.isoformat() if ohlc.end_date else None,
         )
 
-    except RateLimitError as e:
+    except YFRateLimitError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -235,6 +235,8 @@ async def calculate_performance(request: PerformanceRequest):
             timestamp=datetime.now().isoformat(),
         )
 
+    except YFRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -258,6 +260,8 @@ async def add_to_portfolio(request: PortfolioEntryRequest):
         result = await portfolio_service.add_stock(request)
         return result
 
+    except YFRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -274,6 +278,8 @@ async def sell_from_portfolio(request: PortfolioSellRequest):
         result = await portfolio_service.sell_stock(request)
         return result
 
+    except YFRateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
