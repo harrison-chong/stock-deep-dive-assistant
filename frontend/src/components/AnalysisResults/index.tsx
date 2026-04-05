@@ -119,6 +119,20 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
       'Operating Cash Flow minus Capital Expenditures (in billions). What remains after investing in assets. Higher = more value generated for shareholders.',
   };
 
+  const marketDataDefinitions: Record<string, string> = {
+    'Previous Close':
+      "Most recent closing price before today (in dollars). Yesterday's final market price.",
+    'Day High': 'Highest price traded during the current trading session (in dollars).',
+    'Day Low': 'Lowest price traded during the current trading session (in dollars).',
+    Bid: 'Highest price a buyer is willing to pay for shares right now (in dollars).',
+    Ask: 'Lowest price a seller is willing to accept for shares right now (in dollars).',
+    Volume:
+      'Total shares traded today (e.g., 5.2M = 5.2 million shares). Higher volume = more liquid.',
+    'Avg Volume': 'Average daily volume over recent sessions. Shows typical trading activity.',
+    '52W High': 'Highest price in the past 52 weeks (in dollars).',
+    '52W Low': 'Lowest price in the past 52 weeks (in dollars).',
+  };
+
   const analystDefinitions: Record<string, string> = {
     'Analyst Opinions':
       'Number of Wall Street analysts covering this stock. More opinions = more coverage.',
@@ -292,7 +306,12 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
             <div className="space-y-4">
               {data.fundamental_overview.market_data.map((metric, i) => (
                 <div key={i} className="flex justify-between items-baseline gap-2">
-                  <span className="text-gray-700 text-sm flex items-center">{metric.name}</span>
+                  <span className="text-gray-700 text-sm flex items-center">
+                    {metric.name}
+                    {marketDataDefinitions[metric.name] && (
+                      <MetricDefinition text={marketDataDefinitions[metric.name]} />
+                    )}
+                  </span>
                   <span className="font-medium text-gray-900 text-sm">
                     {metric.value != null
                       ? metric.unit === '$'
@@ -305,7 +324,10 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
                 </div>
               ))}
               <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">Beta</span>
+                <span className="text-gray-700 text-sm flex items-center">
+                  Beta
+                  <MetricDefinition text="Measure of stock volatility vs the market. >1 = more volatile than market, <1 = less volatile." />
+                </span>
                 <span className="font-medium text-gray-900 text-sm">
                   {data.beta != null ? data.beta.toFixed(2) : 'N/A'}
                 </span>
@@ -329,7 +351,10 @@ export function AnalysisResults({ data, period, onPeriodChange }: AnalysisResult
                 </span>
               </div>
               <div className="flex justify-between items-baseline gap-2">
-                <span className="text-gray-700 text-sm flex items-center">Earnings Date</span>
+                <span className="text-gray-700 text-sm flex items-center">
+                  Earnings Date
+                  <MetricDefinition text="Upcoming date when the company will report earnings. Stock may be more volatile around this time." />
+                </span>
                 <span className="font-medium text-gray-900 text-sm">
                   {data.earnings_timestamp
                     ? new Date(data.earnings_timestamp * 1000).toLocaleDateString('en-US', {
