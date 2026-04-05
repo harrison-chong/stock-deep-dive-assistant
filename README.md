@@ -59,6 +59,12 @@ In the root repository, run:
 ./start-dev.sh
 ```
 
+or
+
+```bash
+bash start-dev.sh
+```
+
 Then open `http://localhost:5173` in your browser.
 
 ## Installing pre-commit hook
