@@ -37,10 +37,9 @@ Create environment variable file:
 
 ```bash
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
 ```
 
-Add in your own `OPENAI_API_KEY` to the .env file for the backend.
+Add in your own `OPENAI_API_KEY` to the .env file.
 
 ### Starting the Application
 

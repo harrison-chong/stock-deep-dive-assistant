@@ -12,7 +12,6 @@ venv/
 
 # Environment variables
 backend/.env
-frontend/.env
 .env
 .env.local
 .env.*.local
