@@ -169,6 +169,7 @@ async def get_chart_data(request: ChartDataRequest):
         raise HTTPException(status_code=500, detail="Failed to fetch chart data")
 
 
+@router.post("/performance", response_model=PerformanceResponse)
 async def calculate_performance(request: PerformanceRequest):
     """
     Calculate stock performance from purchase date to current date
