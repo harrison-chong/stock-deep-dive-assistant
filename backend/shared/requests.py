@@ -3,42 +3,41 @@ Request models for the API.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
 
 
 class AnalysisRequest(BaseModel):
     """Request to analyze a stock"""
 
     ticker: str = Field(..., description="Stock ticker")
-    period: Optional[str] = Field(
+    period: str | None = Field(
         default=None,
         description="Data period (optional): 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max. Use period OR start_date+end_date.",
     )
-    start_date: Optional[str] = Field(
+    start_date: str | None = Field(
         default=None,
         description="Start date in YYYY-MM-DD format. Use with end_date for exact date range.",
     )
-    end_date: Optional[str] = Field(
+    end_date: str | None = Field(
         default=None,
         description="End date in YYYY-MM-DD format. Defaults to today if not specified.",
     )
-    investment_horizon: Optional[str] = Field(default="1y")
-    risk_tolerance: Optional[str] = Field(default="moderate")
+    investment_horizon: str | None = Field(default="1y")
+    risk_tolerance: str | None = Field(default="moderate")
 
 
 class ChartDataRequest(BaseModel):
     """Request to fetch only chart data (lightweight, no metrics calculation)"""
 
     ticker: str = Field(..., description="Stock ticker")
-    period: Optional[str] = Field(
+    period: str | None = Field(
         default=None,
         description="Data period (optional): 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max. Use period OR start_date+end_date.",
     )
-    start_date: Optional[str] = Field(
+    start_date: str | None = Field(
         default=None,
         description="Start date in YYYY-MM-DD format. Use with end_date for exact date range.",
     )
-    end_date: Optional[str] = Field(
+    end_date: str | None = Field(
         default=None,
         description="End date in YYYY-MM-DD format. Defaults to today if not specified.",
     )
@@ -91,8 +90,8 @@ class PortfolioResponse(BaseModel):
 class PortfolioListResponse(BaseModel):
     """List of portfolio entries"""
 
-    portfolio: List[PortfolioResponse]
-    summary: Dict[str, float]
+    portfolio: list[PortfolioResponse]
+    summary: dict[str, float]
 
 
 class PortfolioPerformanceResponse(BaseModel):
@@ -105,7 +104,7 @@ class PortfolioPerformanceResponse(BaseModel):
     annualized_return: float
     annualized_return_percentage: float
     benchmark_comparison: dict[str, float]
-    holdings: List[dict]
+    holdings: list[dict]
 
 
 class PortfolioSummaryResponse(BaseModel):
@@ -118,5 +117,5 @@ class PortfolioSummaryResponse(BaseModel):
     holdings_count: int
     annualized_return: float
     annualized_return_percentage: float
-    benchmarks: List[dict]
+    benchmarks: list[dict]
     last_updated: str

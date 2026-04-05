@@ -152,7 +152,7 @@ function HomePage() {
                 value={ticker}
                 onChange={setTicker}
                 onSubmit={() => handleAnalyze(undefined, dateRange)}
-                placeholder="Enter stock ticker (e.g., AAPL, BHP.AX)"
+                placeholder="Enter ticker (e.g., AAPL, CBA.AX for ASX, NVDA for NASDAQ)"
                 disabled={loading}
                 submitLabel={loading ? 'Analyzing...' : 'Analyze'}
                 showSubmitButton={true}
@@ -160,6 +160,17 @@ function HomePage() {
             </div>
             <PeriodSelector value={period} onChange={setPeriod} disabled={loading} />
           </div>
+          <p className="text-xs text-gray-400">
+            Stock data provided by{' '}
+            <a
+              href="https://au.finance.yahoo.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-gray-600"
+            >
+              Yahoo Finance
+            </a>
+          </p>
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />

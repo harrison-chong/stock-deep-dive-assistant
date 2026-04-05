@@ -8,7 +8,13 @@ export interface AnalysisData {
   market_cap: number | null;
   data_start_date: string | null;
   data_end_date: string | null;
-  chart_data: { date: string; close: number }[];
+  chart_data: {
+    date: string;
+    close: number;
+    sma20?: number | null;
+    sma50?: number | null;
+    sma200?: number | null;
+  }[];
   technical_overview: {
     moving_averages: { name: string; value: number | null }[];
     momentum: { name: string; value: number | null }[];
@@ -76,8 +82,6 @@ export interface AnalysisData {
   city: string | null;
   phone: string | null;
   fax: string | null;
-  // Raw yfinance info dict for maximum data exposure
-  extra_info: Record<string, unknown>;
   // Additional Yahoo Finance fields
   regular_market_change: number | null;
   regular_market_change_percent: number | null;
@@ -87,6 +91,46 @@ export interface AnalysisData {
   target_median_price: number | null;
   dividend_rate: number | null;
   forward_dividend_yield: number | null;
+  // Additional yfinance fields - Financial Health
+  ebitda: number | null;
+  total_cash: number | null;
+  total_debt: number | null;
+  total_cash_per_share: number | null;
+  current_ratio: number | null;
+  quick_ratio: number | null;
+  payout_ratio: number | null;
+  free_cash_flow: number | null;
+  operating_cash_flow: number | null;
+  // Share structure
+  shares_outstanding: number | null;
+  revenue_per_share: number | null;
+  // Ownership
+  held_percent_insiders: number | null;
+  held_percent_institutions: number | null;
+  // Analyst data
+  number_of_analyst_opinions: number | null;
+  recommendation_key: string | null;
+  recommendation_mean: number | null;
+  average_analyst_rating: string | null;
+  target_high_price: number | null;
+  target_low_price: number | null;
+  // Moving averages (from yfinance)
+  fifty_day_average: number | null;
+  two_hundred_day_average: number | null;
+  // Short interest
+  shares_short: number | null;
+  short_ratio: number | null;
+  short_percent_of_float: number | null;
+  float_shares: number | null;
+  // 52-week and all-time performance
+  fifty_two_week_change: number | null;
+  s_and_p_fifty_two_week_change: number | null;
+  all_time_high: number | null;
+  all_time_low: number | null;
+  // Dividend details
+  trailing_annual_dividend_rate: number | null;
+  trailing_annual_dividend_yield: number | null;
+  five_year_avg_dividend_yield: number | null;
   // Advanced metrics calculated from available OHLC data (max period="max")
   advanced_metrics: {
     statistical: {

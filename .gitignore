@@ -36,3 +36,6 @@ Thumbs.db
 # Vite generated types / configs
 vite.config.d.ts
 vite.config.js
+
+# Claude
+.claude/

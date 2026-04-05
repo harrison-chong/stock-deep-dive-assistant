@@ -179,10 +179,16 @@ class StockAnalyzer:
                 ),
             ],
             earnings=[
-                MetricResponse(name="EPS (TTM)", value=fundamentals.eps),
-                MetricResponse(name="Forward EPS", value=fundamentals.forward_eps),
-                MetricResponse(name="Book Value", value=fundamentals.book_value),
-                MetricResponse(name="Book/Share", value=fundamentals.book_per_share),
+                MetricResponse(name="EPS (TTM)", value=fundamentals.eps, unit="$"),
+                MetricResponse(
+                    name="Forward EPS", value=fundamentals.forward_eps, unit="$"
+                ),
+                MetricResponse(
+                    name="Book Value", value=fundamentals.book_value, unit="$"
+                ),
+                MetricResponse(
+                    name="Book/Share", value=fundamentals.book_per_share, unit="$"
+                ),
                 MetricResponse(
                     name="Earnings Growth", value=fundamentals.earnings_growth, unit="%"
                 ),
@@ -284,13 +290,34 @@ class StockAnalyzer:
             confidence_score=ai_interpretation.confidence_score,
         )
 
-        # Build chart data from OHLC
+        # Build chart data from OHLC with SMA calculations
+        closes = list(ohlc.close)
+        timestamps = list(ohlc.timestamp)
+
+        # Calculate SMAs
+        def calculate_sma(values: list, period: int) -> list:
+            result = []
+            for i in range(len(values)):
+                if i < period - 1:
+                    result.append(None)
+                else:
+                    sma = sum(values[i - period + 1 : i + 1]) / period
+                    result.append(round(sma, 2))
+            return result
+
+        sma20 = calculate_sma(closes, 20)
+        sma50 = calculate_sma(closes, 50)
+        sma200 = calculate_sma(closes, 200)
+
         chart_data = [
             {
                 "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),
                 "close": float(close),
+                "sma20": sma20[i],
+                "sma50": sma50[i],
+                "sma200": sma200[i],
             }
-            for ts, close in zip(ohlc.timestamp, ohlc.close)
+            for i, (ts, close) in enumerate(zip(timestamps, closes))
         ]
 
         # Build response - include all available data
@@ -319,11 +346,8 @@ class StockAnalyzer:
             city=company_info.city,
             phone=company_info.phone,
             fax=company_info.fax,
-            # Raw yfinance info dict for maximum data exposure
-            extra_info=info,
             # Advanced metrics from OHLC data (period determined by user selection)
             advanced_metrics=advanced_metrics,
-            # Additional Yahoo Finance fields
             regular_market_change=fundamentals.regular_market_change,
             regular_market_change_percent=fundamentals.regular_market_change_percent,
             beta=fundamentals.beta,
@@ -332,6 +356,38 @@ class StockAnalyzer:
             target_median_price=fundamentals.target_median_price,
             dividend_rate=fundamentals.dividend_rate,
             forward_dividend_yield=fundamentals.forward_dividend_yield,
+            ebitda=fundamentals.ebitda,
+            total_cash=fundamentals.total_cash,
+            total_debt=fundamentals.total_debt,
+            total_cash_per_share=fundamentals.total_cash_per_share,
+            current_ratio=fundamentals.current_ratio,
+            quick_ratio=fundamentals.quick_ratio,
+            payout_ratio=fundamentals.payout_ratio,
+            free_cash_flow=fundamentals.free_cash_flow,
+            operating_cash_flow=fundamentals.operating_cash_flow,
+            shares_outstanding=fundamentals.shares_outstanding,
+            revenue_per_share=fundamentals.revenue_per_share,
+            held_percent_insiders=fundamentals.held_percent_insiders,
+            held_percent_institutions=fundamentals.held_percent_institutions,
+            number_of_analyst_opinions=fundamentals.number_of_analyst_opinions,
+            recommendation_key=fundamentals.recommendation_key,
+            recommendation_mean=fundamentals.recommendation_mean,
+            average_analyst_rating=fundamentals.average_analyst_rating,
+            target_high_price=fundamentals.target_high_price,
+            target_low_price=fundamentals.target_low_price,
+            fifty_day_average=fundamentals.fifty_day_average,
+            two_hundred_day_average=fundamentals.two_hundred_day_average,
+            shares_short=fundamentals.shares_short,
+            short_ratio=fundamentals.short_ratio,
+            short_percent_of_float=fundamentals.short_percent_of_float,
+            float_shares=fundamentals.float_shares,
+            fifty_two_week_change=fundamentals.fifty_two_week_change,
+            s_and_p_fifty_two_week_change=fundamentals.s_and_p_fifty_two_week_change,
+            all_time_high=fundamentals.all_time_high,
+            all_time_low=fundamentals.all_time_low,
+            trailing_annual_dividend_rate=fundamentals.trailing_annual_dividend_rate,
+            trailing_annual_dividend_yield=fundamentals.trailing_annual_dividend_yield,
+            five_year_avg_dividend_yield=fundamentals.five_year_avg_dividend_yield,
         )
 
     async def calculate_performance(

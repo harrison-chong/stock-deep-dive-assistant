@@ -5,7 +5,6 @@ Portfolio management service.
 import json
 import os
 from datetime import datetime
-from typing import List, Dict
 
 from shared.domain import (
     PortfolioEntry,
@@ -30,7 +29,7 @@ class PortfolioService:
         self.benchmarks = self._get_default_benchmarks()
         self.portfolio = self._load_portfolio()
 
-    def _get_default_benchmarks(self) -> List[PortfolioBenchmark]:
+    def _get_default_benchmarks(self) -> list[PortfolioBenchmark]:
         """Get default benchmark indices"""
         return [
             PortfolioBenchmark(
@@ -47,7 +46,7 @@ class PortfolioService:
             ),
         ]
 
-    def _load_portfolio(self) -> List[PortfolioEntry]:
+    def _load_portfolio(self) -> list[PortfolioEntry]:
         """Load portfolio from file"""
         if not os.path.exists(self.portfolio_file):
             return []
@@ -295,7 +294,7 @@ class PortfolioService:
             summary=self._calculate_summary(),
         )
 
-    def _calculate_summary(self) -> Dict[str, float]:
+    def _calculate_summary(self) -> dict[str, float]:
         """Calculate portfolio summary"""
         active_holdings = [entry for entry in self.portfolio if not entry.sold]
         total_investment = sum(
