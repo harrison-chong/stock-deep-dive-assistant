@@ -169,6 +169,7 @@ async def get_chart_data(request: ChartDataRequest):
         raise HTTPException(status_code=500, detail="Failed to fetch chart data")
 
 
+@router.post("/performance", response_model=PerformanceResponse)
 async def calculate_performance(request: PerformanceRequest):
     """
     Calculate stock performance from purchase date to current date
@@ -219,12 +220,19 @@ async def calculate_performance(request: PerformanceRequest):
             )
 
         years_held = days_held / 365.25
-        annualized_return = (
-            ((current_price / request.purchase_price) ** (1 / years_held)) - 1
-            if years_held > 0
-            else 0
+        # Only calculate annualized return if held for at least 6 months
+        # Short-term annualized returns are misleading and explode for brief holds
+        MIN_HOLD_YEARS = 0.5
+        if years_held >= MIN_HOLD_YEARS:
+            price_ratio = current_price / request.purchase_price
+            import math
+
+            annualized_return = math.exp(math.log(price_ratio) / years_held) - 1
+        else:
+            annualized_return = None
+        annualized_return_percentage = (
+            annualized_return * 100 if annualized_return is not None else None
         )
-        annualized_return_percentage = annualized_return * 100
 
         return PerformanceResponse(
             ticker=ticker,
@@ -240,7 +248,7 @@ async def calculate_performance(request: PerformanceRequest):
             profit_loss_percentage=profit_loss_percentage,
             annualized_return=annualized_return,
             annualized_return_percentage=annualized_return_percentage,
-            disclaimer="⚠️ Not financial advice. For educational purposes only.",
+            disclaimer="⚠️ Not financial advice. For educational purposes only. Annualized return only calculated for holdings held 6+ months.",
             timestamp=datetime.now().isoformat(),
         )
 

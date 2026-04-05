@@ -17,8 +17,8 @@ interface PerformanceData {
   current_value: number;
   profit_loss: number;
   profit_loss_percentage: number;
-  annualized_return: number;
-  annualized_return_percentage: number;
+  annualized_return: number | null;
+  annualized_return_percentage: number | null;
   disclaimer: string;
   timestamp: string;
 }
@@ -225,16 +225,24 @@ function PerformanceCalculatorPage() {
                   <p
                     className={`text-sm ${data.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
                   >
-                    {formatPercentage(data.profit_loss_percentage)}
+                    {formatPercentage(data.profit_loss_percentage / 100)}
                   </p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
                   <h4 className="font-semibold text-orange-900 mb-3">Annualized Return</h4>
                   <p className="text-2xl font-bold text-orange-900">
-                    {formatPercentage(data.annualized_return_percentage)}
+                    {data.annualized_return_percentage !== null
+                      ? formatPercentage(data.annualized_return_percentage / 100)
+                      : 'N/A'}
                   </p>
-                  <p className="text-sm text-orange-600">Compounded annually</p>
+                  {data.annualized_return_percentage === null ? (
+                    <p className="text-sm text-orange-600">
+                      Only calculated for holdings owned 6+ months
+                    </p>
+                  ) : (
+                    <p className="text-sm text-orange-600">Compounded annually</p>
+                  )}
                 </div>
               </div>
             </div>
