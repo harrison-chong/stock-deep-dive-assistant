@@ -18,12 +18,26 @@ function formatLargeNumber(value: number): string {
   return `${sign}$${absValue.toFixed(2)}`;
 }
 
-function formatMetricValue(value: number | null, unit?: string): string {
+// Metrics that show N/A when value is 0 (not applicable for certain industries)
+const metricsAsNAWhenZero = [
+  'Gross Margins',
+  'Operating Margins',
+  'Profit Margin',
+  'Return on Assets',
+  'Return on Investment',
+];
+
+function formatMetricValue(value: number | null, unit?: string, name?: string): string {
   if (value === null) return 'N/A';
 
-  // Handle percentage values - yfinance returns decimals (0.14 = 14%)
+  // For certain metrics, 0 means not applicable
+  if (value === 0 && name && metricsAsNAWhenZero.includes(name)) {
+    return 'N/A';
+  }
+
+  // Handle percentage values - backend already converts decimals to percentages
   if (unit === '%') {
-    return `${(value * 100).toFixed(2)}%`;
+    return `${value.toFixed(2)}%`;
   }
 
   // Handle currency/share values
@@ -65,7 +79,7 @@ export function MetricsCard({
                 )}
               </span>
               <span className="font-medium text-gray-900">
-                {formatMetricValue(metric.value, metric.unit)}
+                {formatMetricValue(metric.value, metric.unit, metric.name)}
               </span>
             </div>
             {showInterpretation && metric.interpretation && (

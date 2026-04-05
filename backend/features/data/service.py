@@ -2,10 +2,34 @@
 Data fetching service.
 """
 
+import time
 import pandas as pd
 import yfinance as yf
 
 from shared.domain import OHLCData, FundamentalData, CompanyInfo
+
+
+class RateLimitError(Exception):
+    """Raised when Yahoo Finance rate limits our requests"""
+
+    pass
+
+
+def retry_with_backoff(func, max_retries=3, base_delay=1.0):
+    """Retry a function with exponential backoff on rate limit errors."""
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except yf.YFRateLimitError as e:
+            if attempt == max_retries - 1:
+                raise RateLimitError(
+                    f"Yahoo Finance rate limit exceeded after {max_retries} attempts. "
+                    f"Please try again in a few minutes."
+                ) from e
+            delay = base_delay * (2**attempt)
+            time.sleep(delay)
+        except Exception:
+            raise
 
 
 class DataService:
@@ -19,40 +43,45 @@ class DataService:
         end_date: str | None = None,
     ) -> OHLCData:
         """Fetch OHLC data from yfinance using period OR start/end dates"""
-        try:
+
+        def fetch():
             # Use start/end dates if provided, otherwise fall back to period
             if start_date and end_date:
-                data = yf.download(
+                return yf.download(
                     ticker, start=start_date, end=end_date, progress=False, repair=True
                 )
             elif period:
-                data = yf.download(ticker, period=period, progress=False, repair=True)
+                return yf.download(ticker, period=period, progress=False, repair=True)
             else:
-                # Default to 5 years if nothing specified
-                data = yf.download(ticker, period="5y", progress=False, repair=True)
+                return yf.download(ticker, period="5y", progress=False, repair=True)
 
-            if data.empty:
-                raise ValueError(f"No data found for {ticker}")
-
-            # Flatten multi-level columns if needed
-            if isinstance(data.columns, pd.MultiIndex):
-                data.columns = data.columns.get_level_values(0)
-
-            # Ensure we have the right columns
-            data.columns = [col.strip() for col in data.columns]
-
-            return OHLCData(
-                timestamp=data.index.tolist(),
-                open=data["Open"].tolist(),
-                high=data["High"].tolist(),
-                low=data["Low"].tolist(),
-                close=data["Close"].tolist(),
-                volume=data["Volume"].astype(int).tolist(),
-                start_date=data.index[0],
-                end_date=data.index[-1],
-            )
+        try:
+            data = retry_with_backoff(fetch)
+        except RateLimitError:
+            raise  # Re-raise with original message
         except Exception as e:
             raise ValueError(f"Failed to fetch data for {ticker}: {str(e)}")
+
+        if data.empty:
+            raise ValueError(f"No data found for {ticker}")
+
+        # Flatten multi-level columns if needed
+        if isinstance(data.columns, pd.MultiIndex):
+            data.columns = data.columns.get_level_values(0)
+
+        # Ensure we have the right columns
+        data.columns = [col.strip() for col in data.columns]
+
+        return OHLCData(
+            timestamp=data.index.tolist(),
+            open=data["Open"].tolist(),
+            high=data["High"].tolist(),
+            low=data["Low"].tolist(),
+            close=data["Close"].tolist(),
+            volume=data["Volume"].astype(int).tolist(),
+            start_date=data.index[0],
+            end_date=data.index[-1],
+        )
 
     @staticmethod
     async def get_ticker_info(ticker: str) -> tuple[FundamentalData, CompanyInfo, dict]:
@@ -61,115 +90,128 @@ class DataService:
         This avoids duplicate yf.Ticker() calls.
         Returns the fundamentals, company info, and the raw info dict.
         """
-        try:
+
+        def fetch():
             ticker_obj = yf.Ticker(ticker)
-            info = ticker_obj.info
+            return ticker_obj.info
 
-            fundamentals = FundamentalData(
-                ticker=ticker,
-                market_cap=info.get("marketCap"),
-                pe_ratio=info.get("trailingPE"),
-                forward_pe=info.get("forwardPE"),
-                eps=info.get("trailingEps"),
-                revenue=info.get("totalRevenue"),
-                revenue_growth=info.get("revenueGrowth"),
-                roe=info.get("returnOnEquity"),
-                debt_to_equity=info.get("debtToEquity"),
-                free_cash_flow=info.get("freeCashflow"),
-                # dividendYield from yfinance is already in % (0.41 = 0.41%), NOT decimal
-                dividend_yield=info.get("dividendYield"),
-                profit_margin=info.get("profitMargins"),
-                peg_ratio=info.get("pegRatio"),
-                industry=info.get("industry"),
-                sector=info.get("sector"),
-                previous_close=info.get("previousClose"),
-                day_high=info.get("dayHigh"),
-                day_low=info.get("dayLow"),
-                bid=info.get("bid"),
-                ask=info.get("ask"),
-                volume=info.get("volume"),
-                average_volume=info.get("averageVolume"),
-                fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
-                fifty_two_week_low=info.get("fiftyTwoWeekLow"),
-                enterprise_value=info.get("enterpriseValue"),
-                price_to_book=info.get("priceToBook"),
-                price_to_sales=info.get("priceToSalesTrailing12Months"),
-                enterprise_to_ebitda=info.get("enterpriseToEbitda"),
-                trailing_peg_ratio=info.get("trailingPegRatio"),
-                forward_eps=info.get("forwardEps"),
-                book_value=info.get("bookValue"),
-                book_per_share=info.get("bookPerShare"),
-                return_on_assets=info.get("returnOnAssets"),
-                return_on_investment=info.get("returnOnInvestment"),
-                gross_margins=info.get("grossMargins"),
-                operating_margins=info.get("operatingMargins"),
-                earnings_quarterly_growth=info.get("earningsQuarterlyGrowth"),
-                earnings_growth=info.get("earningsGrowth"),
-                regular_market_change=info.get("regularMarketChange"),
-                regular_market_change_percent=info.get("regularMarketChangePercent"),
-                beta=info.get("beta"),
-                earnings_timestamp=info.get("earningsTimestamp"),
-                target_mean_price=info.get("targetMeanPrice"),
-                target_median_price=info.get("targetMedianPrice"),
-                dividend_rate=info.get("dividendRate"),
-                forward_dividend_yield=info.get("dividendYield"),
-                # Additional yfinance fields
-                ebitda=info.get("ebitda"),
-                revenue_per_share=info.get("revenuePerShare"),
-                payout_ratio=info.get("payoutRatio"),
-                total_cash=info.get("totalCash"),
-                total_debt=info.get("totalDebt"),
-                total_cash_per_share=info.get("totalCashPerShare"),
-                current_ratio=info.get("currentRatio"),
-                quick_ratio=info.get("quickRatio"),
-                shares_outstanding=info.get("sharesOutstanding"),
-                float_shares=info.get("floatShares"),
-                implied_shares_outstanding=info.get("impliedSharesOutstanding"),
-                held_percent_insiders=info.get("heldPercentInsiders"),
-                held_percent_institutions=info.get("heldPercentInstitutions"),
-                number_of_analyst_opinions=info.get("numberOfAnalystOpinions"),
-                recommendation_key=info.get("recommendationKey"),
-                recommendation_mean=info.get("recommendationMean"),
-                average_analyst_rating=info.get("averageAnalystRating"),
-                target_high_price=info.get("targetHighPrice"),
-                target_low_price=info.get("targetLowPrice"),
-                fifty_day_average=info.get("fiftyDayAverage"),
-                two_hundred_day_average=info.get("twoHundredDayAverage"),
-                fifty_two_week_change=info.get("52WeekChange"),
-                s_and_p_fifty_two_week_change=info.get("SandP52WeekChange"),
-                shares_short=info.get("sharesShort"),
-                short_ratio=info.get("shortRatio"),
-                short_percent_of_float=info.get("shortPercentOfFloat"),
-                trailing_annual_dividend_rate=info.get("trailingAnnualDividendRate"),
-                trailing_annual_dividend_yield=info.get("trailingAnnualDividendYield"),
-                five_year_avg_dividend_yield=info.get("fiveYearAvgDividendYield"),
-                ex_dividend_date=info.get("exDividendDate"),
-                dividend_date=info.get("dividendDate"),
-                last_dividend_date=info.get("lastDividendDate"),
-                last_dividend_value=info.get("lastDividendValue"),
-                all_time_high=info.get("allTimeHigh"),
-                all_time_low=info.get("allTimeLow"),
-            )
-
-            company_info = CompanyInfo(
-                ticker=ticker,
-                name=info.get("longName", ticker),
-                sector=info.get("sector"),
-                industry=info.get("industry"),
-                website=info.get("website"),
-                description=info.get("longBusinessSummary"),
-                currency=info.get("currency"),
-                full_time_employees=info.get("fullTimeEmployees"),
-                country=info.get("country"),
-                state=info.get("state"),
-                city=info.get("city"),
-                phone=info.get("phone"),
-                fax=info.get("fax"),
-            )
-
-            return fundamentals, company_info, info
+        try:
+            info = retry_with_backoff(fetch)
+        except RateLimitError:
+            raise  # Re-raise with original message
         except Exception as e:
             raise ValueError(f"Failed to fetch ticker info for {ticker}: {str(e)}")
+
+        fundamentals = FundamentalData(
+            ticker=ticker,
+            market_cap=info.get("marketCap"),
+            pe_ratio=info.get("trailingPE"),
+            forward_pe=info.get("forwardPE"),
+            eps=info.get("trailingEps"),
+            revenue=info.get("totalRevenue"),
+            revenue_growth=(info.get("revenueGrowth") or 0) * 100,
+            roe=(info.get("returnOnEquity") or 0) * 100,
+            debt_to_equity=info.get("debtToEquity"),
+            free_cash_flow=info.get("freeCashflow"),
+            # dividendYield from yfinance is already in % (0.41 = 0.41%), NOT decimal
+            dividend_yield=info.get("dividendYield"),
+            profit_margin=(info.get("profitMargins") or 0) * 100,
+            peg_ratio=info.get("pegRatio"),
+            industry=info.get("industry"),
+            sector=info.get("sector"),
+            previous_close=info.get("previousClose"),
+            day_high=info.get("dayHigh"),
+            day_low=info.get("dayLow"),
+            bid=info.get("bid"),
+            ask=info.get("ask"),
+            volume=info.get("volume"),
+            average_volume=info.get("averageVolume"),
+            fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
+            fifty_two_week_low=info.get("fiftyTwoWeekLow"),
+            enterprise_value=info.get("enterpriseValue"),
+            price_to_book=info.get("priceToBook"),
+            price_to_sales=info.get("priceToSalesTrailing12Months"),
+            enterprise_to_ebitda=info.get("enterpriseToEbitda"),
+            trailing_peg_ratio=info.get("trailingPegRatio"),
+            forward_eps=info.get("forwardEps"),
+            book_value=info.get("bookValue"),
+            book_per_share=info.get("bookPerShare"),
+            return_on_assets=(info.get("returnOnAssets") or 0) * 100,
+            return_on_investment=(info.get("returnOnInvestment") * 100)
+            if info.get("returnOnInvestment") is not None
+            else None,
+            gross_margins=(info.get("grossMargins") or 0) * 100,
+            operating_margins=(info.get("operatingMargins") or 0) * 100,
+            earnings_quarterly_growth=(info.get("earningsQuarterlyGrowth") or 0) * 100,
+            earnings_growth=(info.get("earningsGrowth") or 0) * 100,
+            regular_market_change=info.get("regularMarketChange"),
+            regular_market_change_percent=info.get("regularMarketChangePercent"),
+            beta=info.get("beta"),
+            earnings_timestamp=info.get("earningsTimestamp"),
+            target_mean_price=info.get("targetMeanPrice"),
+            target_median_price=info.get("targetMedianPrice"),
+            dividend_rate=info.get("dividendRate"),
+            forward_dividend_yield=info.get("dividendYield"),
+            # Additional yfinance fields
+            ebitda=info.get("ebitda"),
+            revenue_per_share=info.get("revenuePerShare"),
+            payout_ratio=(info.get("payoutRatio") or 0) * 100,
+            total_cash=info.get("totalCash"),
+            total_debt=info.get("totalDebt"),
+            total_cash_per_share=info.get("totalCashPerShare"),
+            current_ratio=info.get("currentRatio"),
+            quick_ratio=info.get("quickRatio"),
+            shares_outstanding=info.get("sharesOutstanding"),
+            float_shares=info.get("floatShares"),
+            implied_shares_outstanding=info.get("impliedSharesOutstanding"),
+            held_percent_insiders=(info.get("heldPercentInsiders") or 0) * 100,
+            held_percent_institutions=(info.get("heldPercentInstitutions") or 0) * 100,
+            number_of_analyst_opinions=info.get("numberOfAnalystOpinions"),
+            recommendation_key=info.get("recommendationKey"),
+            recommendation_mean=info.get("recommendationMean"),
+            average_analyst_rating=info.get("averageAnalystRating"),
+            target_high_price=info.get("targetHighPrice"),
+            target_low_price=info.get("targetLowPrice"),
+            fifty_day_average=info.get("fiftyDayAverage"),
+            two_hundred_day_average=info.get("twoHundredDayAverage"),
+            fifty_two_week_change=(info.get("52WeekChange") or 0) * 100,
+            s_and_p_fifty_two_week_change=(info.get("SandP52WeekChange") or 0) * 100,
+            shares_short=info.get("sharesShort"),
+            short_ratio=info.get("shortRatio"),
+            short_percent_of_float=(info.get("shortPercentOfFloat") or 0) * 100,
+            trailing_annual_dividend_rate=info.get("trailingAnnualDividendRate"),
+            # trailingAnnualDividendYield is a decimal (0.04 = 4%), multiply by 100 to get %
+            trailing_annual_dividend_yield=(
+                info.get("trailingAnnualDividendYield") or 0
+            )
+            * 100,
+            # fiveYearAvgDividendYield is already in % form (2.9 = 2.9%)
+            five_year_avg_dividend_yield=info.get("fiveYearAvgDividendYield"),
+            ex_dividend_date=info.get("exDividendDate"),
+            dividend_date=info.get("dividendDate"),
+            last_dividend_date=info.get("lastDividendDate"),
+            last_dividend_value=info.get("lastDividendValue"),
+            all_time_high=info.get("allTimeHigh"),
+            all_time_low=info.get("allTimeLow"),
+        )
+
+        company_info = CompanyInfo(
+            ticker=ticker,
+            name=info.get("longName", ticker),
+            sector=info.get("sector"),
+            industry=info.get("industry"),
+            website=info.get("website"),
+            description=info.get("longBusinessSummary"),
+            currency=info.get("currency"),
+            full_time_employees=info.get("fullTimeEmployees"),
+            country=info.get("country"),
+            state=info.get("state"),
+            city=info.get("city"),
+            phone=info.get("phone"),
+            fax=info.get("fax"),
+        )
+
+        return fundamentals, company_info, info
 
     @staticmethod
     async def get_industry_peers(ticker: str, limit: int = 5) -> list[str]:
@@ -184,10 +226,17 @@ class DataService:
         """
         Get the current price for a ticker
         """
+
+        def fetch():
+            return yf.download(ticker, period="1d", progress=False, repair=True)
+
         try:
-            data = yf.download(ticker, period="1d", progress=False, repair=True)
-            if data.empty:
-                raise ValueError(f"No data found for {ticker}")
-            return float(data["Close"].iloc[-1].item())
+            data = retry_with_backoff(fetch)
+        except RateLimitError:
+            raise  # Re-raise with original message
         except Exception as e:
             raise ValueError(f"Failed to fetch current price for {ticker}: {str(e)}")
+
+        if data.empty:
+            raise ValueError(f"No data found for {ticker}")
+        return float(data["Close"].iloc[-1].item())

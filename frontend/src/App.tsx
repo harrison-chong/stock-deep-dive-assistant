@@ -173,6 +173,12 @@ function HomePage() {
               Yahoo Finance
             </a>
           </p>
+          {import.meta.env.VITE_API_BASE_URL &&
+            !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
+              <p className="text-xs text-gray-400 mt-1">
+                Note: Backend may take ~60s to wake up if idle.
+              </p>
+            )}
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />

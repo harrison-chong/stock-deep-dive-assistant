@@ -25,6 +25,7 @@ from shared.responses import (
 )
 from application.analysis import StockAnalyzer
 from features.portfolio.service import PortfolioService
+from features.data.service import RateLimitError
 
 router = APIRouter()
 analyzer = StockAnalyzer()
@@ -53,6 +54,8 @@ async def analyze_stock(request: AnalysisRequest):
         )
         return result
 
+    except RateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -82,6 +85,8 @@ async def generate_ai_analysis(request: AnalysisRequest):
         )
         return result
 
+    except RateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -146,6 +151,8 @@ async def get_chart_data(request: ChartDataRequest):
             data_end_date=ohlc.end_date.isoformat() if ohlc.end_date else None,
         )
 
+    except RateLimitError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
