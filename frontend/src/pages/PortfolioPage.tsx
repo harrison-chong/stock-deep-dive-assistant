@@ -7,7 +7,7 @@ import {
   getPortfolioPerformance,
 } from '../services/portfolio';
 import { Search, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { DatePickerInput } from '../components/DatePickerInput';
 
 function PortfolioPage() {
   const [portfolio, setPortfolio] = useState<PortfolioEntry[]>([]);
@@ -133,239 +133,224 @@ function PortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Back to Analysis
-            </Link>
-            <button
-              onClick={() => setAddModalOpen(true)}
-              className="ml-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Add Stock
-            </button>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto px-6 py-12">
+      {/* Add Stock Button */}
+      <div className="mb-8">
+        <button
+          onClick={() => setAddModalOpen(true)}
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          Add Stock
+        </button>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Summary Section */}
-        {/* Performance Section */}
-        {performance && (
-          <div className="mb-12">
-            <div className="bg-white border border-gray-200 rounded-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Portfolio Performance</h2>
-
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-blue-900 mb-2">Total Cost Basis</h3>
-                  <p className="text-xl font-bold text-blue-900">
-                    {formatCurrency(performance.total_cost)}
-                  </p>
-                </div>
-
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-green-900 mb-2">Current Value</h3>
-                  <p className="text-xl font-bold text-green-900">
-                    {formatCurrency(performance.current_value)}
-                  </p>
-                </div>
-
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-purple-900 mb-2">Total P&L</h3>
-                  <p
-                    className={`text-2xl font-bold ${
-                      performance.total_profit_loss >= 0 ? 'text-green-900' : 'text-red-900'
-                    }`}
-                  >
-                    {performance.total_profit_loss >= 0 ? '↑' : '↓'}{' '}
-                    {formatCurrency(performance.total_profit_loss)}
-                  </p>
-                  <p
-                    className={`text-sm ${
-                      performance.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {formatPercentage(performance.total_profit_loss_percentage / 100)}
-                  </p>
-                </div>
-
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-orange-900 mb-2">Annualized Return</h3>
-                  <p className="text-2xl font-bold text-orange-900">
-                    {performance.annualized_return_percentage !== null
-                      ? formatPercentage(performance.annualized_return_percentage / 100)
-                      : 'N/A'}
-                  </p>
-                </div>
-              </div>
-
-              {performance.benchmark_comparison &&
-                Object.keys(performance.benchmark_comparison).length > 0 && (
-                  <div className="mt-8 pt-8 border-t border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Benchmark Comparison
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {Object.entries(performance.benchmark_comparison).map(
-                        ([name, returnPercentage]) => {
-                          const benchmarkValue =
-                            performance.benchmark_monetary_comparison?.[name] || 0;
-                          const valueChange = benchmarkValue - performance.total_cost;
-                          const valueChangeFormatted = formatCurrency(valueChange);
-                          const valueChangeClass =
-                            valueChange >= 0 ? 'text-green-600' : 'text-red-600';
-
-                          // Calculate earliest purchase date from portfolio
-                          let earliestPurchaseDate: string | null = null;
-                          if (portfolio.length > 0) {
-                            const dates = portfolio.map((entry) => new Date(entry.purchase_date));
-                            const sortedDates = dates.sort((a, b) => a.getTime() - b.getTime());
-                            earliestPurchaseDate =
-                              sortedDates[0]?.toISOString().split('T')[0] || null;
-                          }
-
-                          return (
-                            <div
-                              key={name}
-                              className="bg-gray-50 border border-gray-200 rounded-lg p-4"
-                            >
-                              <div className="flex justify-between items-center mb-2">
-                                <div>
-                                  <p className="font-medium text-gray-900">{name}</p>
-                                  <p className="text-xs text-gray-600">Benchmark</p>
-                                </div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {formatPercentage(returnPercentage / 100)}
-                                </p>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <p className="text-xs text-gray-500">
-                                  Value if invested in benchmark:
-                                </p>
-                                <p
-                                  className={`text-sm font-medium ${valueChange >= 0 ? 'text-green-900' : 'text-red-900'}`}
-                                >
-                                  {formatCurrency(benchmarkValue)}
-                                </p>
-                              </div>
-                              <div className="flex justify-between items-center mt-1">
-                                <p className="text-xs text-gray-500">Difference from portfolio:</p>
-                                <p className={`text-sm font-medium ${valueChangeClass}`}>
-                                  {valueChange >= 0 ? '↑' : '↓'} {valueChangeFormatted}
-                                </p>
-                              </div>
-                              {earliestPurchaseDate && (
-                                <div className="mt-2 pt-2 border-t border-gray-200">
-                                  <p className="text-xs text-gray-500">
-                                    Based on earliest purchase: {earliestPurchaseDate}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        },
-                      )}
-                    </div>
-                  </div>
-                )}
-            </div>
-          </div>
-        )}
-
-        {/* Holdings Section */}
+      {/* Summary Section */}
+      {/* Performance Section */}
+      {performance && (
         <div className="mb-12">
           <div className="bg-white border border-gray-200 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Current Holdings</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Portfolio Performance</h2>
 
-            {portfolio.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
-                  No stocks in your portfolio yet. Add your first stock to get started!
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="font-semibold text-blue-900 mb-2">Total Cost Basis</h3>
+                <p className="text-xl font-bold text-blue-900">
+                  {formatCurrency(performance.total_cost)}
                 </p>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {portfolio.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {entry.company_name}
-                          </h3>
-                          <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {entry.ticker}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          Purchased {entry.quantity} shares at{' '}
-                          {formatCurrency(entry.purchase_price)} each
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Purchase Date: {entry.purchase_date}
-                        </p>
-                      </div>
 
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900 mb-2">
-                          {formatCurrency(
-                            entry.current_value || entry.purchase_price * entry.quantity,
-                          )}{' '}
-                          {/* Show current value or fallback */}
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          {formatCurrency(entry.current_price || entry.purchase_price)} per share
-                        </div>
-                        <div
-                          className={`text-sm font-medium ${
-                            entry.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {entry.profit_loss >= 0 ? '↑' : '↓'}{' '}
-                          {formatCurrency(entry.profit_loss || 0)} (
-                          {formatPercentage((entry.profit_loss_percentage || 0) / 100)})
-                        </div>
-                        <div className="text-sm text-gray-500 mt-2">
-                          Annualized Return:{' '}
-                          {entry.annualized_return_percentage !== null
-                            ? formatPercentage(entry.annualized_return_percentage / 100)
-                            : 'N/A'}
-                        </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <h3 className="font-semibold text-green-900 mb-2">Current Value</h3>
+                <p className="text-xl font-bold text-green-900">
+                  {formatCurrency(performance.current_value)}
+                </p>
+              </div>
+
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                <h3 className="font-semibold text-purple-900 mb-2">Total P&L</h3>
+                <p
+                  className={`text-2xl font-bold ${
+                    performance.total_profit_loss >= 0 ? 'text-green-900' : 'text-red-900'
+                  }`}
+                >
+                  {performance.total_profit_loss >= 0 ? '↑' : '↓'}{' '}
+                  {formatCurrency(performance.total_profit_loss)}
+                </p>
+                <p
+                  className={`text-sm ${
+                    performance.total_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {formatPercentage(performance.total_profit_loss_percentage / 100)}
+                </p>
+              </div>
+
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <h3 className="font-semibold text-orange-900 mb-2">Annualized Return</h3>
+                <p className="text-2xl font-bold text-orange-900">
+                  {performance.annualized_return_percentage !== null
+                    ? formatPercentage(performance.annualized_return_percentage / 100)
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+
+            {performance.benchmark_comparison &&
+              Object.keys(performance.benchmark_comparison).length > 0 && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Benchmark Comparison</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {Object.entries(performance.benchmark_comparison).map(
+                      ([name, returnPercentage]) => {
+                        const benchmarkValue =
+                          performance.benchmark_monetary_comparison?.[name] || 0;
+                        const valueChange = benchmarkValue - performance.total_cost;
+                        const valueChangeFormatted = formatCurrency(valueChange);
+                        const valueChangeClass =
+                          valueChange >= 0 ? 'text-green-600' : 'text-red-600';
+
+                        // Calculate earliest purchase date from portfolio
+                        let earliestPurchaseDate: string | null = null;
+                        if (portfolio.length > 0) {
+                          const dates = portfolio.map((entry) => new Date(entry.purchase_date));
+                          const sortedDates = dates.sort((a, b) => a.getTime() - b.getTime());
+                          earliestPurchaseDate =
+                            sortedDates[0]?.toISOString().split('T')[0] || null;
+                        }
+
+                        return (
+                          <div
+                            key={name}
+                            className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <div>
+                                <p className="font-medium text-gray-900">{name}</p>
+                                <p className="text-xs text-gray-600">Benchmark</p>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {formatPercentage(returnPercentage / 100)}
+                              </p>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <p className="text-xs text-gray-500">
+                                Value if invested in benchmark:
+                              </p>
+                              <p
+                                className={`text-sm font-medium ${valueChange >= 0 ? 'text-green-900' : 'text-red-900'}`}
+                              >
+                                {formatCurrency(benchmarkValue)}
+                              </p>
+                            </div>
+                            <div className="flex justify-between items-center mt-1">
+                              <p className="text-xs text-gray-500">Difference from portfolio:</p>
+                              <p className={`text-sm font-medium ${valueChangeClass}`}>
+                                {valueChange >= 0 ? '↑' : '↓'} {valueChangeFormatted}
+                              </p>
+                            </div>
+                            {earliestPurchaseDate && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <p className="text-xs text-gray-500">
+                                  Based on earliest purchase: {earliestPurchaseDate}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      )}
+
+      {/* Holdings Section */}
+      <div className="mb-12">
+        <div className="bg-white border border-gray-200 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Current Holdings</h2>
+
+          {portfolio.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">
+                No stocks in your portfolio yet. Add your first stock to get started!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {portfolio.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {entry.company_name}
+                        </h3>
+                        <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {entry.ticker}
+                        </span>
                       </div>
+                      <p className="text-sm text-gray-600">
+                        Purchased {entry.quantity} shares at {formatCurrency(entry.purchase_price)}{' '}
+                        each
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Purchase Date: {entry.purchase_date}
+                      </p>
                     </div>
 
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => {
-                          setSellModalOpen(true);
-                          setSelectedEntry(entry);
-                          setSellFormData({
-                            id: entry.id,
-                            sell_date: new Date().toISOString().split('T')[0],
-                            sell_price: entry.current_price || entry.purchase_price,
-                          });
-                        }}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium"
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-gray-900 mb-2">
+                        {formatCurrency(
+                          entry.current_value || entry.purchase_price * entry.quantity,
+                        )}{' '}
+                        {/* Show current value or fallback */}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {formatCurrency(entry.current_price || entry.purchase_price)} per share
+                      </div>
+                      <div
+                        className={`text-sm font-medium ${
+                          entry.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
                       >
-                        Sell
-                      </button>
+                        {entry.profit_loss >= 0 ? '↑' : '↓'}{' '}
+                        {formatCurrency(entry.profit_loss || 0)} (
+                        {formatPercentage((entry.profit_loss_percentage || 0) / 100)})
+                      </div>
+                      <div className="text-sm text-gray-500 mt-2">
+                        Annualized Return:{' '}
+                        {entry.annualized_return_percentage !== null
+                          ? formatPercentage(entry.annualized_return_percentage / 100)
+                          : 'N/A'}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSellModalOpen(true);
+                        setSelectedEntry(entry);
+                        setSellFormData({
+                          id: entry.id,
+                          sell_date: new Date().toISOString().split('T')[0],
+                          sell_price: entry.current_price || entry.purchase_price,
+                        });
+                      }}
+                      className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium"
+                    >
+                      Sell
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -402,11 +387,10 @@ function PortfolioPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Purchase Date
                   </label>
-                  <input
-                    type="date"
+                  <DatePickerInput
                     value={formData.purchase_date}
-                    onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
+                    onChange={(date) => setFormData({ ...formData, purchase_date: date })}
+                    placeholder="Purchase Date"
                   />
                 </div>
 
@@ -490,13 +474,10 @@ function PortfolioPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Sell Date</label>
-                  <input
-                    type="date"
+                  <DatePickerInput
                     value={sellFormData.sell_date}
-                    onChange={(e) =>
-                      setSellFormData({ ...sellFormData, sell_date: e.target.value })
-                    }
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
+                    onChange={(date) => setSellFormData({ ...sellFormData, sell_date: date })}
+                    placeholder="Sell Date"
                   />
                 </div>
 

@@ -1,11 +1,13 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AutocompleteInput } from './components/AutocompleteInput';
 import { AlertCircle, TrendingUp } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
 import PortfolioPage from './pages/PortfolioPage';
+import { useState } from 'react';
 import './App.css';
+
+type Tab = 'analysis' | 'performance' | 'portfolio';
 
 // Period options with date calculation
 const PERIODS = [
@@ -79,7 +81,148 @@ function PeriodSelector({
   );
 }
 
-function HomePage() {
+function AnalysisTab({
+  ticker,
+  setTicker,
+  period,
+  setPeriod,
+  loading,
+  loadingAI,
+  error,
+  errorAI,
+  data,
+  handleAnalyze,
+  updateChartData,
+  handleGenerateAI,
+}: {
+  ticker: string;
+  setTicker: (ticker: string) => void;
+  period: string;
+  setPeriod: (period: string) => void;
+  loading: boolean;
+  loadingAI: boolean;
+  error: string;
+  errorAI: string;
+  data: any;
+  handleAnalyze: any;
+  updateChartData: any;
+  handleGenerateAI: any;
+}) {
+  // Get date range for the selected period
+  const dateRange = getDateRange(period);
+
+  // Handle period change from chart - lightweight chart-only update (no metrics recalculation)
+  const handleChartPeriodChange = (newPeriod: string) => {
+    setPeriod(newPeriod);
+    if (ticker.trim()) {
+      const newDateRange = getDateRange(newPeriod);
+      updateChartData(newDateRange);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-12">
+      {/* Search Section */}
+      <div className="mb-12">
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <AutocompleteInput
+              value={ticker}
+              onChange={setTicker}
+              onSubmit={() => handleAnalyze(undefined, dateRange)}
+              placeholder="Enter ticker (e.g., AAPL, CBA.AX for ASX, NVDA for NASDAQ)"
+              disabled={loading}
+              submitLabel={loading ? 'Analyzing...' : 'Analyze'}
+              showSubmitButton={true}
+            />
+          </div>
+          <PeriodSelector value={period} onChange={setPeriod} disabled={loading} />
+        </div>
+        <p className="text-xs text-gray-400">
+          Stock data provided by{' '}
+          <a
+            href="https://au.finance.yahoo.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Yahoo Finance
+          </a>
+        </p>
+        {import.meta.env.VITE_API_BASE_URL &&
+          !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
+            <p className="text-xs text-gray-400 mt-1">
+              Note: Initial load may take ~60s if service was inactive.
+            </p>
+          )}
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-800 text-sm">{error}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Analysis Results */}
+      {data && (
+        <AnalysisResults
+          data={data}
+          period={period}
+          onPeriodChange={handleChartPeriodChange}
+          loadingAI={loadingAI}
+          errorAI={errorAI}
+          onGenerateAI={handleGenerateAI}
+        />
+      )}
+    </div>
+  );
+}
+
+function TabNav({ activeTab, onTabChange }: { activeTab: Tab; onTabChange: (tab: Tab) => void }) {
+  return (
+    <div className="border-b border-gray-100 bg-white sticky top-[57px] z-40">
+      <div className="max-w-6xl mx-auto px-6 py-3">
+        <div className="overflow-x-auto hide-scrollbar">
+          <div className="flex items-center gap-2 min-w-max">
+            <button
+              onClick={() => onTabChange('analysis')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'analysis'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Analysis
+            </button>
+            <button
+              onClick={() => onTabChange('performance')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'performance'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Performance Calculator
+            </button>
+            <button
+              onClick={() => onTabChange('portfolio')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'portfolio'
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Portfolio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('analysis');
   const {
     ticker,
     setTicker,
@@ -95,18 +238,6 @@ function HomePage() {
     handleGenerateAI,
   } = useStockAnalysis();
 
-  // Get date range for the selected period
-  const dateRange = getDateRange(period);
-
-  // Handle period change from chart - lightweight chart-only update (no metrics recalculation)
-  const handleChartPeriodChange = (newPeriod: string) => {
-    setPeriod(newPeriod);
-    if (ticker.trim()) {
-      const newDateRange = getDateRange(newPeriod);
-      updateChartData(newDateRange);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -119,102 +250,29 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="border-b border-gray-100 bg-white sticky top-[57px] z-40">
-        <div className="max-w-6xl mx-auto px-6 py-3">
-          <div className="overflow-x-auto hide-scrollbar">
-            <div className="flex items-center gap-2 min-w-max">
-              <Link
-                to="/"
-                className="px-4 py-2 text-sm font-medium text-gray-900 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Analysis
-              </Link>
-              <Link
-                to="/performance"
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Performance Calculator
-              </Link>
-              <Link
-                to="/portfolio"
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Portfolio
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Tab Navigation */}
+      <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Search Section */}
-        <div className="mb-12">
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="flex-1">
-              <AutocompleteInput
-                value={ticker}
-                onChange={setTicker}
-                onSubmit={() => handleAnalyze(undefined, dateRange)}
-                placeholder="Enter ticker (e.g., AAPL, CBA.AX for ASX, NVDA for NASDAQ)"
-                disabled={loading}
-                submitLabel={loading ? 'Analyzing...' : 'Analyze'}
-                showSubmitButton={true}
-              />
-            </div>
-            <PeriodSelector value={period} onChange={setPeriod} disabled={loading} />
-          </div>
-          <p className="text-xs text-gray-400">
-            Stock data provided by{' '}
-            <a
-              href="https://au.finance.yahoo.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-gray-600"
-            >
-              Yahoo Finance
-            </a>
-          </p>
-          {import.meta.env.VITE_API_BASE_URL &&
-            !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
-              <p className="text-xs text-gray-400 mt-1">
-                Note: Initial load may take ~60s if service was inactive.
-              </p>
-            )}
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Analysis Results */}
-        {data && (
-          <AnalysisResults
-            data={data}
-            period={period}
-            onPeriodChange={handleChartPeriodChange}
-            loadingAI={loadingAI}
-            errorAI={errorAI}
-            onGenerateAI={handleGenerateAI}
-          />
-        )}
-      </div>
+      {/* Tab Content */}
+      {activeTab === 'analysis' && (
+        <AnalysisTab
+          ticker={ticker}
+          setTicker={setTicker}
+          period={period}
+          setPeriod={setPeriod}
+          loading={loading}
+          loadingAI={loadingAI}
+          error={error}
+          errorAI={errorAI}
+          data={data}
+          handleAnalyze={handleAnalyze}
+          updateChartData={updateChartData}
+          handleGenerateAI={handleGenerateAI}
+        />
+      )}
+      {activeTab === 'performance' && <PerformanceCalculatorPage />}
+      {activeTab === 'portfolio' && <PortfolioPage />}
     </div>
-  );
-}
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/performance" element={<PerformanceCalculatorPage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
-      </Routes>
-    </Router>
   );
 }
 
