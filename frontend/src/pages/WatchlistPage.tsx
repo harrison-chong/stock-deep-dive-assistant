@@ -1,23 +1,18 @@
 import { useState, useEffect } from 'react';
-import { WatchlistEntry, WatchlistSummary, AddWatchlistRequest } from '../types/watchlist';
-import {
-  addWatchlistEntry,
-  deleteWatchlistEntry,
-  getWatchlist,
-  getWatchlistFilterOptions,
-} from '../services/watchlist';
-import { AlertCircle, X } from 'lucide-react';
+import { WatchlistEntry, AddWatchlistRequest } from '../types/watchlist';
+import { addWatchlistEntry, deleteWatchlistEntry, getWatchlist } from '../services/watchlist';
+import { AlertCircle, X, RefreshCw } from 'lucide-react';
 import { AutocompleteInput } from '../components/AutocompleteInput';
 import { DatePickerInput } from '../components/DatePickerInput';
 
 function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
-  const [summary, setSummary] = useState<WatchlistSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [allStocks, setAllStocks] = useState<WatchlistEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasPrices, setHasPrices] = useState(false);
   const [error, setError] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [filterOption, setFilterOption] = useState<string>('');
-  const [filterOptions, setFilterOptions] = useState<string[]>([]);
   const [addError, setAddError] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; ticker: string } | null>(null);
   const [formData, setFormData] = useState<AddWatchlistRequest>({
@@ -28,31 +23,34 @@ function WatchlistPage() {
     added_by: '',
   });
 
+  // Compute displayed stocks by filtering client-side
+  const displayedStocks = filterOption
+    ? allStocks.filter((s) => s.added_by === filterOption)
+    : allStocks;
+
+  // Derive filter options from loaded watchlist entries
+  const filterOptions = Array.from(
+    new Set(allStocks.map((s) => s.added_by).filter(Boolean)),
+  ).sort();
+
+  // Load watchlist on mount (without fetching live prices)
   useEffect(() => {
-    loadWatchlist();
-    loadFilterOptions();
+    loadWatchlist(false);
   }, []);
 
-  const loadWatchlist = async () => {
+  const loadWatchlist = async (fetchCurrentPrice: boolean = true) => {
     try {
       setLoading(true);
+      if (fetchCurrentPrice) setRefreshing(true);
       setError('');
-      const data = await getWatchlist(filterOption || undefined);
-      setWatchlist(data.watchlist);
-      setSummary(data.summary);
+      const data = await getWatchlist(undefined, fetchCurrentPrice);
+      setAllStocks(data.watchlist);
+      if (fetchCurrentPrice) setHasPrices(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load watchlist');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadFilterOptions = async () => {
-    try {
-      const options = await getWatchlistFilterOptions();
-      setFilterOptions(options);
-    } catch {
-      // Silently fail - filter options are nice to have
+      setRefreshing(false);
     }
   };
 
@@ -62,8 +60,8 @@ function WatchlistPage() {
       setAddModalOpen(false);
       setFormData({ ticker: '', entry_price: undefined, entry_date: '', notes: '', added_by: '' });
       setAddError('');
-      await loadWatchlist();
-      await loadFilterOptions();
+      // Refresh with prices if we already have prices, otherwise without
+      await loadWatchlist(hasPrices);
     } catch (err: unknown) {
       // Extract meaningful error message from axios error response
       const axiosError = err as { response?: { data?: { detail?: string } } };
@@ -79,8 +77,8 @@ function WatchlistPage() {
   const handleDeleteStock = async (id: string) => {
     try {
       await deleteWatchlistEntry(id);
-      await loadWatchlist();
-      await loadFilterOptions();
+      // Refresh with prices if we already have prices, otherwise without
+      await loadWatchlist(hasPrices);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to delete stock');
     }
@@ -134,12 +132,24 @@ function WatchlistPage() {
           <h1 className="text-2xl font-bold text-gray-900">Stock Watchlist</h1>
           <p className="text-sm text-gray-500 mt-1">Track stocks you&apos;re considering buying</p>
         </div>
-        <button
-          onClick={() => setAddModalOpen(true)}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          + Add Stock
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              loadWatchlist(true);
+            }}
+            disabled={loading}
+            className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            + Add Stock
+          </button>
+        </div>
       </div>
 
       {/* Filter */}
@@ -149,7 +159,6 @@ function WatchlistPage() {
             value={filterOption}
             onChange={(e) => {
               setFilterOption(e.target.value);
-              loadWatchlist();
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
           >
@@ -164,7 +173,7 @@ function WatchlistPage() {
       )}
 
       {/* Table */}
-      {watchlist.length === 0 ? (
+      {displayedStocks.length === 0 && !loading ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
           <p className="text-gray-500 text-lg">
             No stocks in your watchlist yet. Add your first stock to get started!
@@ -202,7 +211,7 @@ function WatchlistPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {watchlist.map((entry) => (
+              {displayedStocks.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm font-semibold text-gray-900">{entry.ticker}</span>
@@ -217,15 +226,19 @@ function WatchlistPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-gray-900">
-                      {formatCurrency(entry.current_price)}
+                      {hasPrices ? formatCurrency(entry.current_price) : '—'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`text-sm font-medium ${entry.gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                    >
-                      {formatPercentage(entry.gain_loss_percentage)}
-                    </span>
+                    {hasPrices ? (
+                      <span
+                        className={`text-sm font-medium ${entry.gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                      >
+                        {formatPercentage(entry.gain_loss_percentage)}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-500 truncate max-w-xs block">
@@ -251,29 +264,48 @@ function WatchlistPage() {
       )}
 
       {/* Summary */}
-      {summary && watchlist.length > 0 && (
+      {displayedStocks.length > 0 && (
         <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-8">
             <div>
-              <p className="text-xs text-gray-500 uppercase">Total Stocks</p>
-              <p className="text-lg font-semibold text-gray-900">{summary.total_stocks}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase">Avg Gain/Loss</p>
-              <p
-                className={`text-lg font-semibold ${summary.average_gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}
-              >
-                {formatPercentage(summary.average_gain_loss_percentage)}
+              <p className="text-xs text-gray-500 uppercase">Showing</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {displayedStocks.length} of {allStocks.length}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase">Above Entry</p>
-              <p className="text-lg font-semibold text-green-600">{summary.stocks_above_entry}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 uppercase">Below Entry</p>
-              <p className="text-lg font-semibold text-red-600">{summary.stocks_below_entry}</p>
-            </div>
+            {hasPrices && displayedStocks.length > 0 && (
+              <>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase">Avg Gain/Loss</p>
+                  {(() => {
+                    const total = displayedStocks.reduce(
+                      (sum, s) => sum + s.gain_loss_percentage,
+                      0,
+                    );
+                    const avg = total / displayedStocks.length;
+                    return (
+                      <p
+                        className={`text-lg font-semibold ${avg >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                      >
+                        {formatPercentage(avg)}
+                      </p>
+                    );
+                  })()}
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase">Above Entry</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    {displayedStocks.filter((s) => s.gain_loss_percentage >= 0).length}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase">Below Entry</p>
+                  <p className="text-lg font-semibold text-red-600">
+                    {displayedStocks.filter((s) => s.gain_loss_percentage < 0).length}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

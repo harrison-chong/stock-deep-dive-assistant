@@ -12,17 +12,12 @@ export const deleteWatchlistEntry = async (id: string) => {
   return response.data;
 };
 
-export const getWatchlist = async (addedBy?: string) => {
-  const params = addedBy ? { added_by: addedBy } : {};
+export const getWatchlist = async (addedBy?: string, fetchCurrentPrice: boolean = true) => {
+  const params: Record<string, string | boolean> = {};
+  if (addedBy) params.added_by = addedBy;
+  if (!fetchCurrentPrice) params.fetch_current_price = 'false';
   const response = await axios.get<WatchlistListResponse>(`${API_BASE_URL}/api/watchlist`, {
     params,
   });
   return response.data;
-};
-
-export const getWatchlistFilterOptions = async () => {
-  const response = await axios.get<{ options: string[] }>(
-    `${API_BASE_URL}/api/watchlist/filter/added_by`,
-  );
-  return response.data.options;
 };

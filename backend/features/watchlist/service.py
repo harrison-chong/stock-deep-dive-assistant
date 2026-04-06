@@ -140,8 +140,12 @@ class WatchlistService:
             return True
         return False
 
-    def get_watchlist(self, added_by: str | None = None) -> WatchlistListResponse:
-        """Get all watchlist entries, optionally filtered by added_by"""
+    def get_watchlist(
+        self, added_by: str | None = None, fetch_current_price: bool = True
+    ) -> WatchlistListResponse:
+        """Get all watchlist entries, optionally filtered by added_by.
+        If fetch_current_price is False, skip fetching live prices (faster initial load).
+        """
         entries = self.watchlist
         if added_by:
             entries = [e for e in entries if e.added_by == added_by]
@@ -152,42 +156,58 @@ class WatchlistService:
         stocks_below = 0
 
         for entry in entries:
-            try:
-                current_price = self.data_service.get_current_price(entry.ticker)
-                gain_loss_percentage = (
-                    (current_price - entry.entry_price) / entry.entry_price * 100
-                    if entry.entry_price > 0
-                    else 0
-                )
-                total_gain_loss += gain_loss_percentage
-
-                if gain_loss_percentage >= 0:
-                    stocks_above += 1
-                else:
-                    stocks_below += 1
-
-                watchlist_responses.append(
-                    WatchlistEntryResponse(
-                        id=entry.id,
-                        ticker=entry.ticker,
-                        entry_price=entry.entry_price,
-                        entry_date=entry.entry_date.strftime("%Y-%m-%d"),
-                        current_price=current_price,
-                        gain_loss_percentage=gain_loss_percentage,
-                        notes=entry.notes,
-                        added_by=entry.added_by,
-                        added_date=entry.added_date.strftime("%Y-%m-%d"),
+            if fetch_current_price:
+                try:
+                    current_price = self.data_service.get_current_price(entry.ticker)
+                    gain_loss_percentage = (
+                        (current_price - entry.entry_price) / entry.entry_price * 100
+                        if entry.entry_price > 0
+                        else 0
                     )
-                )
-            except Exception as e:
-                print(f"Error getting current price for {entry.ticker}: {e}")
+                    total_gain_loss += gain_loss_percentage
+
+                    if gain_loss_percentage >= 0:
+                        stocks_above += 1
+                    else:
+                        stocks_below += 1
+
+                    watchlist_responses.append(
+                        WatchlistEntryResponse(
+                            id=entry.id,
+                            ticker=entry.ticker,
+                            entry_price=entry.entry_price,
+                            entry_date=entry.entry_date.strftime("%Y-%m-%d"),
+                            current_price=current_price,
+                            gain_loss_percentage=gain_loss_percentage,
+                            notes=entry.notes,
+                            added_by=entry.added_by,
+                            added_date=entry.added_date.strftime("%Y-%m-%d"),
+                        )
+                    )
+                except Exception as e:
+                    print(f"Error getting current price for {entry.ticker}: {e}")
+                    watchlist_responses.append(
+                        WatchlistEntryResponse(
+                            id=entry.id,
+                            ticker=entry.ticker,
+                            entry_price=entry.entry_price,
+                            entry_date=entry.entry_date.strftime("%Y-%m-%d"),
+                            current_price=0,
+                            gain_loss_percentage=0,
+                            notes=entry.notes,
+                            added_by=entry.added_by,
+                            added_date=entry.added_date.strftime("%Y-%m-%d"),
+                        )
+                    )
+            else:
+                # Skip fetching prices - show entry data without current price
                 watchlist_responses.append(
                     WatchlistEntryResponse(
                         id=entry.id,
                         ticker=entry.ticker,
                         entry_price=entry.entry_price,
                         entry_date=entry.entry_date.strftime("%Y-%m-%d"),
-                        current_price=0,
+                        current_price=entry.entry_price,  # Use entry price so gain_loss = 0
                         gain_loss_percentage=0,
                         notes=entry.notes,
                         added_by=entry.added_by,
@@ -210,7 +230,3 @@ class WatchlistService:
             watchlist=watchlist_responses,
             summary=summary,
         )
-
-    def get_unique_added_by(self) -> list[str]:
-        """Get list of unique added_by values for filtering"""
-        return list(set(entry.added_by for entry in self.watchlist if entry.added_by))

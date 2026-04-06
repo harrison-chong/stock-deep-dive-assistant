@@ -316,30 +316,20 @@ async def delete_from_watchlist(id: str):
 
 
 @router.get("/watchlist", response_model=WatchlistListResponse)
-async def get_watchlist(added_by: str | None = None):
+async def get_watchlist(added_by: str | None = None, fetch_current_price: bool = True):
     """
-    Get all watchlist entries, optionally filtered by added_by
+    Get all watchlist entries, optionally filtered by added_by.
+    Set fetch_current_price=false to skip fetching live prices (faster, for initial load).
     """
     try:
-        watchlist = watchlist_service.get_watchlist(added_by=added_by)
+        watchlist = watchlist_service.get_watchlist(
+            added_by=added_by, fetch_current_price=fetch_current_price
+        )
         return watchlist
 
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
-
-
-@router.get("/watchlist/filter/added_by")
-async def get_watchlist_filter_options():
-    """
-    Get unique added_by values for filtering
-    """
-    try:
-        return {"options": watchlist_service.get_unique_added_by()}
-
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get filter options")
 
 
 @router.get("/health")
