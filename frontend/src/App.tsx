@@ -3,11 +3,11 @@ import { AlertCircle, TrendingUp } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
-import PortfolioPage from './pages/PortfolioPage';
+import WatchlistPage from './pages/WatchlistPage';
 import { useState } from 'react';
 import './App.css';
 
-type Tab = 'analysis' | 'performance' | 'portfolio';
+type Tab = 'analysis' | 'performance' | 'watchlist';
 
 // Period options with date calculation
 const PERIODS = [
@@ -205,14 +205,14 @@ function TabNav({ activeTab, onTabChange }: { activeTab: Tab; onTabChange: (tab:
               Performance Calculator
             </button>
             <button
-              onClick={() => onTabChange('portfolio')}
+              onClick={() => onTabChange('watchlist')}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === 'portfolio'
+                activeTab === 'watchlist'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
-              Portfolio
+              Watchlist
             </button>
           </div>
         </div>
@@ -271,7 +271,7 @@ function App() {
         />
       )}
       {activeTab === 'performance' && <PerformanceCalculatorPage />}
-      {activeTab === 'portfolio' && <PortfolioPage />}
+      {activeTab === 'watchlist' && <WatchlistPage />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ interface DatePickerInputProps {
   value: string;
   onChange: (date: string) => void;
   placeholder?: string;
+  minDate?: Date;
   maxDate?: Date;
   className?: string;
 }
@@ -16,16 +17,19 @@ export function DatePickerInput({
   value,
   onChange,
   placeholder = 'Select date',
+  minDate,
   maxDate = new Date(),
   className = '',
 }: DatePickerInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<Date | undefined>(value ? new Date(value) : undefined);
+  const [viewMonth, setViewMonth] = useState<Date>(value ? new Date(value) : new Date());
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (value) {
       setSelected(new Date(value));
+      setViewMonth(new Date(value));
     }
   }, [value]);
 
@@ -49,7 +53,27 @@ export function DatePickerInput({
 
   const disabledDays = {
     after: maxDate,
+    before: minDate,
   };
+
+  const currentYear = viewMonth.getFullYear();
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - 25 + i).filter(
+    (y) => y >= 2000 && y <= maxDate.getFullYear(),
+  );
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
   const footer = (
     <div className="flex justify-end mt-2 pt-2 border-t border-gray-200">
@@ -78,6 +102,39 @@ export function DatePickerInput({
 
       {isOpen && (
         <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+          {/* Month/Year selector */}
+          <div className="flex gap-2 mb-3 pb-2 border-b border-gray-200">
+            <select
+              value={viewMonth.getMonth()}
+              onChange={(e) => {
+                const newDate = new Date(viewMonth);
+                newDate.setMonth(parseInt(e.target.value));
+                setViewMonth(newDate);
+              }}
+              className="px-2 py-1 border border-gray-300 rounded text-sm"
+            >
+              {months.map((m, i) => (
+                <option key={m} value={i}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={viewMonth.getFullYear()}
+              onChange={(e) => {
+                const newDate = new Date(viewMonth);
+                newDate.setFullYear(parseInt(e.target.value));
+                setViewMonth(newDate);
+              }}
+              className="px-2 py-1 border border-gray-300 rounded text-sm"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
           <DayPicker
             mode="single"
             selected={selected}
@@ -85,6 +142,8 @@ export function DatePickerInput({
             disabled={disabledDays}
             showOutsideDays
             footer={footer}
+            month={viewMonth}
+            onMonthChange={setViewMonth}
             modifiersClassNames={{
               selected: 'rdp-day_selected',
               today: 'rdp-day_today',

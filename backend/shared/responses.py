@@ -317,54 +317,31 @@ class PerformanceResponse(BaseModel):
     timestamp: str
 
 
-class PortfolioEntryResponse(BaseModel):
-    """Portfolio entry response"""
+class WatchlistEntryResponse(BaseModel):
+    """Watchlist entry response"""
 
     id: str
     ticker: str
-    company_name: str
-    purchase_date: str
-    quantity: float
-    purchase_price: float
+    entry_price: float
+    entry_date: str
     current_price: float
-    current_value: float
-    profit_loss: float
-    profit_loss_percentage: float
-    annualized_return: float
-    annualized_return_percentage: float
-    status: str  # "active" or "sold"
+    gain_loss_percentage: float
+    notes: str
+    added_by: str
+    added_date: str
 
 
-class PortfolioListResponse(BaseModel):
-    """List of portfolio entries"""
+class WatchlistSummaryResponse(BaseModel):
+    """Watchlist summary response"""
 
-    portfolio: list[PortfolioEntryResponse]
-    summary: dict[str, float]
-
-
-class PortfolioPerformanceResponse(BaseModel):
-    """Portfolio performance response"""
-
-    total_cost: float
-    current_value: float
-    total_profit_loss: float
-    total_profit_loss_percentage: float
-    annualized_return: float
-    annualized_return_percentage: float
-    benchmark_comparison: dict[str, float]
-    benchmark_monetary_comparison: dict[str, float]
-    holdings: list[dict]
+    total_stocks: int
+    average_gain_loss_percentage: float
+    stocks_above_entry: int
+    stocks_below_entry: int
 
 
-class PortfolioSummaryResponse(BaseModel):
-    """Portfolio summary response"""
+class WatchlistListResponse(BaseModel):
+    """List of watchlist entries"""
 
-    total_investment: float
-    total_value: float
-    total_profit_loss: float
-    total_profit_loss_percentage: float
-    holdings_count: int
-    annualized_return: float
-    annualized_return_percentage: float
-    benchmarks: list[dict]
-    last_updated: str
+    watchlist: list[WatchlistEntryResponse]
+    summary: WatchlistSummaryResponse
