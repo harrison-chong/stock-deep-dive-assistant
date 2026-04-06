@@ -3,6 +3,7 @@ Data fetching service.
 """
 
 import time
+from datetime import datetime, timedelta
 import pandas as pd
 import yfinance as yf
 from yfinance.exceptions import YFRateLimitError
@@ -216,4 +217,37 @@ class DataService:
         data = retry_with_backoff(fetch)
         if data.empty:
             raise ValueError(f"No data found for '{ticker}'.")
+        return float(data["Close"].iloc[-1].item())
+
+    @staticmethod
+    def get_price_on_date(ticker: str, date: str) -> float:
+        """
+        Get the closing price for a ticker on or after a specific date.
+        Fetches a small window (5 days before to 7 days after) and returns the first close on or after the date.
+        """
+
+        requested_date = datetime.strptime(date, "%Y-%m-%d")
+        start = requested_date - timedelta(days=5)
+        end = requested_date + timedelta(days=7)
+
+        def fetch():
+            return yf.download(
+                ticker,
+                start=start.strftime("%Y-%m-%d"),
+                end=end.strftime("%Y-%m-%d"),
+                progress=False,
+                repair=True,
+            )
+
+        data = retry_with_backoff(fetch)
+        if data.empty:
+            raise ValueError(f"No data found for '{ticker}' around {date}.")
+
+        # Find first close on or after the requested date
+        data_dates = data.index.tolist()
+        for i, d in enumerate(data_dates):
+            if d.date() >= requested_date.date():
+                return float(data["Close"].iloc[i].item())
+
+        # If none found, return the last available close (edge case)
         return float(data["Close"].iloc[-1].item())

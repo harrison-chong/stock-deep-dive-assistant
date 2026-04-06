@@ -8,28 +8,25 @@ from datetime import datetime
 from shared.requests import (
     AnalysisRequest,
     PerformanceRequest,
-    PortfolioEntryRequest,
-    PortfolioSellRequest,
+    WatchlistEntryRequest,
     ChartDataRequest,
 )
 from shared.responses import (
     StockAnalysisResponse,
     PerformanceResponse,
-    PortfolioEntryResponse,
-    PortfolioListResponse,
-    PortfolioPerformanceResponse,
-    PortfolioSummaryResponse,
+    WatchlistEntryResponse,
+    WatchlistListResponse,
     ChartDataResponse,
     MarketSummaryResponse,
     AIOutlookResponse,
 )
 from application.analysis import StockAnalyzer
-from features.portfolio.service import PortfolioService
+from features.watchlist.service import WatchlistService
 from yfinance.exceptions import YFRateLimitError
 
 router = APIRouter()
 analyzer = StockAnalyzer()
-portfolio_service = PortfolioService()
+watchlist_service = WatchlistService()
 
 
 @router.post("/analyze", response_model=StockAnalysisResponse)
@@ -264,10 +261,10 @@ async def calculate_performance(request: PerformanceRequest):
         raise HTTPException(status_code=500, detail="Performance calculation failed")
 
 
-@router.post("/portfolio/add", response_model=PortfolioEntryResponse)
-async def add_to_portfolio(request: PortfolioEntryRequest):
+@router.post("/watchlist", response_model=WatchlistEntryResponse)
+async def add_to_watchlist(request: WatchlistEntryRequest):
     """
-    Add a stock to the portfolio
+    Add a stock to the watchlist
     """
     ticker = request.ticker.upper()
 
@@ -277,7 +274,7 @@ async def add_to_portfolio(request: PortfolioEntryRequest):
         raise HTTPException(status_code=400, detail="Invalid ticker format")
 
     try:
-        result = await portfolio_service.add_stock(request)
+        result = await watchlist_service.add_stock(request)
         return result
 
     except YFRateLimitError:
@@ -286,79 +283,63 @@ async def add_to_portfolio(request: PortfolioEntryRequest):
             detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        error_msg = str(e)
+        if "delisted" in error_msg.lower() or "no data found" in error_msg.lower():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Ticker '{ticker}' not found in Yahoo Finance. It may be delisted or invalid. Please check and try again.",
+            )
+        raise HTTPException(status_code=404, detail=error_msg)
     except Exception as e:
         print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to add stock to portfolio")
+        raise HTTPException(status_code=500, detail="Failed to add stock to watchlist")
 
 
-@router.post("/portfolio/sell", response_model=PortfolioEntryResponse)
-async def sell_from_portfolio(request: PortfolioSellRequest):
+@router.delete("/watchlist/{id}")
+async def delete_from_watchlist(id: str):
     """
-    Sell a stock from the portfolio
-    """
-    try:
-        result = await portfolio_service.sell_stock(request)
-        return result
-
-    except YFRateLimitError:
-        raise HTTPException(
-            status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Failed to sell stock from portfolio"
-        )
-
-
-@router.get("/portfolio", response_model=PortfolioListResponse)
-async def get_portfolio():
-    """
-    Get all portfolio entries
+    Delete a stock from the watchlist
     """
     try:
-        portfolio = portfolio_service.get_portfolio()
-        return portfolio
+        success = watchlist_service.delete_stock(id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Watchlist entry not found")
+        return {"status": "ok", "message": "Stock removed from watchlist"}
 
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve portfolio")
-
-
-@router.get("/portfolio/performance", response_model=PortfolioPerformanceResponse)
-async def get_portfolio_performance():
-    """
-    Get portfolio performance metrics
-    """
-    try:
-        performance = await portfolio_service.get_performance()
-        return performance
-
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error: {str(e)}")
         raise HTTPException(
-            status_code=500, detail="Failed to calculate portfolio performance"
+            status_code=500, detail="Failed to delete stock from watchlist"
         )
 
 
-@router.get("/portfolio/summary", response_model=PortfolioSummaryResponse)
-async def get_portfolio_summary():
+@router.get("/watchlist", response_model=WatchlistListResponse)
+async def get_watchlist(added_by: str | None = None):
     """
-    Get portfolio summary
+    Get all watchlist entries, optionally filtered by added_by
     """
     try:
-        summary = portfolio_service.get_summary()
-        return summary
+        watchlist = watchlist_service.get_watchlist(added_by=added_by)
+        return watchlist
 
     except Exception as e:
         print(f"Error: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Failed to retrieve portfolio summary"
-        )
+        raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
+
+
+@router.get("/watchlist/filter/added_by")
+async def get_watchlist_filter_options():
+    """
+    Get unique added_by values for filtering
+    """
+    try:
+        return {"options": watchlist_service.get_unique_added_by()}
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get filter options")
 
 
 @router.get("/health")
