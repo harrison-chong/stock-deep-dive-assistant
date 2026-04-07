@@ -1,35 +1,42 @@
 import os
+from functools import lru_cache
 from jinja2 import Environment, FileSystemLoader
+
+
+# Cache the template environment for the prompts directory
+@lru_cache(maxsize=1)
+def _get_prompts_env():
+    """Get cached Jinja2 environment for prompts directory."""
+    prompts_dir = os.path.join(os.path.dirname(__file__), "..", "prompts")
+    return FileSystemLoader(prompts_dir)
 
 
 def render_template(template_path: str, **context) -> str:
     """
     Render a Jinja2 template with provided context.
 
-    This function creates a new Jinja2 Environment for the template's directory on each call.
-    It supports any template path and is general-purpose for rendering templates from various locations.
-
     Args:
-        template_path (str): Full or relative path to the template file (e.g., 'prompts/recommender.jinja2').
+        template_path (str): Relative path to the template file within prompts directory.
         **context: Variables to pass to the template.
 
     Returns:
         str: Rendered template string.
-
-    Raises:
-        jinja2.TemplateNotFound: If the template file does not exist.
-        ValueError: If template_path is invalid.
     """
-    # Extract the directory containing the template
+    # For prompts directory templates, use cached environment
+    prompts_dir = os.path.join(os.path.dirname(__file__), "..", "prompts")
     template_dir = os.path.dirname(template_path)
 
-    # Create a loader and environment for this directory
-    loader = FileSystemLoader(template_dir)
-    env = Environment(loader=loader)
+    if (
+        template_path.startswith("prompts/")
+        or template_dir == prompts_dir
+        or not template_dir
+    ):
+        env = Environment(loader=_get_prompts_env())
+    else:
+        # Fallback for other template paths
+        loader = FileSystemLoader(template_dir)
+        env = Environment(loader=loader)
 
-    # Get the template name from the path and load it
     template_name = os.path.basename(template_path)
     template = env.get_template(template_name)
-
-    # Render the template with the provided context and return the result
     return template.render(**context)

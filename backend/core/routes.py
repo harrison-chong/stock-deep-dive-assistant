@@ -193,7 +193,7 @@ async def calculate_performance(request: PerformanceRequest):
                 current_price = float(regular_market_price)
             else:
                 # Last resort: fetch 1 day of data if price not in info
-                ohlc = await analyzer.data_service.get_ohlc(ticker, days=1)
+                ohlc = await analyzer.data_service.get_ohlc(ticker, period="1d")
                 if not ohlc.close:
                     raise ValueError(f"No data found for {ticker}")
                 current_price = float(ohlc.close[-1])

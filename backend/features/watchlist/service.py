@@ -21,7 +21,11 @@ class WatchlistService:
 
     def __init__(self):
         self.data_service = DataService()
-        self.watchlist_file = "data/watchlist.json"
+        # Use absolute path based on module location
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        self.watchlist_file = os.path.join(
+            module_dir, "..", "..", "data", "watchlist.json"
+        )
         self.watchlist = self._load_watchlist()
 
     def _load_watchlist(self) -> list[WatchlistEntry]:
@@ -67,15 +71,24 @@ class WatchlistService:
             for entry in self.watchlist
         ]
 
+        # Ensure directory exists
+        directory = os.path.dirname(self.watchlist_file)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+
         try:
             with open(self.watchlist_file, "w") as f:
                 json.dump(watchlist_data, f, indent=2)
         except Exception as e:
-            print(f"Error saving watchlist: {e}")
+            raise RuntimeError(f"Failed to save watchlist: {e}") from e
 
     async def add_stock(self, request: WatchlistEntryRequest) -> WatchlistEntryResponse:
         """Add a stock to the watchlist"""
         ticker = request.ticker.upper()
+
+        # Check if ticker already exists in watchlist
+        if any(entry.ticker == ticker for entry in self.watchlist):
+            raise ValueError(f"{ticker} is already in watchlist")
 
         # Determine entry_date - default to today
         if request.entry_date:
