@@ -9,6 +9,7 @@ import yfinance as yf
 from yfinance.exceptions import YFRateLimitError
 
 from shared.domain import OHLCData, FundamentalData, CompanyInfo
+from common.logging import app_logger
 
 
 def retry_with_backoff(func, max_retries=3, base_delay=5.0):
@@ -20,7 +21,7 @@ def retry_with_backoff(func, max_retries=3, base_delay=5.0):
             if attempt == max_retries - 1:
                 raise
             delay = base_delay * (2**attempt)
-            print(
+            app_logger.warning(
                 f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
             )
             time.sleep(delay)

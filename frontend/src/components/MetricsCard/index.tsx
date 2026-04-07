@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { MetricsCardProps } from '../../types/analysis';
 import { MetricDefinition } from '../shared/MetricDefinition';
 
@@ -81,7 +82,7 @@ function SourceBadge({ source }: { source: 'yahoo' | 'calculated' }) {
   );
 }
 
-export function MetricsCard({
+export const MetricsCard = memo(function MetricsCard({
   title,
   metrics,
   showInterpretation,
@@ -99,7 +100,7 @@ export function MetricsCard({
       </div>
       <div className="space-y-4">
         {metrics.map((metric, i) => (
-          <div key={i}>
+          <div key={metric.name || i}>
             <div className="flex justify-between items-start gap-2 mb-1">
               <span className="text-gray-700 text-sm flex flex-wrap items-center gap-1">
                 <span className="whitespace-nowrap">{metric.name}</span>
@@ -119,4 +120,4 @@ export function MetricsCard({
       </div>
     </div>
   );
-}
+});

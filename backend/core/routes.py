@@ -22,6 +22,8 @@ from shared.responses import (
 )
 from application.analysis import StockAnalyzer
 from features.watchlist.service import WatchlistService
+from common.utils import calculate_sma
+from common.logging import app_logger
 from yfinance.exceptions import YFRateLimitError
 
 router = APIRouter()
@@ -59,7 +61,7 @@ async def analyze_stock(request: AnalysisRequest):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Analysis failed")
 
 
@@ -93,7 +95,7 @@ async def generate_ai_analysis(request: AnalysisRequest):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        print(f"AI Error: {str(e)}")
+        app_logger.error(f"AI Error: {str(e)}")
         raise HTTPException(status_code=500, detail="AI analysis failed")
 
 
@@ -121,16 +123,6 @@ async def get_chart_data(request: ChartDataRequest):
         # Calculate SMAs for the chart
         closes = list(ohlc.close)
         timestamps = list(ohlc.timestamp)
-
-        def calculate_sma(values: list, period: int) -> list:
-            result = []
-            for i in range(len(values)):
-                if i < period - 1:
-                    result.append(None)
-                else:
-                    sma = sum(values[i - period + 1 : i + 1]) / period
-                    result.append(round(sma, 2))
-            return result
 
         sma20 = calculate_sma(closes, 20)
         sma50 = calculate_sma(closes, 50)
@@ -162,7 +154,7 @@ async def get_chart_data(request: ChartDataRequest):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch chart data")
 
 
@@ -257,7 +249,7 @@ async def calculate_performance(request: PerformanceRequest):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Performance calculation failed")
 
 
@@ -291,7 +283,7 @@ async def add_to_watchlist(request: WatchlistEntryRequest):
             )
         raise HTTPException(status_code=404, detail=error_msg)
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to add stock to watchlist")
 
 
@@ -309,7 +301,7 @@ async def delete_from_watchlist(id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to delete stock from watchlist"
         )
@@ -328,7 +320,7 @@ async def get_watchlist(added_by: str | None = None, fetch_current_price: bool =
         return watchlist
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
 
 
@@ -368,5 +360,5 @@ async def get_market_summary():
         )
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch market summary")
