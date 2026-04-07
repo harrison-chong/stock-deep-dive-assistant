@@ -9,6 +9,7 @@ from shared.domain import AIInterpretation
 from common.config import config
 from common.client import client
 from common.utils import render_template
+from common.logging import app_logger
 
 
 class AIService:
@@ -262,7 +263,7 @@ class AIService:
             )
 
         except Exception as e:
-            print(f"AI error: {str(e)}")
+            app_logger.error(f"AI error: {str(e)}")
             return AIInterpretation(
                 overall_summary="AI service unavailable",
                 bull_case="See data above",

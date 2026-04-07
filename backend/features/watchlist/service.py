@@ -14,6 +14,7 @@ from shared.responses import (
     WatchlistListResponse,
 )
 from features.data.service import DataService
+from common.logging import app_logger
 
 
 class WatchlistService:
@@ -53,7 +54,7 @@ class WatchlistService:
                 for entry in data
             ]
         except Exception as e:
-            print(f"Error loading watchlist: {e}")
+            app_logger.warning(f"Error loading watchlist: {e}")
             return []
 
     def _save_watchlist(self) -> None:
@@ -198,7 +199,9 @@ class WatchlistService:
                         )
                     )
                 except Exception as e:
-                    print(f"Error getting current price for {entry.ticker}: {e}")
+                    app_logger.warning(
+                        f"Error getting current price for {entry.ticker}: {e}"
+                    )
                     watchlist_responses.append(
                         WatchlistEntryResponse(
                             id=entry.id,
