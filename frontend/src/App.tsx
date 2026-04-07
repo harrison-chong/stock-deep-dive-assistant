@@ -1,12 +1,14 @@
 import { AutocompleteInput } from './components/AutocompleteInput';
-import { AlertCircle, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { useStockAnalysis } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
-import PerformanceCalculatorPage from './pages/PerformanceCalculatorPage';
-import WatchlistPage from './pages/WatchlistPage';
+import { PerformanceCalculatorPage } from './pages/PerformanceCalculatorPage';
+import { WatchlistPage } from './pages/WatchlistPage';
 import { useState } from 'react';
 import './App.css';
 import { PERIODS, getDateRange } from './constants';
+import { ErrorAlert } from './components/shared/ErrorAlert';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 type Tab = 'analysis' | 'performance' | 'watchlist';
 
@@ -114,12 +116,7 @@ function AnalysisTab({
               Note: Initial load may take ~60s if service was inactive.
             </p>
           )}
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
+        {error && <ErrorAlert message={error} />}
       </div>
 
       {/* Analysis Results */}
@@ -213,24 +210,26 @@ function App() {
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab Content */}
-      {activeTab === 'analysis' && (
-        <AnalysisTab
-          ticker={ticker}
-          setTicker={setTicker}
-          period={period}
-          setPeriod={setPeriod}
-          loading={loading}
-          loadingAI={loadingAI}
-          error={error}
-          errorAI={errorAI}
-          data={data}
-          handleAnalyze={handleAnalyze}
-          updateChartData={updateChartData}
-          handleGenerateAI={handleGenerateAI}
-        />
-      )}
-      {activeTab === 'performance' && <PerformanceCalculatorPage />}
-      {activeTab === 'watchlist' && <WatchlistPage />}
+      <ErrorBoundary>
+        {activeTab === 'analysis' && (
+          <AnalysisTab
+            ticker={ticker}
+            setTicker={setTicker}
+            period={period}
+            setPeriod={setPeriod}
+            loading={loading}
+            loadingAI={loadingAI}
+            error={error}
+            errorAI={errorAI}
+            data={data}
+            handleAnalyze={handleAnalyze}
+            updateChartData={updateChartData}
+            handleGenerateAI={handleGenerateAI}
+          />
+        )}
+        {activeTab === 'performance' && <PerformanceCalculatorPage />}
+        {activeTab === 'watchlist' && <WatchlistPage />}
+      </ErrorBoundary>
     </div>
   );
 }

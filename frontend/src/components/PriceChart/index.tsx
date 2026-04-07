@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -9,6 +9,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { PERIODS } from '../../constants';
+import { getGainLossColor } from '../../utils/formatting';
 
 interface PriceChartProps {
   ticker: string;
@@ -24,7 +25,7 @@ interface PriceChartProps {
   onPeriodChange: (period: string) => void;
 }
 
-export function PriceChart({
+export const PriceChart = memo(function PriceChart({
   ticker,
   currentPrice,
   chartData,
@@ -64,10 +65,13 @@ export function PriceChart({
   const priceChange = latestPrice - startPrice;
   const percentChange = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
 
-  const handlePeriodChange = (newPeriod: string) => {
-    setSelectedPeriod(newPeriod);
-    onPeriodChange(newPeriod);
-  };
+  const handlePeriodChange = useCallback(
+    (newPeriod: string) => {
+      setSelectedPeriod(newPeriod);
+      onPeriodChange(newPeriod);
+    },
+    [onPeriodChange],
+  );
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -80,9 +84,7 @@ export function PriceChart({
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p
-              className={`text-lg font-bold ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}
-            >
+            <p className={`text-lg font-bold ${getGainLossColor(priceChange)}`}>
               {priceChange >= 0 ? '+' : ''}
               {priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
             </p>
@@ -234,4 +236,4 @@ export function PriceChart({
       </div>
     </div>
   );
-}
+});

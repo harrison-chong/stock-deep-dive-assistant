@@ -22,6 +22,7 @@ from shared.responses import (
 )
 from application.analysis import StockAnalyzer
 from features.watchlist.service import WatchlistService
+from common.utils import calculate_sma
 from yfinance.exceptions import YFRateLimitError
 
 router = APIRouter()
@@ -121,16 +122,6 @@ async def get_chart_data(request: ChartDataRequest):
         # Calculate SMAs for the chart
         closes = list(ohlc.close)
         timestamps = list(ohlc.timestamp)
-
-        def calculate_sma(values: list, period: int) -> list:
-            result = []
-            for i in range(len(values)):
-                if i < period - 1:
-                    result.append(None)
-                else:
-                    sma = sum(values[i - period + 1 : i + 1]) / period
-                    result.append(round(sma, 2))
-            return result
 
         sma20 = calculate_sma(closes, 20)
         sma50 = calculate_sma(closes, 50)

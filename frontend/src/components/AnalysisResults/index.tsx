@@ -2,7 +2,11 @@ import { AnalysisData } from '../../types/analysis';
 import { MetricsCard } from '../MetricsCard';
 import { PriceChart } from '../PriceChart';
 import { MetricDefinition } from '../shared/MetricDefinition';
-import { AlertCircle } from 'lucide-react';
+import { ErrorAlert } from '../shared/ErrorAlert';
+import { WarningAlert } from '../shared/WarningAlert';
+import { getGainLossColor } from '../../utils/formatting';
+import { CompanyHeader } from './CompanyHeader';
+import { DataSourceLegend } from './DataSourceLegend';
 import {
   movingAverageDefinitions,
   momentumDefinitions,
@@ -42,70 +46,10 @@ export function AnalysisResults({
   return (
     <div className="space-y-8">
       {/* Company Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <div className="flex items-baseline gap-3">
-              <h2 className="text-2xl font-bold text-gray-900">{data.company_name}</h2>
-              <span className="text-sm text-gray-500">{data.ticker}</span>
-            </div>
-            <div className="flex gap-4 mt-2 text-xs text-gray-500">
-              {data.sector && (
-                <div>
-                  <span className="font-medium text-gray-600">Sector:</span> {data.sector}
-                </div>
-              )}
-              {data.industry && (
-                <div>
-                  <span className="font-medium text-gray-600">Industry:</span> {data.industry}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="flex items-baseline justify-end gap-2">
-              <p className="text-3xl font-bold text-gray-900">{data.current_price.toFixed(2)}</p>
-              {data.currency && <p className="text-base text-gray-600">{data.currency}</p>}
-            </div>
-            {data.regular_market_change !== null && data.regular_market_change !== undefined && (
-              <p
-                className={`text-sm font-medium ${data.regular_market_change >= 0 ? 'text-green-600' : 'text-red-600'}`}
-              >
-                {data.regular_market_change >= 0 ? '+' : ''}
-                {data.regular_market_change.toFixed(2)} (
-                {data.regular_market_change_percent !== null &&
-                data.regular_market_change_percent !== undefined
-                  ? `${data.regular_market_change_percent >= 0 ? '+' : ''}${data.regular_market_change_percent.toFixed(2)}%`
-                  : 'N/A'}
-                ) Today
-              </p>
-            )}
-            {data.market_cap && (
-              <p className="text-sm text-gray-600">
-                Market Cap: ${(data.market_cap / 1e9).toFixed(1)}B
-              </p>
-            )}
-            {data.data_start_date && data.data_end_date && (
-              <p className="text-xs text-gray-500">
-                Data: {new Date(data.data_start_date).toLocaleDateString()} -{' '}
-                {new Date(data.data_end_date).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <CompanyHeader data={data} />
 
       {/* Data Source Legend */}
-      <div className="flex items-center gap-6 text-xs text-gray-500">
-        <div className="flex items-center gap-1.5">
-          <span className="px-1.5 py-0.5 bg-gray-100 rounded">Y! Finance</span>
-          <span>Sourced from Yahoo Finance</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">Calc</span>
-          <span>Calculated from historical price data</span>
-        </div>
-      </div>
+      <DataSourceLegend />
 
       {/* Price Chart */}
 
@@ -818,11 +762,7 @@ export function AnalysisResults({
                               }`}
                             >
                               <p className="text-xs text-gray-600">{monthNames[monthNum]}</p>
-                              <p
-                                className={`text-lg font-bold ${
-                                  ret >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}
-                              >
+                              <p className={`text-lg font-bold ${getGainLossColor(ret)}`}>
                                 {(ret * 100).toFixed(1)}%
                               </p>
                             </div>
@@ -847,11 +787,7 @@ export function AnalysisResults({
                             }`}
                           >
                             <p className="text-xs text-gray-600">{quarter.toUpperCase()}</p>
-                            <p
-                              className={`text-lg font-bold ${
-                                ret >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}
-                            >
+                            <p className={`text-lg font-bold ${getGainLossColor(ret)}`}>
                               {(ret * 100).toFixed(1)}%
                             </p>
                           </div>
@@ -876,11 +812,7 @@ export function AnalysisResults({
                           }`}
                         >
                           <p className="text-xs text-gray-600">{day}</p>
-                          <p
-                            className={`text-lg font-bold ${
-                              ret >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
+                          <p className={`text-lg font-bold ${getGainLossColor(ret)}`}>
                             {(ret * 100).toFixed(2)}%
                           </p>
                         </div>
@@ -913,12 +845,7 @@ export function AnalysisResults({
                   'Generate AI Analysis'
                 )}
               </button>
-              {errorAI && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">{errorAI}</p>
-                </div>
-              )}
+              {errorAI && <ErrorAlert message={errorAI} />}
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg p-8">
@@ -1146,14 +1073,10 @@ export function AnalysisResults({
       )}
 
       {/* Disclaimer */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-4">
-        <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
-        <p className="text-yellow-800 text-sm leading-relaxed">
-          This is not financial advice. This tool is for educational purposes only. Always conduct
-          your own research and consult with qualified financial advisors before making investment
-          decisions.
-        </p>
-      </div>
+      <WarningAlert
+        message="This is not financial advice. This tool is for educational purposes only. Always conduct your own research and consult with qualified financial advisors before making investment decisions."
+        className="mt-6"
+      />
 
       <p className="text-xs text-gray-500 text-center">
         Analysis generated: {new Date(data.timestamp).toLocaleString()}

@@ -3,6 +3,18 @@ from functools import lru_cache
 from jinja2 import Environment, FileSystemLoader
 
 
+def calculate_sma(values: list[float], period: int) -> list[float | None]:
+    """Calculate Simple Moving Average for a list of values."""
+    result: list[float | None] = []
+    for i in range(len(values)):
+        if i < period - 1:
+            result.append(None)
+        else:
+            sma = sum(values[i - period + 1 : i + 1]) / period
+            result.append(round(sma, 2))
+    return result
+
+
 # Cache the template environment for the prompts directory
 @lru_cache(maxsize=1)
 def _get_prompts_env():

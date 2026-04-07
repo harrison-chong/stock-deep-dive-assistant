@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { AlertCircle } from 'lucide-react';
 import { AutocompleteInput } from '../components/AutocompleteInput';
 import { DatePickerInput } from '../components/DatePickerInput';
 import { API_BASE_URL } from '../constants';
+import { ErrorAlert } from '../components/shared/ErrorAlert';
+import { WarningAlert } from '../components/shared/WarningAlert';
 
 interface PerformanceData {
   ticker: string;
@@ -23,7 +24,7 @@ interface PerformanceData {
   timestamp: string;
 }
 
-function PerformanceCalculatorPage() {
+export function PerformanceCalculatorPage() {
   const [ticker, setTicker] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -132,12 +133,7 @@ function PerformanceCalculatorPage() {
             {loading ? 'Calculating...' : 'Calculate Performance'}
           </button>
         </form>
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
+        {error && <ErrorAlert message={error} />}
       </div>
 
       {/* Results */}
@@ -272,10 +268,7 @@ function PerformanceCalculatorPage() {
           </div>
 
           {/* Disclaimer */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-4">
-            <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-800 text-sm leading-relaxed">{data.disclaimer}</p>
-          </div>
+          <WarningAlert message={data.disclaimer} />
 
           <p className="text-xs text-gray-500 text-center">
             Performance calculated: {new Date(data.timestamp).toLocaleString()}
@@ -285,5 +278,3 @@ function PerformanceCalculatorPage() {
     </div>
   );
 }
-
-export default PerformanceCalculatorPage;

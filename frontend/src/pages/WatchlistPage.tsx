@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { WatchlistEntry, AddWatchlistRequest } from '../types/watchlist';
 import { addWatchlistEntry, deleteWatchlistEntry, getWatchlist } from '../services/watchlist';
-import { AlertCircle, X, RefreshCw } from 'lucide-react';
-import { AutocompleteInput } from '../components/AutocompleteInput';
-import { DatePickerInput } from '../components/DatePickerInput';
+import { RefreshCw, X } from 'lucide-react';
+import { ErrorAlert } from '../components/shared/ErrorAlert';
+import { AddStockModal } from '../components/shared/AddStockModal';
+import { DeleteConfirmModal } from '../components/shared/DeleteConfirmModal';
+import { getGainLossColor } from '../utils/formatting';
 
-function WatchlistPage() {
+export function WatchlistPage() {
   const [allStocks, setAllStocks] = useState<WatchlistEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -115,10 +117,7 @@ function WatchlistPage() {
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-800">{error}</p>
-          </div>
+          <ErrorAlert message={error} />
         </div>
       </div>
     );
@@ -232,7 +231,7 @@ function WatchlistPage() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {hasPrices ? (
                       <span
-                        className={`text-sm font-medium ${entry.gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                        className={`text-sm font-medium ${getGainLossColor(entry.gain_loss_percentage)}`}
                       >
                         {formatPercentage(entry.gain_loss_percentage)}
                       </span>
@@ -284,9 +283,7 @@ function WatchlistPage() {
                     );
                     const avg = total / displayedStocks.length;
                     return (
-                      <p
-                        className={`text-lg font-semibold ${avg >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                      >
+                      <p className={`text-lg font-semibold ${getGainLossColor(avg)}`}>
                         {formatPercentage(avg)}
                       </p>
                     );
@@ -311,157 +308,37 @@ function WatchlistPage() {
       )}
 
       {/* Add Stock Modal */}
-      {addModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Add Stock to Watchlist</h3>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddStock();
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stock Ticker
-                  </label>
-                  <AutocompleteInput
-                    value={formData.ticker}
-                    onChange={(ticker) => setFormData({ ...formData, ticker })}
-                    onSubmit={() => {}}
-                    placeholder="Stock ticker (must match Yahoo Finance, e.g. AAPL, BHP.AX)"
-                    showSubmitButton={false}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Entry Date <span className="text-gray-400 text-xs">(defaults to today)</span>
-                  </label>
-                  <DatePickerInput
-                    value={formData.entry_date || ''}
-                    onChange={(date) => setFormData({ ...formData, entry_date: date })}
-                    placeholder="Select date"
-                    minDate={new Date(2000, 0, 1)}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Entry Price{' '}
-                    <span className="text-gray-400 text-xs">
-                      (leave empty to use closing price on date)
-                    </span>
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Price on entry date"
-                    value={formData.entry_price || ''}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        entry_price: parseFloat(e.target.value) || undefined,
-                      })
-                    }
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes (why you wanted to buy)
-                  </label>
-                  <textarea
-                    placeholder="Reason for interest..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500 resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Added By</label>
-                  <input
-                    type="text"
-                    placeholder="Your name (required)"
-                    value={formData.added_by}
-                    onChange={(e) => setFormData({ ...formData, added_by: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500"
-                  />
-                </div>
-              </div>
-
-              {addError && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-800">{addError}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddModalOpen(false);
-                    setFormData({
-                      ticker: '',
-                      entry_price: undefined,
-                      entry_date: '',
-                      notes: '',
-                      added_by: '',
-                    });
-                    setAddError('');
-                  }}
-                  className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!formData.ticker || !formData.added_by.trim()}
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Add Stock
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddStockModal
+        isOpen={addModalOpen}
+        onClose={() => {
+          setAddModalOpen(false);
+          setFormData({
+            ticker: '',
+            entry_price: undefined,
+            entry_date: '',
+            notes: '',
+            added_by: '',
+          });
+          setAddError('');
+        }}
+        formData={formData}
+        onFormChange={setFormData}
+        onSubmit={handleAddStock}
+        error={addError}
+      />
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Stock</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to remove{' '}
-              <span className="font-semibold">{deleteConfirm.ticker}</span> from your watchlist?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  await handleDeleteStock(deleteConfirm.id);
-                  setDeleteConfirm(null);
-                }}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={!!deleteConfirm}
+        ticker={deleteConfirm?.ticker || ''}
+        onConfirm={async () => {
+          if (deleteConfirm) {
+            await handleDeleteStock(deleteConfirm.id);
+            setDeleteConfirm(null);
+          }
+        }}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
-
-export default WatchlistPage;
