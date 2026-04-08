@@ -8,7 +8,7 @@ import {
 
 export const WATCHLIST_KEY = 'watchlist';
 
-export function useWatchlist(fetchCurrentPrice: boolean = true) {
+export function useWatchlist(fetchCurrentPrice: boolean = false) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
