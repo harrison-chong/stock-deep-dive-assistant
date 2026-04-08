@@ -196,6 +196,9 @@ export function WatchlistPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Added By
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Notes
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                   Entry Price
                 </th>
@@ -205,7 +208,7 @@ export function WatchlistPage() {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                   Gain/Loss
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -214,16 +217,12 @@ export function WatchlistPage() {
               {displayedStocks.map((entry) => (
                 <tr key={entry.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{entry.ticker}</span>
-                      {entry.notes && (
-                        <span className="text-xs text-gray-500 truncate max-w-[200px]">
-                          {entry.notes}
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-medium text-gray-900">{entry.ticker}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{entry.added_by}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 max-w-[200px] truncate">
+                    {entry.notes || '-'}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-900 text-right">
                     ${entry.entry_price.toFixed(2)}
                   </td>

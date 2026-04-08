@@ -4,9 +4,41 @@ import { AnalysisData } from '../types/analysis';
 import { analyzeStock, getChartData, generateAIAnalysis } from '../services/api';
 import { ERROR_MESSAGES } from '../constants';
 
-export const useStockAnalysis = () => {
+const ANALYSIS_KEY = 'stockAnalysis';
+
+export interface UseStockAnalysisReturn {
+  ticker: string;
+  setTicker: (ticker: string) => void;
+  period: string;
+  setPeriod: (period: string) => void;
+  loading: boolean;
+  loadingChart: boolean;
+  loadingAI: boolean;
+  errorAI: string;
+  error: string;
+  data: AnalysisData | null;
+  handleAnalyze: (
+    e?: React.FormEvent,
+    dateRange?: { startDate?: string; endDate?: string; period?: string },
+  ) => Promise<void>;
+  updateChartData: (dateRange: {
+    startDate?: string;
+    endDate?: string;
+    period?: string;
+  }) => Promise<void>;
+  handleGenerateAI: (dateRange?: {
+    startDate?: string;
+    endDate?: string;
+    period?: string;
+  }) => Promise<void>;
+}
+
+export const useStockAnalysis = (): UseStockAnalysisReturn => {
   const [ticker, setTicker] = useState('');
   const [period, setPeriod] = useState('5y');
+  const [dateRange, setDateRange] = useState<
+    { startDate?: string; endDate?: string; period?: string } | undefined
+  >(undefined);
   const [loading, setLoading] = useState(false);
   const [loadingChart, setLoadingChart] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -19,24 +51,27 @@ export const useStockAnalysis = () => {
   const handleAnalyze = useCallback(
     async (
       e?: React.FormEvent,
-      dateRange?: { startDate?: string; endDate?: string; period?: string },
+      newDateRange?: { startDate?: string; endDate?: string; period?: string },
     ) => {
       if (e) e.preventDefault();
       if (!ticker.trim()) return;
 
       setLoading(true);
       setError('');
-      setErrorAI('');
 
-      // Update cache key for React Query
-      queryClient.cancelQueries({ queryKey: ['analysis', ticker, period] });
+      // Cancel any in-flight requests
+      queryClient.cancelQueries({ queryKey: [ANALYSIS_KEY, ticker, period] });
+
+      // Update date range if provided
+      if (newDateRange) {
+        setDateRange(newDateRange);
+      }
 
       try {
-        const result = await analyzeStock(ticker, dateRange);
+        const result = await analyzeStock(ticker, newDateRange ?? dateRange);
         setData(result);
-
-        // Prefetch into React Query cache
-        queryClient.setQueryData(['analysis', ticker, period], result);
+        // Prefetch into React Query cache for future use
+        queryClient.setQueryData([ANALYSIS_KEY, ticker, period], result);
       } catch (err: unknown) {
         if (err && typeof err === 'object' && 'response' in err) {
           const axiosError = err as { response?: { data?: { detail?: string }; status?: number } };
@@ -48,7 +83,7 @@ export const useStockAnalysis = () => {
               `No data found for "${ticker.toUpperCase()}". Please check the ticker and try again.`,
             );
           } else if (status === 400) {
-            setError(`Invalid ticker format. Please enter a valid stock ticker.`);
+            setError('Invalid ticker format. Please enter a valid stock ticker.');
           } else if (detail) {
             setError(detail);
           } else {
@@ -63,16 +98,16 @@ export const useStockAnalysis = () => {
         setLoading(false);
       }
     },
-    [ticker, period, queryClient],
+    [ticker, period, dateRange, queryClient],
   );
 
   const updateChartData = useCallback(
-    async (dateRange: { startDate?: string; endDate?: string; period?: string }) => {
+    async (newDateRange: { startDate?: string; endDate?: string; period?: string }) => {
       if (!ticker.trim() || !data) return;
 
       setLoadingChart(true);
       try {
-        const chartResult = await getChartData(ticker, dateRange);
+        const chartResult = await getChartData(ticker, newDateRange);
         const newData = {
           ...data,
           chart_data: chartResult.chart_data,
@@ -80,35 +115,36 @@ export const useStockAnalysis = () => {
           data_end_date: chartResult.data_end_date,
         };
         setData(newData);
-        queryClient.setQueryData(['analysis', ticker, period], newData);
+        // Update cache with new chart data
+        queryClient.setQueryData([ANALYSIS_KEY, ticker, period], newData);
       } catch {
-        handleAnalyze(undefined, dateRange);
+        // On error, refetch the full analysis
+        handleAnalyze(undefined, newDateRange);
       } finally {
         setLoadingChart(false);
       }
     },
-    [ticker, data, period, queryClient, handleAnalyze],
+    [ticker, period, data, queryClient, handleAnalyze],
   );
 
   const handleGenerateAI = useCallback(
-    async (dateRange?: { startDate?: string; endDate?: string; period?: string }) => {
-      if (!ticker.trim()) return;
+    async (newDateRange?: { startDate?: string; endDate?: string; period?: string }) => {
+      if (!ticker.trim() || !data) return;
 
       setLoadingAI(true);
+      setErrorAI('');
       try {
-        const aiResult = await generateAIAnalysis(ticker, dateRange);
-        const newData = data ? { ...data, ai_outlook: aiResult } : null;
+        const aiResult = await generateAIAnalysis(ticker, newDateRange ?? dateRange);
+        const newData = { ...data, ai_outlook: aiResult };
         setData(newData);
-        if (newData) {
-          queryClient.setQueryData(['analysis', ticker, period], newData);
-        }
+        queryClient.setQueryData([ANALYSIS_KEY, ticker, period], newData);
       } catch {
         setErrorAI('AI analysis failed. Please try again.');
       } finally {
         setLoadingAI(false);
       }
     },
-    [ticker, data, period, queryClient],
+    [ticker, period, dateRange, data, queryClient],
   );
 
   return {
