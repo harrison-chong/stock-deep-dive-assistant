@@ -221,6 +221,38 @@ class DataService:
         return float(data["Close"].iloc[-1].item())
 
     @staticmethod
+    def get_current_prices(tickers: list[str]) -> dict[str, float]:
+        """
+        Get current prices for multiple tickers in a single API call.
+        Returns a dict of ticker -> price. Missing/invalid tickers are omitted.
+        """
+        if not tickers:
+            return {}
+
+        def fetch():
+            return yf.download(
+                tickers, period="1d", progress=False, repair=True, group_by="ticker"
+            )
+
+        try:
+            data = retry_with_backoff(fetch)
+        except Exception:
+            return {}
+
+        prices = {}
+        for ticker in tickers:
+            try:
+                if isinstance(data.columns, pd.MultiIndex):
+                    close = data[ticker]["Close"]
+                else:
+                    close = data["Close"]
+                if not close.empty and pd.notna(close.iloc[-1]):
+                    prices[ticker] = float(close.iloc[-1].item())
+            except (KeyError, IndexError, ValueError):
+                continue
+        return prices
+
+    @staticmethod
     def get_price_on_date(ticker: str, date: str) -> float:
         """
         Get the closing price for a ticker on or after a specific date.

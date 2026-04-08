@@ -164,6 +164,12 @@ class WatchlistService:
         if added_by:
             entries = [e for e in entries if e.added_by == added_by]
 
+        # Batch fetch all current prices in a single API call
+        prices = {}
+        if fetch_current_price and entries:
+            tickers = [entry.ticker for entry in entries]
+            prices = self.data_service.get_current_prices(tickers)
+
         watchlist_responses = []
         total_gain_loss = 0
         stocks_above = 0
@@ -171,8 +177,8 @@ class WatchlistService:
 
         for entry in entries:
             if fetch_current_price:
-                try:
-                    current_price = self.data_service.get_current_price(entry.ticker)
+                current_price = prices.get(entry.ticker)
+                if current_price is not None:
                     gain_loss_percentage = (
                         (current_price - entry.entry_price) / entry.entry_price * 100
                         if entry.entry_price > 0
@@ -198,17 +204,15 @@ class WatchlistService:
                             added_date=entry.added_date.strftime("%Y-%m-%d"),
                         )
                     )
-                except Exception as e:
-                    app_logger.warning(
-                        f"Error getting current price for {entry.ticker}: {e}"
-                    )
+                else:
+                    # Price fetch failed for this ticker
                     watchlist_responses.append(
                         WatchlistEntryResponse(
                             id=entry.id,
                             ticker=entry.ticker,
                             entry_price=entry.entry_price,
                             entry_date=entry.entry_date.strftime("%Y-%m-%d"),
-                            current_price=0,
+                            current_price=entry.entry_price,  # Fallback to entry price
                             gain_loss_percentage=0,
                             notes=entry.notes,
                             added_by=entry.added_by,

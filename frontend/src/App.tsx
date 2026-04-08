@@ -213,9 +213,9 @@ function App() {
       {/* Tab Navigation */}
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Tab Content - Keep all mounted to preserve React Query cache */}
+      {/* Tab Content - Only active tab mounts (lazy loading) */}
       <ErrorBoundary>
-        <div className={activeTab !== 'analysis' ? 'hidden' : ''}>
+        {activeTab === 'analysis' && (
           <AnalysisTab
             ticker={ticker}
             setTicker={setTicker}
@@ -230,13 +230,9 @@ function App() {
             updateChartData={updateChartData}
             handleGenerateAI={handleGenerateAI}
           />
-        </div>
-        <div className={activeTab !== 'performance' ? 'hidden' : ''}>
-          <PerformanceCalculatorPage />
-        </div>
-        <div className={activeTab !== 'watchlist' ? 'hidden' : ''}>
-          <WatchlistPage />
-        </div>
+        )}
+        {activeTab === 'performance' && <PerformanceCalculatorPage />}
+        {activeTab === 'watchlist' && <WatchlistPage />}
       </ErrorBoundary>
     </div>
   );
