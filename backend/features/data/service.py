@@ -229,6 +229,7 @@ class DataService:
         if not tickers:
             return {}
 
+        # Single API call to Yahoo Finance - fetches all tickers at once
         def fetch():
             return yf.download(
                 tickers, period="1d", progress=False, repair=True, group_by="ticker"
@@ -239,6 +240,7 @@ class DataService:
         except Exception:
             return {}
 
+        # Parse results from the single response (no additional API calls)
         prices = {}
         for ticker in tickers:
             try:
