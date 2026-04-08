@@ -22,6 +22,7 @@ from shared.responses import (
 )
 from application.analysis import StockAnalyzer
 from features.watchlist.service import WatchlistService
+from features.performance.service import PerformanceService
 from common.utils import calculate_sma
 from common.logging import app_logger
 from yfinance.exceptions import YFRateLimitError
@@ -29,6 +30,7 @@ from yfinance.exceptions import YFRateLimitError
 router = APIRouter()
 analyzer = StockAnalyzer()
 watchlist_service = WatchlistService()
+performance_service = PerformanceService()
 
 
 @router.post("/analyze", response_model=StockAnalysisResponse)
@@ -190,55 +192,32 @@ async def calculate_performance(request: PerformanceRequest):
                     raise ValueError(f"No data found for {ticker}")
                 current_price = float(ohlc.close[-1])
 
-        # Calculate performance metrics
-        total_cost = request.quantity * request.purchase_price
-        current_value = request.quantity * current_price
-        profit_loss = current_value - total_cost
-        profit_loss_percentage = (
-            (profit_loss / total_cost) * 100 if total_cost != 0 else 0
-        )
-
-        # Calculate annualized return
-        purchase_date = datetime.strptime(request.purchase_date, "%Y-%m-%d")
-        current_date = datetime.now()
-        days_held = (current_date - purchase_date).days
-
-        if days_held <= 0:
-            raise HTTPException(
-                status_code=400, detail="Purchase date must be in the past"
-            )
-
-        years_held = days_held / 365.25
-        # Only calculate annualized return if held for at least 6 months
-        # Short-term annualized returns are misleading and explode for brief holds
-        MIN_HOLD_YEARS = 0.5
-        if years_held >= MIN_HOLD_YEARS:
-            price_ratio = current_price / request.purchase_price
-            import math
-
-            annualized_return = math.exp(math.log(price_ratio) / years_held) - 1
-        else:
-            annualized_return = None
-        annualized_return_percentage = (
-            annualized_return * 100 if annualized_return is not None else None
+        # Calculate performance metrics using service
+        metrics = performance_service.calculate_performance(
+            ticker=ticker,
+            company_name=company_info.name,
+            quantity=request.quantity,
+            purchase_price=request.purchase_price,
+            purchase_date=request.purchase_date,
+            current_price=current_price,
         )
 
         return PerformanceResponse(
-            ticker=ticker,
-            company_name=company_info.name,
-            purchase_date=request.purchase_date,
-            current_date=current_date.strftime("%Y-%m-%d"),
-            quantity=request.quantity,
-            purchase_price=request.purchase_price,
-            current_price=current_price,
-            total_cost=total_cost,
-            current_value=current_value,
-            profit_loss=profit_loss,
-            profit_loss_percentage=profit_loss_percentage,
-            annualized_return=annualized_return,
-            annualized_return_percentage=annualized_return_percentage,
-            disclaimer="⚠️ Not financial advice. For educational purposes only. Annualized return only calculated for holdings held 6+ months.",
-            timestamp=datetime.now().isoformat(),
+            ticker=metrics.ticker,
+            company_name=metrics.company_name,
+            purchase_date=metrics.purchase_date,
+            current_date=metrics.current_date,
+            quantity=metrics.quantity,
+            purchase_price=metrics.purchase_price,
+            current_price=metrics.current_price,
+            total_cost=metrics.total_cost,
+            current_value=metrics.current_value,
+            profit_loss=metrics.profit_loss,
+            profit_loss_percentage=metrics.profit_loss_percentage,
+            annualized_return=metrics.annualized_return,
+            annualized_return_percentage=metrics.annualized_return_percentage,
+            disclaimer=metrics.disclaimer,
+            timestamp=metrics.timestamp,
         )
 
     except YFRateLimitError:

@@ -20,7 +20,7 @@ def calculate_sma(values: list[float], period: int) -> list[float | None]:
 def _get_prompts_env():
     """Get cached Jinja2 environment for prompts directory."""
     prompts_dir = os.path.join(os.path.dirname(__file__), "..", "prompts")
-    return FileSystemLoader(prompts_dir)
+    return Environment(loader=FileSystemLoader(prompts_dir))
 
 
 def render_template(template_path: str, **context) -> str:
@@ -43,9 +43,9 @@ def render_template(template_path: str, **context) -> str:
         or template_dir == prompts_dir
         or not template_dir
     ):
-        env = Environment(loader=_get_prompts_env())
+        env = _get_prompts_env()
     else:
-        # Fallback for other template paths
+        # Fallback for other template paths (not cached)
         loader = FileSystemLoader(template_dir)
         env = Environment(loader=loader)
 

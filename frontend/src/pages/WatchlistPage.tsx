@@ -4,6 +4,7 @@ import { RefreshCw, X } from 'lucide-react';
 import { ErrorAlert } from '../components/shared/ErrorAlert';
 import { AddStockModal } from '../components/shared/AddStockModal';
 import { DeleteConfirmModal } from '../components/shared/DeleteConfirmModal';
+import { TableSkeleton, CardSkeleton } from '../components/shared/SkeletonLoader';
 import { getGainLossColor } from '../utils/formatting';
 
 export function WatchlistPage() {
@@ -106,17 +107,17 @@ export function WatchlistPage() {
       </div>
 
       {/* Summary Cards */}
-      {watchlist.length > 0 && (
+      {displayedStocks.length > 0 && (
         <div className="grid grid-cols-4 gap-4 mb-8">
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-xs text-gray-500 uppercase">Total Stocks</p>
-            <p className="text-2xl font-bold text-gray-900">{watchlist.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{displayedStocks.length}</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-xs text-gray-500 uppercase">Avg Gain/Loss</p>
             {(() => {
-              const total = watchlist.reduce((sum, s) => sum + s.gain_loss_percentage, 0);
-              const avg = total / watchlist.length;
+              const total = displayedStocks.reduce((sum, s) => sum + s.gain_loss_percentage, 0);
+              const avg = total / displayedStocks.length;
               return (
                 <p className={`text-2xl font-bold ${getGainLossColor(avg)}`}>
                   {formatPercentage(avg)}
@@ -127,13 +128,13 @@ export function WatchlistPage() {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-xs text-gray-500 uppercase">Above Entry</p>
             <p className="text-2xl font-bold text-green-600">
-              {watchlist.filter((s) => s.gain_loss_percentage >= 0).length}
+              {displayedStocks.filter((s) => s.gain_loss_percentage >= 0).length}
             </p>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <p className="text-xs text-gray-500 uppercase">Below Entry</p>
             <p className="text-2xl font-bold text-red-600">
-              {watchlist.filter((s) => s.gain_loss_percentage < 0).length}
+              {displayedStocks.filter((s) => s.gain_loss_percentage < 0).length}
             </p>
           </div>
         </div>
@@ -170,10 +171,10 @@ export function WatchlistPage() {
 
       {/* Watchlist Table */}
       {isLoading ? (
-        <div className="text-center py-12">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-          <p className="text-gray-500 mt-2">Loading watchlist...</p>
-        </div>
+        <>
+          <CardSkeleton />
+          <TableSkeleton rows={5} />
+        </>
       ) : watchlist.length === 0 ? (
         <div className="text-center py-12 bg-white border border-gray-200 rounded-lg">
           <p className="text-gray-500 mb-4">Your watchlist is empty</p>
