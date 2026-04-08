@@ -54,7 +54,7 @@ class DataService:
         data = retry_with_backoff(fetch)
         if data.empty:
             raise ValueError(
-                f"No data found for {ticker}. This may be an invalid ticker or data is unavailable."
+                f"Ticker '{ticker}' not found in Yahoo Finance. It may be delisted, invalid, or have no available data. Please check the ticker symbol and try again."
             )
 
         # Flatten multi-level columns if needed

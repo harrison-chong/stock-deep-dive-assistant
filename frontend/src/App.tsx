@@ -1,6 +1,6 @@
 import { AutocompleteInput } from './components/AutocompleteInput';
 import { TrendingUp } from 'lucide-react';
-import { useStockAnalysis } from './hooks/useStockAnalysis';
+import { useStockAnalysis, UseStockAnalysisReturn } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import { PerformanceCalculatorPage } from './pages/PerformanceCalculatorPage';
 import { WatchlistPage } from './pages/WatchlistPage';
@@ -42,33 +42,37 @@ function PeriodSelector({
   );
 }
 
-function AnalysisTab({
-  ticker,
-  setTicker,
-  period,
-  setPeriod,
-  loading,
-  loadingAI,
-  error,
-  errorAI,
-  data,
-  handleAnalyze,
-  updateChartData,
-  handleGenerateAI,
-}: {
-  ticker: string;
-  setTicker: (ticker: string) => void;
-  period: string;
-  setPeriod: (period: string) => void;
-  loading: boolean;
-  loadingAI: boolean;
-  error: string;
-  errorAI: string;
-  data: any;
-  handleAnalyze: any;
-  updateChartData: any;
-  handleGenerateAI: any;
-}) {
+function AnalysisTab(
+  props: Pick<
+    UseStockAnalysisReturn,
+    | 'ticker'
+    | 'setTicker'
+    | 'period'
+    | 'setPeriod'
+    | 'loading'
+    | 'loadingAI'
+    | 'error'
+    | 'errorAI'
+    | 'data'
+    | 'handleAnalyze'
+    | 'updateChartData'
+    | 'handleGenerateAI'
+  >,
+) {
+  const {
+    ticker,
+    setTicker,
+    period,
+    setPeriod,
+    loading,
+    loadingAI,
+    error,
+    errorAI,
+    data,
+    handleAnalyze,
+    updateChartData,
+    handleGenerateAI,
+  } = props;
   // Get date range for the selected period
   const dateRange = getDateRange(period);
 
@@ -209,9 +213,9 @@ function App() {
       {/* Tab Navigation */}
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Tab Content */}
+      {/* Tab Content - Keep all mounted to preserve React Query cache */}
       <ErrorBoundary>
-        {activeTab === 'analysis' && (
+        <div className={activeTab !== 'analysis' ? 'hidden' : ''}>
           <AnalysisTab
             ticker={ticker}
             setTicker={setTicker}
@@ -226,9 +230,13 @@ function App() {
             updateChartData={updateChartData}
             handleGenerateAI={handleGenerateAI}
           />
-        )}
-        {activeTab === 'performance' && <PerformanceCalculatorPage />}
-        {activeTab === 'watchlist' && <WatchlistPage />}
+        </div>
+        <div className={activeTab !== 'performance' ? 'hidden' : ''}>
+          <PerformanceCalculatorPage />
+        </div>
+        <div className={activeTab !== 'watchlist' ? 'hidden' : ''}>
+          <WatchlistPage />
+        </div>
       </ErrorBoundary>
     </div>
   );

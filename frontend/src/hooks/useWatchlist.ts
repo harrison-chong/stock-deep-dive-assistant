@@ -14,7 +14,7 @@ export function useWatchlist(fetchCurrentPrice: boolean = true) {
   const query = useQuery({
     queryKey: [WATCHLIST_KEY, fetchCurrentPrice],
     queryFn: () => fetchWatchlist(undefined, fetchCurrentPrice),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: Infinity, // Only refetch on explicit refresh
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
