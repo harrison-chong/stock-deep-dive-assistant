@@ -64,7 +64,7 @@ class StockAnalyzer:
         ticker_info = _parse_ticker_info(ticker, info_dict)
         tech_indicators = technical_service.calculate_all(df)
         advanced_metrics = advanced_service.calculate_all(df)
-        current_price = await self.data_source.fetch_current_price(ticker)
+        current_price = float(df["close"].iloc[-1]) if not df.empty else None
 
         return _build_analysis_response(
             ticker, ticker_info, ohlc, tech_indicators, advanced_metrics, current_price
@@ -98,7 +98,7 @@ class StockAnalyzer:
 
         ticker_info = _parse_ticker_info(ticker, info_dict)
         tech_indicators = technical_service.calculate_all(df)
-        current_price = await self.data_source.fetch_current_price(ticker)
+        current_price = float(df["close"].iloc[-1]) if not df.empty else None
         advanced_metrics = advanced_service.calculate_all(df)
 
         tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, SMA20: {tech_indicators.sma_20}, SMA50: {tech_indicators.sma_50}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
@@ -264,7 +264,9 @@ def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
             dividend_rate=info.get("dividendRate"),
             payout_ratio=_pct(info.get("payoutRatio")),
             trailing_annual_dividend_rate=info.get("trailingAnnualDividendRate"),
-            trailing_annual_dividend_yield=_pct(info.get("trailingAnnualDividendYield")),
+            trailing_annual_dividend_yield=_pct(
+                info.get("trailingAnnualDividendYield")
+            ),
             five_year_avg_dividend_yield=info.get("fiveYearAvgDividendYield"),
         ),
         financial_health=FinancialHealth(
