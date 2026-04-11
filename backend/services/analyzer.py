@@ -24,7 +24,7 @@ from services import advanced as advanced_service
 from services import ai as ai_service
 
 
-def __pct(val: float | None) -> float | None:
+def _pct(val: float | None) -> float | None:
     """Convert decimal ratio to percentage (e.g., 0.15 -> 15.0)."""
     return (val or 0) * 100 if val is not None else None
 
