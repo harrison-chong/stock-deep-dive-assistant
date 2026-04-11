@@ -15,7 +15,10 @@ interface TechnicalSectionProps {
 
 export function TechnicalSection({ technical_overview }: TechnicalSectionProps) {
   return (
-    <div className="grid md:grid-cols-3 gap-5">
+    <div
+      className="grid gap-5"
+      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+    >
       <MetricsCard
         title="Moving Averages"
         metrics={technical_overview.moving_averages}

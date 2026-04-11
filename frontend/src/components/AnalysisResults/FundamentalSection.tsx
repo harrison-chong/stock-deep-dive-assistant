@@ -104,7 +104,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid gap-5"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+      >
         <MetricsCard
           title="Profitability"
           metrics={fundamental_overview.profitability}
@@ -125,7 +128,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           }}
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-2 xl:auto-fit gap-5"
+        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+      >
         <MetricsCard
           title="Valuation"
           metrics={fundamental_overview.valuation}
@@ -139,7 +145,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           metricDefinitions={marginsDefinitions}
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-2 xl:auto-fit gap-5"
+        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+      >
         <MetricsCard
           title="Financial Strength"
           metrics={[...fundamental_overview.financial_strength, ...fundamental_overview.growth]}
@@ -156,7 +165,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           metricDefinitions={earningsDefinitions}
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-2 xl:auto-fit gap-5"
+        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+      >
         <MetricsCard
           title="Market Data"
           metrics={[
@@ -209,7 +221,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           }}
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-2 xl:auto-fit gap-5"
+        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+      >
         <MetricsCard
           title="Financial Health"
           metrics={[
@@ -249,7 +264,10 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           metricDefinitions={shortInterestDefinitions}
         />
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div
+        className="grid sm:grid-cols-2 lg:grid-cols-2 xl:auto-fit gap-5"
+        style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+      >
         <MetricsCard
           title="Ownership & Structure"
           metrics={[
