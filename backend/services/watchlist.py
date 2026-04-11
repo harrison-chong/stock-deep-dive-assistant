@@ -4,7 +4,12 @@ from datetime import datetime
 
 from domain.models import WatchlistEntry
 from sources.base import DataSource
-from infrastructure.persistence import load_watchlist, save_watchlist
+from infrastructure.persistence import load_watchlist, save_watchlist, DATE_FORMAT
+
+
+def _calc_gain_loss_pct(current_price: float, entry_price: float) -> float:
+    """Calculate gain/loss percentage."""
+    return (current_price - entry_price) / entry_price * 100 if entry_price > 0 else 0
 
 
 async def add_stock(
@@ -19,22 +24,26 @@ async def add_stock(
     ticker = ticker.upper()
     watchlist = load_watchlist()
 
-    if any(entry.ticker == ticker for entry in watchlist):
+    # O(1) lookup using dict comprehension
+    tickers_in_watchlist = {entry.ticker for entry in watchlist}
+    if ticker in tickers_in_watchlist:
         raise ValueError(f"{ticker} is already in watchlist")
+
+    # Fetch current price once for both entry price and current price
+    current_price = await data_source.fetch_current_price(ticker)
 
     if entry_price > 0:
         price = entry_price
     elif entry_date and entry_date.date() >= datetime.now().date():
-        price = await data_source.fetch_current_price(ticker)
+        price = current_price
     elif entry_date:
         price = await data_source.fetch_price_on_date(
-            ticker, entry_date.strftime("%Y-%m-%d")
+            ticker, entry_date.strftime(DATE_FORMAT)
         )
     else:
-        price = await data_source.fetch_current_price(ticker)
+        price = current_price
 
-    current_price = await data_source.fetch_current_price(ticker)
-    gain_loss_percentage = (current_price - price) / price * 100 if price > 0 else 0
+    gain_loss_percentage = _calc_gain_loss_pct(current_price, price)
 
     new_entry = WatchlistEntry(
         id=str(datetime.now().timestamp()),
@@ -53,12 +62,12 @@ async def add_stock(
         "id": new_entry.id,
         "ticker": new_entry.ticker,
         "entry_price": new_entry.entry_price,
-        "entry_date": new_entry.entry_date.strftime("%Y-%m-%d"),
+        "entry_date": new_entry.entry_date.strftime(DATE_FORMAT),
         "current_price": current_price,
         "gain_loss_percentage": gain_loss_percentage,
         "notes": new_entry.notes,
         "added_by": new_entry.added_by,
-        "added_date": new_entry.added_date.strftime("%Y-%m-%d"),
+        "added_date": new_entry.added_date.strftime(DATE_FORMAT),
     }
 
 
@@ -73,7 +82,9 @@ def delete_stock(id: str) -> bool:
     return False
 
 
-async def get_watchlist(added_by: str | None = None, data_source: DataSource | None = None) -> dict:
+async def get_watchlist(
+    added_by: str | None = None, data_source: DataSource | None = None
+) -> dict:
     """Get all watchlist entries with summary."""
     entries = load_watchlist()
     if added_by:
@@ -95,28 +106,26 @@ async def get_watchlist(added_by: str | None = None, data_source: DataSource | N
     responses = []
     for entry in entries:
         current_price = current_prices.get(entry.ticker, entry.entry_price)
-        gain_loss_percentage = (
-            (current_price - entry.entry_price) / entry.entry_price * 100
-            if entry.entry_price > 0
-            else 0
-        )
+        gain_loss_percentage = _calc_gain_loss_pct(current_price, entry.entry_price)
         total_gain_loss += gain_loss_percentage
         if gain_loss_percentage >= 0:
             stocks_above += 1
         else:
             stocks_below += 1
 
-        responses.append({
-            "id": entry.id,
-            "ticker": entry.ticker,
-            "entry_price": entry.entry_price,
-            "entry_date": entry.entry_date.strftime("%Y-%m-%d"),
-            "current_price": current_price,
-            "gain_loss_percentage": gain_loss_percentage,
-            "notes": entry.notes,
-            "added_by": entry.added_by,
-            "added_date": entry.added_date.strftime("%Y-%m-%d"),
-        })
+        responses.append(
+            {
+                "id": entry.id,
+                "ticker": entry.ticker,
+                "entry_price": entry.entry_price,
+                "entry_date": entry.entry_date.strftime(DATE_FORMAT),
+                "current_price": current_price,
+                "gain_loss_percentage": gain_loss_percentage,
+                "notes": entry.notes,
+                "added_by": entry.added_by,
+                "added_date": entry.added_date.strftime(DATE_FORMAT),
+            }
+        )
 
     total_stocks = len(entries)
     average_gain_loss = total_gain_loss / total_stocks if total_stocks > 0 else 0

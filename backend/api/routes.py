@@ -6,6 +6,7 @@ from typing import Any
 
 from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
+from infrastructure.persistence import DATE_FORMAT
 from api.dependencies import get_data_source, get_analyzer
 from services.analyzer import StockAnalyzer, calculate_sma
 from services.watchlist import (
@@ -16,6 +17,8 @@ from services.watchlist import (
 
 
 router = APIRouter()
+
+RATE_LIMIT_MSG = "RATE_LIMIT_MSG"
 
 
 def _is_valid_ticker(ticker: str) -> bool:
@@ -44,7 +47,7 @@ async def analyze_stock(request: dict, analyzer: StockAnalyzer = Depends(get_ana
     except RateLimitError:
         raise HTTPException(
             status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+            detail="RATE_LIMIT_MSG",
         )
     except Exception as e:
         app_logger.error(f"Error: {str(e)}")
@@ -74,7 +77,7 @@ async def generate_ai_analysis(
     except RateLimitError:
         raise HTTPException(
             status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+            detail="RATE_LIMIT_MSG",
         )
     except Exception as e:
         app_logger.error(f"AI Error: {str(e)}")
@@ -127,7 +130,7 @@ async def get_chart_data(request: dict, data_source: Any = Depends(get_data_sour
     except RateLimitError:
         raise HTTPException(
             status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+            detail="RATE_LIMIT_MSG",
         )
     except Exception as e:
         app_logger.error(f"Error: {str(e)}")
@@ -167,7 +170,7 @@ async def calculate_performance(
     except RateLimitError:
         raise HTTPException(
             status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+            detail="RATE_LIMIT_MSG",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -205,7 +208,7 @@ async def add_to_watchlist(request: dict, data_source: Any = Depends(get_data_so
     except RateLimitError:
         raise HTTPException(
             status_code=503,
-            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+            detail="RATE_LIMIT_MSG",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -232,7 +235,9 @@ async def delete_from_watchlist(id: str):
 
 
 @router.get("/watchlist")
-async def get_watchlist(added_by: str | None = None, data_source: Any = Depends(get_data_source)):
+async def get_watchlist(
+    added_by: str | None = None, data_source: Any = Depends(get_data_source)
+):
     """Get all watchlist entries."""
     try:
         return await wl_get_watchlist(added_by=added_by, data_source=data_source)

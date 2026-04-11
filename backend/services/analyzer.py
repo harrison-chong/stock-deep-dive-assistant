@@ -24,6 +24,11 @@ from services import advanced as advanced_service
 from services import ai as ai_service
 
 
+def __pct(val: float | None) -> float | None:
+    """Convert decimal ratio to percentage (e.g., 0.15 -> 15.0)."""
+    return (val or 0) * 100 if val is not None else None
+
+
 class StockAnalyzer:
     """Orchestrates complete stock analysis."""
 
@@ -214,10 +219,6 @@ class StockAnalyzer:
 
 def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
     """Parse raw Yahoo Finance info dict into domain model."""
-
-    def pct(val):
-        return (val or 0) * 100 if val is not None else None
-
     return TickerInfo(
         ticker=ticker,
         company=CompanyInfo(
@@ -246,24 +247,24 @@ def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
             enterprise_to_ebitda=info.get("enterpriseToEbitda"),
         ),
         profitability=ProfitabilityMetrics(
-            profit_margin=pct(info.get("profitMargins")),
-            gross_margins=pct(info.get("grossMargins")),
-            operating_margins=pct(info.get("operatingMargins")),
-            roe=pct(info.get("returnOnEquity")),
-            return_on_assets=pct(info.get("returnOnAssets")),
-            return_on_investment=pct(info.get("returnOnInvestment")),
+            profit_margin=_pct(info.get("profitMargins")),
+            gross_margins=_pct(info.get("grossMargins")),
+            operating_margins=_pct(info.get("operatingMargins")),
+            roe=_pct(info.get("returnOnEquity")),
+            return_on_assets=_pct(info.get("returnOnAssets")),
+            return_on_investment=_pct(info.get("returnOnInvestment")),
         ),
         growth=GrowthMetrics(
-            revenue_growth=pct(info.get("revenueGrowth")),
-            earnings_growth=pct(info.get("earningsGrowth")),
-            earnings_quarterly_growth=pct(info.get("earningsQuarterlyGrowth")),
+            revenue_growth=_pct(info.get("revenueGrowth")),
+            earnings_growth=_pct(info.get("earningsGrowth")),
+            earnings_quarterly_growth=_pct(info.get("earningsQuarterlyGrowth")),
         ),
         dividend=DividendMetrics(
             dividend_yield=info.get("dividendYield"),
             dividend_rate=info.get("dividendRate"),
-            payout_ratio=pct(info.get("payoutRatio")),
+            payout_ratio=_pct(info.get("payoutRatio")),
             trailing_annual_dividend_rate=info.get("trailingAnnualDividendRate"),
-            trailing_annual_dividend_yield=pct(info.get("trailingAnnualDividendYield")),
+            trailing_annual_dividend_yield=_pct(info.get("trailingAnnualDividendYield")),
             five_year_avg_dividend_yield=info.get("fiveYearAvgDividendYield"),
         ),
         financial_health=FinancialHealth(
@@ -275,17 +276,17 @@ def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
             quick_ratio=info.get("quickRatio"),
             free_cash_flow=info.get("freeCashflow"),
             operating_cash_flow=info.get("operatingCashflow"),
-            payout_ratio=pct(info.get("payoutRatio")),
+            payout_ratio=_pct(info.get("payoutRatio")),
             revenue_per_share=info.get("revenuePerShare"),
         ),
         ownership=OwnershipData(
             shares_outstanding=info.get("sharesOutstanding"),
             float_shares=info.get("floatShares"),
-            held_percent_insiders=pct(info.get("heldPercentInsiders")),
-            held_percent_institutions=pct(info.get("heldPercentInstitutions")),
+            held_percent_insiders=_pct(info.get("heldPercentInsiders")),
+            held_percent_institutions=_pct(info.get("heldPercentInstitutions")),
             shares_short=info.get("sharesShort"),
             short_ratio=info.get("shortRatio"),
-            short_percent_of_float=pct(info.get("shortPercentOfFloat")),
+            short_percent_of_float=_pct(info.get("shortPercentOfFloat")),
             implied_shares_outstanding=info.get("impliedSharesOutstanding"),
         ),
         analyst=AnalystData(
@@ -308,8 +309,8 @@ def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
             average_volume=info.get("averageVolume"),
             fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
             fifty_two_week_low=info.get("fiftyTwoWeekLow"),
-            fifty_two_week_change=pct(info.get("52WeekChange")),
-            s_and_p_fifty_two_week_change=pct(info.get("SandP52WeekChange")),
+            fifty_two_week_change=_pct(info.get("52WeekChange")),
+            s_and_p_fifty_two_week_change=_pct(info.get("SandP52WeekChange")),
             all_time_high=info.get("allTimeHigh"),
             all_time_low=info.get("allTimeLow"),
             fifty_day_average=info.get("fiftyDayAverage"),
