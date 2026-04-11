@@ -234,8 +234,10 @@ def _calculate_cagr(close: pd.Series, years: int) -> float | None:
 def _detect_crossovers(ma1: pd.Series, ma2: pd.Series) -> tuple[bool, bool]:
     if len(ma1) < 2 or len(ma2) < 2:
         return False, False
-    golden_cross = (ma1.iloc[-2] <= ma2.iloc[-2]) and (ma1.iloc[-1] > ma2.iloc[-1])
-    death_cross = (ma1.iloc[-2] >= ma2.iloc[-2]) and (ma1.iloc[-1] < ma2.iloc[-1])
+    golden_cross = bool(
+        (ma1.iloc[-2] <= ma2.iloc[-2]) and (ma1.iloc[-1] > ma2.iloc[-1])
+    )
+    death_cross = bool((ma1.iloc[-2] >= ma2.iloc[-2]) and (ma1.iloc[-1] < ma2.iloc[-1]))
     return golden_cross, death_cross
 
 
