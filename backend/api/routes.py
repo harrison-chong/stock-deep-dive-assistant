@@ -8,6 +8,11 @@ from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
 from api.dependencies import get_data_source, get_analyzer
 from services.analyzer import StockAnalyzer, calculate_sma
+from services.watchlist import (
+    add_stock as wl_add_stock,
+    delete_stock as wl_delete_stock,
+    get_watchlist as wl_get_watchlist,
+)
 
 
 router = APIRouter()
@@ -172,27 +177,68 @@ async def calculate_performance(
 
 
 @router.post("/watchlist")
-async def add_to_watchlist(request: dict):
+async def add_to_watchlist(request: dict, data_source: Any = Depends(get_data_source)):
     """Add a stock to the watchlist."""
-    raise HTTPException(
-        status_code=501, detail="Watchlist endpoints pending migration in Task 6"
-    )
+    from datetime import datetime
+
+    ticker = request.get("ticker", "").upper()
+
+    if not _is_valid_ticker(ticker):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    try:
+        entry_date = None
+        if request.get("entry_date"):
+            entry_date = datetime.strptime(request.get("entry_date"), "%Y-%m-%d")
+
+        result = await wl_add_stock(
+            ticker=ticker,
+            entry_price=float(request.get("entry_price", 0)),
+            entry_date=entry_date,
+            notes=request.get("notes", ""),
+            added_by=request.get("added_by", ""),
+            data_source=data_source,
+        )
+        return result
+    except TickerNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RateLimitError:
+        raise HTTPException(
+            status_code=503,
+            detail="Yahoo Finance is rate limited. Please try again in a few minutes.",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        app_logger.error(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add stock to watchlist")
 
 
 @router.delete("/watchlist/{id}")
 async def delete_from_watchlist(id: str):
     """Delete a stock from the watchlist."""
-    raise HTTPException(
-        status_code=501, detail="Watchlist endpoints pending migration in Task 6"
-    )
+    try:
+        success = wl_delete_stock(id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Watchlist entry not found")
+        return {"status": "ok", "message": "Stock removed from watchlist"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        app_logger.error(f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to delete stock from watchlist"
+        )
 
 
 @router.get("/watchlist")
-async def get_watchlist(added_by: str | None = None, fetch_current_price: bool = True):
+async def get_watchlist(added_by: str | None = None):
     """Get all watchlist entries."""
-    raise HTTPException(
-        status_code=501, detail="Watchlist endpoints pending migration in Task 6"
-    )
+    try:
+        return wl_get_watchlist(added_by=added_by)
+    except Exception as e:
+        app_logger.error(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
 
 
 @router.get("/market/summary")
