@@ -6,7 +6,6 @@ from typing import Any
 
 from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
-from infrastructure.persistence import DATE_FORMAT
 from api.dependencies import get_data_source, get_analyzer
 from services.analyzer import StockAnalyzer, calculate_sma
 from services.watchlist import (
