@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -13,6 +17,73 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  @apply bg-slate-50 text-gray-900 antialiased;
+  transition:
+    background-color 0.4s ease,
+    color 0.3s ease;
+}
+
+/* Light mode gradient */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Dark mode using .dark class */
+.dark body::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-blue-500/20 text-blue-900;
+}
+
+.dark ::selection {
+  @apply bg-blue-400/30 text-blue-100;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300/60 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400/80;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-600/60;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500/80;
 }
 
 /* Hide scrollbars but keep functionality */
@@ -24,14 +95,24 @@ body {
   display: none;
 }
 
-/* Custom animations and styles can go here */
-
+/* Custom animations */
 @keyframes fade-in {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -44,8 +125,131 @@ body {
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .animate-in {
   animation:
-    fade-in 0.2s ease-out,
-    slide-in-from-top-2 0.2s ease-out;
+    fade-in 0.25s ease-out,
+    slide-in-from-top-2 0.25s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blue-500/40 ring-offset-2;
+}
+
+.dark *:focus-visible {
+  @apply ring-blue-400/50;
+}
+
+/* Button reset */
+button {
+  @apply cursor-pointer;
+}
+
+/* Skip link */
+.skip-link {
+  @apply absolute -top-10 left-0 bg-blue-600 text-white px-4 py-2 z-50 transition-all duration-200;
+}
+.skip-link:focus {
+  @apply top-0;
+}
+
+/* React Day Picker dark mode */
+.dark .rdp {
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: rgba(59, 130, 246, 0.2);
+  color: #e5e7eb;
+}
+
+.dark .rdp-day {
+  color: #e5e7eb;
+}
+
+.dark .rdp-day:hover {
+  background-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .rdp-day_selected {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dark .rdp-day_selected:hover {
+  background-color: #2563eb;
+}
+
+.dark .rdp-day_today {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+.dark .rdp-head_cell {
+  color: #9ca3af;
+}
+
+.dark .rdp-caption_label {
+  color: #f3f4f6;
+}
+
+.dark .rdp-nav_button {
+  color: #9ca3af;
+}
+
+.dark .rdp-nav_button:hover {
+  background-color: rgba(75, 85, 99, 0.3);
+  color: #f3f4f6;
+}
+
+.dark .rdp-months {
+  background-color: transparent;
+}
+
+.dark .rdp-month {
+  background-color: transparent;
+}
+
+.dark .rdp-table {
+  background-color: transparent;
 }

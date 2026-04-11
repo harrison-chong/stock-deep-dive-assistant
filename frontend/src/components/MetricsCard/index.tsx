@@ -60,61 +60,30 @@ function formatMetricValue(value: number | null, unit?: string, name?: string): 
   return value.toFixed(2);
 }
 
-// Small badge to indicate data source
-function SourceBadge({ source }: { source: 'yahoo' | 'calculated' }) {
-  if (source === 'calculated') {
-    return (
-      <span
-        title="Calculated from historical price data (not from Yahoo Finance)"
-        className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-purple-700 bg-purple-100 rounded cursor-help"
-      >
-        Calc
-      </span>
-    );
-  }
-  return (
-    <span
-      title="Data sourced from Yahoo Finance"
-      className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-gray-600 bg-gray-100 rounded cursor-help"
-    >
-      Y! Finance
-    </span>
-  );
-}
-
 export const MetricsCard = memo(function MetricsCard({
   title,
   metrics,
-  showInterpretation,
   metricDefinitions,
-  source = 'yahoo',
 }: MetricsCardProps & {
   metricDefinitions?: Record<string, string>;
-  source?: 'yahoo' | 'calculated';
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-        <SourceBadge source={source} />
-      </div>
-      <div className="space-y-4">
+    <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-5 border border-gray-200/30 dark:border-gray-800/30 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-all duration-300">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 tracking-tight">
+        {title}
+      </h3>
+      <div className="space-y-3.5">
         {metrics.map((metric, i) => (
-          <div key={metric.name || i}>
-            <div className="flex justify-between items-start gap-2 mb-1">
-              <span className="text-gray-700 text-sm flex flex-wrap items-center gap-1">
-                <span className="whitespace-nowrap">{metric.name}</span>
-                {metricDefinitions?.[metric.name] && (
-                  <MetricDefinition text={metricDefinitions?.[metric.name]} />
-                )}
-              </span>
-              <span className="font-medium text-gray-900 text-sm whitespace-nowrap">
-                {formatMetricValue(metric.value, metric.unit, metric.name)}
-              </span>
-            </div>
-            {showInterpretation && metric.interpretation && (
-              <p className="text-xs text-gray-600">{metric.interpretation}</p>
-            )}
+          <div key={metric.name || i} className="flex justify-between items-start gap-3">
+            <span className="text-gray-500 dark:text-gray-400 text-sm flex flex-wrap items-center gap-1.5">
+              <span className="whitespace-nowrap">{metric.name}</span>
+              {metricDefinitions?.[metric.name] && (
+                <MetricDefinition text={metricDefinitions?.[metric.name]} />
+              )}
+            </span>
+            <span className="font-medium text-gray-900 dark:text-white text-sm whitespace-nowrap tabular-nums">
+              {formatMetricValue(metric.value, metric.unit, metric.name)}
+            </span>
           </div>
         ))}
       </div>
