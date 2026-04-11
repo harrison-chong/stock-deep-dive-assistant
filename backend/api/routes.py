@@ -232,10 +232,10 @@ async def delete_from_watchlist(id: str):
 
 
 @router.get("/watchlist")
-async def get_watchlist(added_by: str | None = None):
+async def get_watchlist(added_by: str | None = None, data_source: Any = Depends(get_data_source)):
     """Get all watchlist entries."""
     try:
-        return wl_get_watchlist(added_by=added_by)
+        return await wl_get_watchlist(added_by=added_by, data_source=data_source)
     except Exception as e:
         app_logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
