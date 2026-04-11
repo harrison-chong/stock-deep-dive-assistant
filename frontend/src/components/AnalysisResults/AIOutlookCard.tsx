@@ -79,9 +79,39 @@ export function AIOutlookCard({ data, loadingAI, errorAI, onGenerateAI }: AIOutl
         <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
       </div>
 
+      {/* Bull Case */}
+      <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+        <h4 className="text-sm font-semibold text-green-800 mb-2">Bull Case</h4>
+        <p className="text-sm text-green-700">{data.ai_outlook.bull_case}</p>
+      </div>
+
+      {/* Bear Case */}
+      <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+        <h4 className="text-sm font-semibold text-red-800 mb-2">Bear Case</h4>
+        <p className="text-sm text-red-700">{data.ai_outlook.bear_case}</p>
+      </div>
+
+      {/* Neutral Scenario */}
+      <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+        <h4 className="text-sm font-semibold text-yellow-800 mb-2">Neutral Scenario</h4>
+        <p className="text-sm text-yellow-700">{data.ai_outlook.neutral_scenario}</p>
+      </div>
+
+      {/* Risk Factors */}
+      {data.ai_outlook.risk_factors.length > 0 && (
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">Risk Factors</h4>
+          <ul className="list-disc list-inside text-sm text-gray-700">
+            {data.ai_outlook.risk_factors.map((risk, index) => (
+              <li key={index}>{risk}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Recommendation Banner */}
       <div
-        className={`mb-6 p-4 rounded-lg border-2 ${
+        className={`p-4 rounded-lg border-2 ${
           data.ai_outlook.recommendation === 'Consider'
             ? 'bg-green-50 border-green-200'
             : data.ai_outlook.recommendation === 'Avoid'
