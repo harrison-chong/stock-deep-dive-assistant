@@ -25,7 +25,7 @@ export function AnalysisResults({
   onGenerateAI,
 }: AnalysisResultsProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* Company Header */}
       <CompanyHeader data={data} />
 
@@ -58,10 +58,10 @@ export function AnalysisResults({
       {/* Disclaimer */}
       <WarningAlert
         message="This is not financial advice. This tool is for educational purposes only. Always conduct your own research and consult with qualified financial advisors before making investment decisions."
-        className="mt-6"
+        className="mt-4"
       />
 
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-gray-300 text-center">
         Analysis generated: {new Date(data.timestamp).toLocaleString()}
       </p>
     </div>

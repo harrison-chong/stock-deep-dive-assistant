@@ -1,15 +1,16 @@
+"""Application logging setup."""
+
 import logging
 import sys
 
 
-# Configure application logging
 def setup_logging(
     name: str = "stock-deep-dive", level: int = logging.INFO
 ) -> logging.Logger:
+    """Configure application logging."""
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    # Only add handler if not already configured
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(level)
@@ -23,5 +24,4 @@ def setup_logging(
     return logger
 
 
-# Application logger instance
 app_logger = setup_logging()

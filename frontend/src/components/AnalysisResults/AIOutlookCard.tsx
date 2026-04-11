@@ -11,34 +11,25 @@ interface AIOutlookCardProps {
 export function AIOutlookCard({ data, loadingAI, errorAI, onGenerateAI }: AIOutlookCardProps) {
   if (loadingAI) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></span>
-          <p className="text-gray-500">Generating AI analysis...</p>
-        </div>
+      <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-12 text-center animate-pulse border border-gray-200/30 dark:border-gray-800/30">
+        <div className="w-8 h-8 mx-auto mb-4 rounded-full bg-gray-200 dark:bg-gray-700" />
+        <p className="text-gray-400 dark:text-gray-500">Generating AI analysis...</p>
       </div>
     );
   }
 
   if (!data.ai_outlook) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <p className="text-gray-600 mb-4">
-          Get an AI-powered analysis of {data.ticker} based on technical and fundamental metrics.
+      <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-12 text-center border border-gray-200/30 dark:border-gray-800/30">
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
+          Get an AI-powered analysis of {data.ticker}
         </p>
         <button
           onClick={onGenerateAI}
           disabled={loadingAI}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20"
         >
-          {loadingAI ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-              Generating...
-            </span>
-          ) : (
-            'Generate AI Analysis'
-          )}
+          Generate AI Analysis
         </button>
         {errorAI && <ErrorAlert message={errorAI} />}
       </div>
@@ -46,64 +37,112 @@ export function AIOutlookCard({ data, loadingAI, errorAI, onGenerateAI }: AIOutl
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-8">
+    <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-8 animate-fade-in border border-gray-200/30 dark:border-gray-800/30">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">AI Analysis</h3>
-            <p className="text-sm text-gray-500">
-              {data.ticker} · {data.company_name}
-            </p>
-          </div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+            />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">AI Outlook</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{data.ticker}</p>
         </div>
       </div>
 
       {/* Overall Summary */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-gray-700 leading-relaxed">{data.ai_outlook.overall_summary}</p>
+      <div className="mb-6 p-4 bg-gray-50/60 dark:bg-gray-800/50 rounded-xl border border-gray-200/30 dark:border-gray-700/30">
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+          {data.ai_outlook.overall_summary}
+        </p>
       </div>
+
+      {/* Bull Case */}
+      <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 to-green-50/40 dark:from-emerald-900/30 dark:to-green-900/20 border border-emerald-200/50 dark:border-emerald-800/30">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <h4 className="text-xs font-semibold text-green-800 dark:text-green-300 uppercase tracking-wide">
+            Bull Case
+          </h4>
+        </div>
+        <p className="text-sm text-green-700 dark:text-green-300">{data.ai_outlook.bull_case}</p>
+      </div>
+
+      {/* Bear Case */}
+      <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-red-50/60 to-rose-50/40 dark:from-red-900/30 dark:to-rose-900/20 border border-red-200/50 dark:border-red-800/30">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <h4 className="text-xs font-semibold text-red-800 dark:text-red-300 uppercase tracking-wide">
+            Bear Case
+          </h4>
+        </div>
+        <p className="text-sm text-red-700 dark:text-red-300">{data.ai_outlook.bear_case}</p>
+      </div>
+
+      {/* Neutral Scenario */}
+      <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-amber-50/60 to-yellow-50/40 dark:from-amber-900/30 dark:to-yellow-900/20 border border-amber-200/50 dark:border-amber-800/30">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-amber-500" />
+          <h4 className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide">
+            Neutral Scenario
+          </h4>
+        </div>
+        <p className="text-sm text-amber-700 dark:text-amber-300">
+          {data.ai_outlook.neutral_scenario}
+        </p>
+      </div>
+
+      {/* Risk Factors */}
+      {data.ai_outlook.risk_factors.length > 0 && (
+        <div className="mb-6 p-4 rounded-xl bg-gray-50/60 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/30">
+          <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">
+            Risk Factors
+          </h4>
+          <ul className="space-y-1">
+            {data.ai_outlook.risk_factors.map((risk, index) => (
+              <li
+                key={index}
+                className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+              >
+                <span className="text-gray-400 dark:text-gray-500">•</span>
+                {risk}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Recommendation Banner */}
       <div
-        className={`mb-6 p-4 rounded-lg border-2 ${
+        className={`p-4 rounded-xl border ${
           data.ai_outlook.recommendation === 'Consider'
-            ? 'bg-green-50 border-green-200'
+            ? 'bg-gradient-to-br from-emerald-50/60 to-green-50/40 dark:from-emerald-900/30 dark:to-green-900/20 border-emerald-200/50 dark:border-emerald-800/30'
             : data.ai_outlook.recommendation === 'Avoid'
-              ? 'bg-red-50 border-red-200'
-              : 'bg-yellow-50 border-yellow-200'
+              ? 'bg-gradient-to-br from-red-50/60 to-rose-50/40 dark:from-red-900/30 dark:to-rose-900/20 border-red-200/50 dark:border-red-800/30'
+              : 'bg-gradient-to-br from-amber-50/60 to-yellow-50/40 dark:from-amber-900/30 dark:to-yellow-900/20 border-amber-200/50 dark:border-amber-800/30'
         }`}
       >
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0">
-            <span
-              className={`text-2xl font-bold ${
-                data.ai_outlook.recommendation === 'Consider'
-                  ? 'text-green-700'
-                  : data.ai_outlook.recommendation === 'Avoid'
-                    ? 'text-red-700'
-                    : 'text-yellow-700'
-              }`}
-            >
-              {data.ai_outlook.recommendation}
-            </span>
-          </div>
-          <p className="text-sm text-gray-700">{data.ai_outlook.recommendation_rationale}</p>
+          <span
+            className={`text-2xl font-semibold ${
+              data.ai_outlook.recommendation === 'Consider'
+                ? 'text-green-700 dark:text-green-300'
+                : data.ai_outlook.recommendation === 'Avoid'
+                  ? 'text-red-700 dark:text-red-300'
+                  : 'text-amber-700 dark:text-amber-300'
+            }`}
+          >
+            {data.ai_outlook.recommendation}
+          </span>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {data.ai_outlook.recommendation_rationale}
+          </p>
         </div>
       </div>
     </div>

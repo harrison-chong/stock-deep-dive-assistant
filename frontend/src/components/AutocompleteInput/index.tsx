@@ -143,15 +143,15 @@ export function AutocompleteInput({
               aria-autocomplete="list"
               aria-controls="ticker-suggestions"
               aria-expanded={showSuggestions && suggestions.length > 0}
-              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/30 dark:border-gray-800/30 rounded-lg focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
           {showSubmitButton && (
             <button
               type="submit"
               disabled={disabled || !value.trim()}
-              className="px-6 py-3 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-colors"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-white transition-colors"
             >
               {disabled ? 'Loading...' : submitLabel}
             </button>
@@ -165,17 +165,17 @@ export function AutocompleteInput({
           ref={suggestionsRef}
           id="ticker-suggestions"
           role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/30 dark:border-gray-800/30 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
           {suggestions.map((suggestion, index) => (
             <li
               key={suggestion}
               role="option"
               aria-selected={index === highlightedIndex}
-              className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0 ${
+              className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
                 index === highlightedIndex
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white text-gray-900 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white/80 dark:bg-gray-900/80 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
               onClick={() => handleSuggestionClick(suggestion)}
             >

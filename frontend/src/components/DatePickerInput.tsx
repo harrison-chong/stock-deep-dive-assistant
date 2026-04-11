@@ -76,11 +76,11 @@ export function DatePickerInput({
   ];
 
   const footer = (
-    <div className="flex justify-end mt-2 pt-2 border-t border-gray-200">
+    <div className="flex justify-end mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
       <button
         type="button"
         onClick={() => setIsOpen(false)}
-        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+        className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
       >
         Close
       </button>
@@ -92,18 +92,22 @@ export function DatePickerInput({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 text-gray-900 placeholder-gray-500 flex items-center justify-between gap-2"
+        className="w-full px-4 py-3 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/30 dark:border-gray-800/30 rounded-lg focus:outline-none focus:border-gray-900 dark:focus:border-gray-100 focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 flex items-center justify-between gap-2"
       >
-        <span className={selected ? 'text-gray-900' : 'text-gray-500'}>
+        <span
+          className={
+            selected ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+          }
+        >
           {selected ? format(selected, 'MMM d, yyyy') : placeholder}
         </span>
-        <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+        <div className="absolute z-50 mt-2 bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl rounded-lg shadow-lg border border-gray-200/30 dark:border-gray-800/30 p-3">
           {/* Month/Year selector */}
-          <div className="flex gap-2 mb-3 pb-2 border-b border-gray-200">
+          <div className="flex gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
             <select
               value={viewMonth.getMonth()}
               onChange={(e) => {
@@ -111,7 +115,7 @@ export function DatePickerInput({
                 newDate.setMonth(parseInt(e.target.value));
                 setViewMonth(newDate);
               }}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              className="px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               {months.map((m, i) => (
                 <option key={m} value={i}>
@@ -126,7 +130,7 @@ export function DatePickerInput({
                 newDate.setFullYear(parseInt(e.target.value));
                 setViewMonth(newDate);
               }}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              className="px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               {years.map((y) => (
                 <option key={y} value={y}>

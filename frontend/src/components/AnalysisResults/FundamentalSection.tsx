@@ -166,7 +166,6 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
             { name: 'Fwd Div Yield', value: forward_dividend_yield, unit: '%' },
             { name: 'Earnings Date', value: earnings_timestamp },
           ]}
-          showInterpretation={false}
           metricDefinitions={{
             ...marketDataDefinitions,
             Beta: 'Measure of stock volatility vs the market. >1 = more volatile than market, <1 = less volatile.',
@@ -177,7 +176,6 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
             'Earnings Date':
               'Upcoming date when the company will report earnings. Stock may be more volatile around this time.',
           }}
-          source="yahoo"
         />
         <MetricsCard
           title="Analyst Ratings"

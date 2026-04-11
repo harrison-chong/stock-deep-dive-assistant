@@ -1,10 +1,10 @@
 import { AutocompleteInput } from './components/AutocompleteInput';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Sun, Moon } from 'lucide-react';
 import { useStockAnalysis, UseStockAnalysisReturn } from './hooks/useStockAnalysis';
 import { AnalysisResults } from './components/AnalysisResults';
 import { PerformanceCalculatorPage } from './pages/PerformanceCalculatorPage';
 import { WatchlistPage } from './pages/WatchlistPage';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { PERIODS, getDateRange } from './constants';
 import { ErrorAlert } from './components/shared/ErrorAlert';
@@ -22,17 +22,17 @@ function PeriodSelector({
   disabled: boolean;
 }) {
   return (
-    <div className="flex items-center bg-gray-100 p-1 rounded-lg gap-0.5 overflow-x-auto hide-scrollbar flex-nowrap">
+    <div className="flex items-center bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm p-1 rounded-full gap-0.5 overflow-x-auto hide-scrollbar flex-nowrap transition-colors duration-300">
       {PERIODS.map((period) => (
         <button
           key={period.value}
           type="button"
           onClick={() => onChange(period.value)}
           disabled={disabled}
-          className={`px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
+          className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
             period.value === value
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-card'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {period.label}
@@ -103,20 +103,20 @@ function AnalysisTab(
           </div>
           <PeriodSelector value={period} onChange={setPeriod} disabled={loading} />
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           Stock data provided by{' '}
           <a
             href="https://au.finance.yahoo.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-gray-600"
+            className="underline hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             Yahoo Finance
           </a>
         </p>
         {import.meta.env.VITE_API_BASE_URL &&
           !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
               Note: Initial load may take ~60s if service was inactive.
             </p>
           )}
@@ -140,36 +140,36 @@ function AnalysisTab(
 
 function TabNav({ activeTab, onTabChange }: { activeTab: Tab; onTabChange: (tab: Tab) => void }) {
   return (
-    <div className="border-b border-gray-100 bg-white sticky top-[57px] z-40">
+    <div className="border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-[57px] z-40 transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-6 py-3">
         <div className="overflow-x-auto hide-scrollbar">
-          <div className="flex items-center gap-2 min-w-max">
+          <div className="flex items-center gap-1 min-w-max">
             <button
               onClick={() => onTabChange('analysis')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
                 activeTab === 'analysis'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               Analysis
             </button>
             <button
               onClick={() => onTabChange('performance')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
                 activeTab === 'performance'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               Performance Calculator
             </button>
             <button
               onClick={() => onTabChange('watchlist')}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
                 activeTab === 'watchlist'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
               Watchlist
@@ -181,8 +181,46 @@ function TabNav({ activeTab, onTabChange }: { activeTab: Tab; onTabChange: (tab:
   );
 }
 
+function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? (
+        <Sun className="w-5 h-5 text-gray-400 hover:text-gray-200 transition-colors" />
+      ) : (
+        <Moon className="w-5 h-5 text-gray-500 hover:text-gray-700 transition-colors" />
+      )}
+    </button>
+  );
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('analysis');
+  const [isDark, setIsDark] = useState(false);
+
+  // Initialize theme from system preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initializing state from media query is a standard pattern
+    setIsDark(mediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // Apply dark mode class
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
+
   const {
     ticker,
     setTicker,
@@ -199,13 +237,25 @@ function App() {
   } = useStockAnalysis();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 transition-colors duration-300">
+      {/* Skip to content link for accessibility */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       {/* Header */}
-      <div className="border-b border-gray-100 bg-white sticky top-0 z-50">
+      <div className="border-b border-gray-200/50 dark:border-gray-800/50 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-6 h-6 text-gray-900" />
-            <h1 className="text-xl font-semibold text-gray-900">Stock Deep Dive</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <TrendingUp className="w-4 h-4 text-white" />
+              </div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
+                Stock Deep Dive
+              </h1>
+            </div>
+            <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
           </div>
         </div>
       </div>
@@ -214,26 +264,28 @@ function App() {
       <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab Content - Only active tab mounts (lazy loading) */}
-      <ErrorBoundary>
-        {activeTab === 'analysis' && (
-          <AnalysisTab
-            ticker={ticker}
-            setTicker={setTicker}
-            period={period}
-            setPeriod={setPeriod}
-            loading={loading}
-            loadingAI={loadingAI}
-            error={error}
-            errorAI={errorAI}
-            data={data}
-            handleAnalyze={handleAnalyze}
-            updateChartData={updateChartData}
-            handleGenerateAI={handleGenerateAI}
-          />
-        )}
-        {activeTab === 'performance' && <PerformanceCalculatorPage />}
-        {activeTab === 'watchlist' && <WatchlistPage />}
-      </ErrorBoundary>
+      <main id="main-content">
+        <ErrorBoundary>
+          {activeTab === 'analysis' && (
+            <AnalysisTab
+              ticker={ticker}
+              setTicker={setTicker}
+              period={period}
+              setPeriod={setPeriod}
+              loading={loading}
+              loadingAI={loadingAI}
+              error={error}
+              errorAI={errorAI}
+              data={data}
+              handleAnalyze={handleAnalyze}
+              updateChartData={updateChartData}
+              handleGenerateAI={handleGenerateAI}
+            />
+          )}
+          {activeTab === 'performance' && <PerformanceCalculatorPage />}
+          {activeTab === 'watchlist' && <WatchlistPage />}
+        </ErrorBoundary>
+      </main>
     </div>
   );
 }

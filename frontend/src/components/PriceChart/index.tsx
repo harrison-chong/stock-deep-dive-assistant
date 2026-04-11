@@ -74,54 +74,52 @@ export const PriceChart = memo(function PriceChart({
   );
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 animate-fade-in transition-colors duration-300">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Price Chart</h3>
-          <p className="text-sm text-gray-500">
-            {ticker} • ${latestPrice.toFixed(2)}
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Price Chart</h3>
+          <p className="text-sm text-gray-400 dark:text-gray-500 font-mono">
+            {ticker} · ${latestPrice.toFixed(2)}
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className={`text-lg font-bold ${getGainLossColor(priceChange)}`}>
-              {priceChange >= 0 ? '+' : ''}
-              {priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
-            </p>
-            <p className="text-xs text-gray-500">Period Change</p>
-          </div>
+        <div className="text-right">
+          <p className={`text-lg font-semibold ${getGainLossColor(priceChange)}`}>
+            {priceChange >= 0 ? '+' : ''}
+            {priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Period Change</p>
         </div>
       </div>
 
       {/* SMA Toggles */}
       {hasSMAData && (
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-2 mb-5">
           <button
             onClick={() => setShowSMA20(!showSMA20)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ${
               showSMA20
-                ? 'bg-blue-100 border-blue-300 text-blue-700'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400'
+                : 'bg-gray-50/50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100/50 dark:hover:bg-gray-700'
             }`}
           >
             SMA 20
           </button>
           <button
             onClick={() => setShowSMA50(!showSMA50)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ${
               showSMA50
-                ? 'bg-orange-100 border-orange-300 text-orange-700'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400'
+                : 'bg-gray-50/50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100/50 dark:hover:bg-gray-700'
             }`}
           >
             SMA 50
           </button>
           <button
             onClick={() => setShowSMA200(!showSMA200)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ${
               showSMA200
-                ? 'bg-purple-100 border-purple-300 text-purple-700'
-                : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400'
+                : 'bg-gray-50/50 dark:bg-gray-700/50 border-gray-100 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-100/50 dark:hover:bg-gray-700'
             }`}
           >
             SMA 200
@@ -130,15 +128,15 @@ export const PriceChart = memo(function PriceChart({
       )}
 
       {/* Period Selector */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-gray-100 dark:border-gray-700">
         {PERIODS.map((p) => (
           <button
             key={p.value}
             onClick={() => handlePeriodChange(p.value)}
-            className={`px-3 py-2 text-xs font-medium transition-colors ${
+            className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 ${
               selectedPeriod === p.value
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-100'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
             {p.label}
@@ -150,7 +148,11 @@ export const PriceChart = memo(function PriceChart({
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#f0f0f0"
+              className="dark:stroke-gray-700"
+            />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 11, fill: '#6b7280' }}
@@ -230,7 +232,7 @@ export const PriceChart = memo(function PriceChart({
       </div>
 
       {/* Range Labels */}
-      <div className="flex justify-between mt-2 text-xs text-gray-500">
+      <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
         <span>${startPrice.toFixed(2)}</span>
         <span>${latestPrice.toFixed(2)}</span>
       </div>
