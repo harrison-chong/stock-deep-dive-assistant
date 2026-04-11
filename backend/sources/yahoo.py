@@ -10,7 +10,7 @@ from yfinance.exceptions import YFRateLimitError
 from sources.base import DataSource
 from domain.models import OHLCData
 from domain.exceptions import TickerNotFoundError, RateLimitError
-from common.logging import app_logger
+from infrastructure.logging import app_logger
 
 
 async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.0):
