@@ -54,7 +54,7 @@ export function AdvancedMetricsSection({
             {formatDate(data.data_end_date)}
           </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-5 gap-y-7">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
               Total Return
@@ -218,7 +218,7 @@ export function AdvancedMetricsSection({
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-7">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
               1 Month
@@ -363,7 +363,7 @@ export function AdvancedMetricsSection({
               {getYears(data.data_start_date, data.data_end_date)} years of data
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 gap-8">
             <div>
               <h5 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4 tracking-wide uppercase">
                 Monthly Returns (Avg)
