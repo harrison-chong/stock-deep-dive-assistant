@@ -5,7 +5,7 @@ Stock Deep Dive Assistant - FastAPI Backend
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.routes import router
+from api.routes import router
 
 app = FastAPI(
     title="Stock Deep Dive Assistant API",
@@ -24,9 +24,3 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
-
-
-@app.get("/health")
-async def health_check() -> dict:
-    """Health check endpoint"""
-    return {"status": "ok"}
