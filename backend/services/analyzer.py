@@ -335,18 +335,9 @@ def _build_analysis_response(
     closes = list(ohlc.close)
     timestamps = list(ohlc.timestamp)
 
-    def calc_sma(values, period):
-        result = []
-        for i in range(len(values)):
-            if i < period - 1:
-                result.append(None)
-            else:
-                result.append(round(sum(values[i - period + 1 : i + 1]) / period, 2))
-        return result
-
-    sma20 = calc_sma(closes, 20)
-    sma50 = calc_sma(closes, 50)
-    sma200 = calc_sma(closes, 200)
+    sma20 = calculate_sma(closes, 20)
+    sma50 = calculate_sma(closes, 50)
+    sma200 = calculate_sma(closes, 200)
     chart_data = [
         {
             "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),

@@ -15,13 +15,11 @@ WATCHLIST_FILE = os.path.join(
     "data",
     "watchlist.json",
 )
+DATE_FORMAT = "%Y-%m-%d"
 
 
 def load_watchlist() -> list[WatchlistEntry]:
     """Load watchlist entries from JSON file."""
-    if not os.path.exists(WATCHLIST_FILE):
-        return []
-
     try:
         with open(WATCHLIST_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -30,12 +28,12 @@ def load_watchlist() -> list[WatchlistEntry]:
                 id=entry["id"],
                 ticker=entry["ticker"],
                 entry_price=entry["entry_price"],
-                entry_date=datetime.strptime(entry["entry_date"], "%Y-%m-%d")
+                entry_date=datetime.strptime(entry["entry_date"], DATE_FORMAT)
                 if entry.get("entry_date")
                 else datetime.now(),
                 notes=entry.get("notes", ""),
                 added_by=entry.get("added_by", ""),
-                added_date=datetime.strptime(entry["added_date"], "%Y-%m-%d")
+                added_date=datetime.strptime(entry["added_date"], DATE_FORMAT)
                 if entry.get("added_date")
                 else datetime.now(),
             )
@@ -59,10 +57,10 @@ def save_watchlist(entries: list[WatchlistEntry]) -> None:
             "id": entry.id,
             "ticker": entry.ticker,
             "entry_price": entry.entry_price,
-            "entry_date": entry.entry_date.strftime("%Y-%m-%d"),
+            "entry_date": entry.entry_date.strftime(DATE_FORMAT),
             "notes": entry.notes,
             "added_by": entry.added_by,
-            "added_date": entry.added_date.strftime("%Y-%m-%d"),
+            "added_date": entry.added_date.strftime(DATE_FORMAT),
         }
         for entry in entries
     ]
