@@ -2,6 +2,8 @@
 
 from datetime import datetime, timedelta
 from typing import Any
+import time as time_module
+
 import pandas as pd
 
 from domain.models import (
@@ -68,6 +70,7 @@ class StockAnalyzer:
         end_date: str | None = None,
     ) -> dict:
         """Perform complete stock analysis without AI."""
+        _maybe_cold_start_delay()
         ohlc = await self._get_ohlc(ticker, period, start_date, end_date)
         info_dict = await self.data_source.fetch_ticker_info_cached(ticker)
 
@@ -99,6 +102,7 @@ class StockAnalyzer:
         end_date: str | None = None,
     ) -> AIInterpretation:
         """Generate AI outlook on-demand."""
+        _maybe_cold_start_delay()
         ohlc = await self._get_ohlc(ticker, period, start_date, end_date)
         info_dict = await self.data_source.fetch_ticker_info_cached(ticker)
 
@@ -577,3 +581,20 @@ def calculate_sma(values: list[float], period: int) -> list[float | None]:
         else:
             result.append(round(sum(values[i - period + 1 : i + 1]) / period, 2))
     return result
+
+
+_last_yahoo_request_time: float = 0
+COLD_START_DELAY: float = 2.0  # seconds
+_IDLE_THRESHOLD: float = 300  # 5 minutes
+
+
+def _maybe_cold_start_delay() -> None:
+    """Delay on cold start to avoid Yahoo Finance rate limit bursts."""
+    global _last_yahoo_request_time
+    now = time_module.monotonic()
+    if now - _last_yahoo_request_time > _IDLE_THRESHOLD:
+        app_logger.info(
+            f"Cold start detected, sleeping {COLD_START_DELAY}s before Yahoo request"
+        )
+        time_module.sleep(COLD_START_DELAY)
+    _last_yahoo_request_time = now
