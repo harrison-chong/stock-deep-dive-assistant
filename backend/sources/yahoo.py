@@ -1,6 +1,5 @@
 """Yahoo Finance data source adapter."""
 
-import asyncio
 from asyncio import Semaphore
 from datetime import datetime, timedelta
 
@@ -21,20 +20,18 @@ _yahoo_semaphore = Semaphore(1)
 _ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
 
 
-async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.0):
-    """Retry a function with exponential backoff on rate limit errors."""
+async def _fetch_with_semaphore(func):
+    """Execute a Yahoo Finance fetch call with semaphore serialization.
+
+    The semaphore prevents burst traffic that could trigger Yahoo's rate limits.
+    On rate limit error, fails fast rather than retrying inside the semaphore
+    (which would block the single worker for many seconds during backoff).
+    """
     async with _yahoo_semaphore:
-        for attempt in range(max_retries):
-            try:
-                return func()
-            except YFRateLimitError:
-                if attempt == max_retries - 1:
-                    raise RateLimitError("Yahoo Finance rate limit exceeded")
-                delay = base_delay * (2**attempt)
-                app_logger.warning(
-                    f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
-                )
-                await asyncio.sleep(delay)
+        try:
+            return func()
+        except YFRateLimitError:
+            raise RateLimitError("Yahoo Finance rate limit exceeded")
 
 
 class YahooDataSource(DataSource):
@@ -59,7 +56,7 @@ class YahooDataSource(DataSource):
             else:
                 return yf.download(ticker, period="5y", progress=False, repair=True)
 
-        data = await _retry_with_backoff(fetch)
+        data = await _fetch_with_semaphore(fetch)
         if data.empty:
             raise TickerNotFoundError(
                 f"Ticker '{ticker}' not found in Yahoo Finance. "
@@ -88,7 +85,7 @@ class YahooDataSource(DataSource):
             ticker_obj = yf.Ticker(ticker)
             return ticker_obj.info
 
-        info = await _retry_with_backoff(fetch)
+        info = await _fetch_with_semaphore(fetch)
         return info
 
     async def fetch_ticker_info_cached(self, ticker: str) -> dict:
@@ -104,7 +101,7 @@ class YahooDataSource(DataSource):
             ticker_obj = yf.Ticker(ticker)
             return ticker_obj.info
 
-        info = await _retry_with_backoff(fetch)
+        info = await _fetch_with_semaphore(fetch)
         _ticker_info_cache[ticker] = (now, info)
         return info
 
@@ -114,7 +111,7 @@ class YahooDataSource(DataSource):
         def fetch() -> pd.DataFrame:
             return yf.download(ticker, period="1d", progress=False, repair=True)
 
-        data = await _retry_with_backoff(fetch)
+        data = await _fetch_with_semaphore(fetch)
         if data.empty:
             raise TickerNotFoundError(f"No data found for '{ticker}'.")
         return float(data["Close"].iloc[-1].item())
@@ -130,7 +127,7 @@ class YahooDataSource(DataSource):
             )
 
         try:
-            data = await _retry_with_backoff(fetch)
+            data = await _fetch_with_semaphore(fetch)
         except Exception:
             return {}
 
@@ -162,7 +159,7 @@ class YahooDataSource(DataSource):
                 repair=True,
             )
 
-        data = await _retry_with_backoff(fetch)
+        data = await _fetch_with_semaphore(fetch)
         if data.empty:
             raise TickerNotFoundError(f"No data found for '{ticker}' around {date}.")
 
