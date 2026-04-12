@@ -81,14 +81,33 @@ export const getMarketSummary = async (): Promise<MarketSummaryResponse> => {
   return response.data;
 };
 
-export const generateAIAnalysis = async (
-  ticker: string,
-  dateRange?: DateRange,
-): Promise<AIOutlookData> => {
-  const response = await axios.post(
-    `${API_BASE_URL}/api/analyze/ai`,
-    buildPayload(ticker, dateRange),
-  );
+export interface AIGenerationOptions {
+  ticker: string;
+  dateRange?: DateRange;
+  ohlcData?: {
+    timestamp: string[];
+    open: number[];
+    high: number[];
+    low: number[];
+    close: number[];
+    volume: number[];
+    start_date: string | null;
+    end_date: string | null;
+  };
+  tickerInfo?: Record<string, unknown>;
+}
+
+export const generateAIAnalysis = async (options: AIGenerationOptions): Promise<AIOutlookData> => {
+  const payload: Record<string, unknown> = {
+    ticker: options.ticker.toUpperCase(),
+  };
+  if (options.dateRange?.period) payload.period = options.dateRange.period;
+  if (options.dateRange?.startDate) payload.start_date = options.dateRange.startDate;
+  if (options.dateRange?.endDate) payload.end_date = options.dateRange.endDate;
+  if (options.ohlcData) payload.ohlc_data = options.ohlcData;
+  if (options.tickerInfo) payload.ticker_info = options.tickerInfo;
+
+  const response = await axios.post(`${API_BASE_URL}/api/analyze/ai`, payload);
   return response.data;
 };
 
