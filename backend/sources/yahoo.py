@@ -13,6 +13,8 @@ from domain.models import OHLCData
 from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
 
+# Module-level singleton: serializes all Yahoo Finance API calls across all
+# DataSource instances to prevent burst-triggered rate limits on cold starts.
 _yahoo_semaphore = Semaphore(1)
 
 
@@ -30,8 +32,6 @@ async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.
                     f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
                 )
                 await asyncio.sleep(delay)
-            except Exception:
-                raise
 
 
 class YahooDataSource(DataSource):
