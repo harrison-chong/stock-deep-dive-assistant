@@ -11,7 +11,6 @@ The application provides:
    - Fundamental metrics (P/E ratio, ROE, margins, dividend data, etc.)
    - Advanced statistics (Sharpe ratio, Sortino ratio, max drawdown, etc.)
    - Seasonal patterns and trailing returns
-   - Real-time news integration
 
 2. **AI-Powered Insights** - Get AI-generated bull/bear case analysis, risk factors, and recommendations based on comprehensive financial data
 
