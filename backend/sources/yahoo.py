@@ -1,6 +1,7 @@
 """Yahoo Finance data source adapter."""
 
 import asyncio
+from asyncio import Semaphore
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -12,22 +13,25 @@ from domain.models import OHLCData
 from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
 
+_yahoo_semaphore = Semaphore(1)
+
 
 async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.0):
     """Retry a function with exponential backoff on rate limit errors."""
-    for attempt in range(max_retries):
-        try:
-            return func()
-        except YFRateLimitError:
-            if attempt == max_retries - 1:
-                raise RateLimitError("Yahoo Finance rate limit exceeded")
-            delay = base_delay * (2**attempt)
-            app_logger.warning(
-                f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
-            )
-            await asyncio.sleep(delay)
-        except Exception:
-            raise
+    async with _yahoo_semaphore:
+        for attempt in range(max_retries):
+            try:
+                return func()
+            except YFRateLimitError:
+                if attempt == max_retries - 1:
+                    raise RateLimitError("Yahoo Finance rate limit exceeded")
+                delay = base_delay * (2**attempt)
+                app_logger.warning(
+                    f"Rate limit hit, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
+                )
+                await asyncio.sleep(delay)
+            except Exception:
+                raise
 
 
 class YahooDataSource(DataSource):
