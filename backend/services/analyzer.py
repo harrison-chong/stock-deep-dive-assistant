@@ -40,6 +40,29 @@ class StockAnalyzer:
         # OHLC cache: ticker -> (fetched_at, OHLCData), 5-minute TTL
         self._ohlc_cache: dict[str, tuple[datetime, Any]] = {}
 
+    def _reconstruct_ohlc(self, data: dict) -> Any:
+        """Reconstruct OHLCData from a dict (e.g., passed from frontend)."""
+        from domain.models import OHLCData
+        from datetime import datetime as dt
+
+        timestamps = data.get("timestamp", [])
+        return OHLCData(
+            timestamp=[
+                dt.fromisoformat(ts) if isinstance(ts, str) else ts for ts in timestamps
+            ],
+            open=data.get("open", []),
+            high=data.get("high", []),
+            low=data.get("low", []),
+            close=data.get("close", []),
+            volume=data.get("volume", []),
+            start_date=dt.fromisoformat(data["start_date"])
+            if data.get("start_date")
+            else None,
+            end_date=dt.fromisoformat(data["end_date"])
+            if data.get("end_date")
+            else None,
+        )
+
     async def _get_ohlc(
         self,
         ticker: str,
@@ -100,11 +123,17 @@ class StockAnalyzer:
         period: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        ohlc_data: dict | None = None,
+        ticker_info_data: dict | None = None,
     ) -> AIInterpretation:
         """Generate AI outlook on-demand."""
         _maybe_cold_start_delay()
-        ohlc = await self._get_ohlc(ticker, period, start_date, end_date)
-        info_dict = await self.data_source.fetch_ticker_info_cached(ticker)
+        if ohlc_data is None or ticker_info_data is None:
+            ohlc = await self._get_ohlc(ticker, period, start_date, end_date)
+            info_dict = await self.data_source.fetch_ticker_info_cached(ticker)
+        else:
+            ohlc = self._reconstruct_ohlc(ohlc_data)
+            info_dict = ticker_info_data
 
         df = pd.DataFrame(
             {
