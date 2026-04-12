@@ -2,12 +2,22 @@
 
 ## Overview
 
-A project to learn about building a stock analysis application.
+A comprehensive stock analysis application that helps users make informed investment decisions by providing detailed financial metrics, technical analysis, AI-powered insights, and portfolio tracking tools.
 
-The goals of this project are to:
+The application provides:
 
-1. Build a website that enables users to input a stock ticker
-2. When the user presses "analyze", an AI agent will recommend insights about the stock
+1. **Stock Analysis** - Enter any stock ticker to get comprehensive analysis including:
+   - Technical indicators (RSI, MACD, Bollinger Bands, Moving Averages, etc.)
+   - Fundamental metrics (P/E ratio, ROE, margins, dividend data, etc.)
+   - Advanced statistics (Sharpe ratio, Sortino ratio, max drawdown, etc.)
+   - Seasonal patterns and trailing returns
+   - Real-time news integration
+
+2. **AI-Powered Insights** - Get AI-generated bull/bear case analysis, risk factors, and recommendations based on comprehensive financial data
+
+3. **Performance Calculator** - Track potential gains/losses by entering purchase price, quantity, and date
+
+4. **Watchlist** - Monitor stocks you're interested in with entry prices and notes
 
 ## Tech Stack
 

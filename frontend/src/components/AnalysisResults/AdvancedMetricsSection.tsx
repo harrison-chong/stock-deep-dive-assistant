@@ -218,7 +218,7 @@ export function AdvancedMetricsSection({
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-7">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-5 gap-y-7">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
               1 Month
@@ -261,6 +261,28 @@ export function AdvancedMetricsSection({
               className={`text-2xl font-semibold tracking-tight ${getGainLossColor(technical.returns_1y ?? 0)}`}
             >
               {technical.returns_1y != null ? `${(technical.returns_1y * 100).toFixed(2)}%` : 'N/A'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+              3 Years
+              <MetricDefinition text="Total return over the last 3 years." />
+            </p>
+            <p
+              className={`text-2xl font-semibold tracking-tight ${getGainLossColor(technical.returns_3y ?? 0)}`}
+            >
+              {technical.returns_3y != null ? `${(technical.returns_3y * 100).toFixed(2)}%` : 'N/A'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+              5 Years
+              <MetricDefinition text="Total return over the last 5 years." />
+            </p>
+            <p
+              className={`text-2xl font-semibold tracking-tight ${getGainLossColor(technical.returns_5y ?? 0)}`}
+            >
+              {technical.returns_5y != null ? `${(technical.returns_5y * 100).toFixed(2)}%` : 'N/A'}
             </p>
           </div>
           <div>
@@ -308,6 +330,97 @@ export function AdvancedMetricsSection({
         </div>
         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
           <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 tracking-wide uppercase text-xs">
+            CAGR (Compound Annual Growth Rate)
+          </h5>
+          <div className="grid grid-cols-3 gap-6">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                2Y CAGR
+                <MetricDefinition text="Compound Annual Growth Rate over 2 years." />
+              </p>
+              <p
+                className={`text-xl font-semibold tracking-tight ${getGainLossColor(technical.cagr_2y ?? 0)}`}
+              >
+                {technical.cagr_2y != null ? `${(technical.cagr_2y * 100).toFixed(2)}%` : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                3Y CAGR
+                <MetricDefinition text="Compound Annual Growth Rate over 3 years." />
+              </p>
+              <p
+                className={`text-xl font-semibold tracking-tight ${getGainLossColor(technical.cagr_3y ?? 0)}`}
+              >
+                {technical.cagr_3y != null ? `${(technical.cagr_3y * 100).toFixed(2)}%` : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                5Y CAGR
+                <MetricDefinition text="Compound Annual Growth Rate over 5 years." />
+              </p>
+              <p
+                className={`text-xl font-semibold tracking-tight ${getGainLossColor(technical.cagr_5y ?? 0)}`}
+              >
+                {technical.cagr_5y != null ? `${(technical.cagr_5y * 100).toFixed(2)}%` : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+          <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 tracking-wide uppercase text-xs">
+            Pivot Points
+          </h5>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Resistance 1
+                <MetricDefinition text="First resistance level based on Fibonacci retracement (38.2%)." />
+              </p>
+              <p className="text-xl font-semibold tracking-tight text-red-500 dark:text-red-400">
+                {technical.pivot_resistance_1 != null
+                  ? `$${technical.pivot_resistance_1.toFixed(2)}`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Resistance 2
+                <MetricDefinition text="Second resistance level based on Fibonacci retracement (61.8%)." />
+              </p>
+              <p className="text-xl font-semibold tracking-tight text-red-400 dark:text-red-500">
+                {technical.pivot_resistance_2 != null
+                  ? `$${technical.pivot_resistance_2.toFixed(2)}`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Support 1
+                <MetricDefinition text="First support level based on Fibonacci retracement (38.2%)." />
+              </p>
+              <p className="text-xl font-semibold tracking-tight text-emerald-600 dark:text-emerald-400">
+                {technical.pivot_support_1 != null
+                  ? `$${technical.pivot_support_1.toFixed(2)}`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Support 2
+                <MetricDefinition text="Second support level based on Fibonacci retracement (61.8%)." />
+              </p>
+              <p className="text-xl font-semibold tracking-tight text-emerald-500 dark:text-emerald-300">
+                {technical.pivot_support_2 != null
+                  ? `$${technical.pivot_support_2.toFixed(2)}`
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+          <h5 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 tracking-wide uppercase text-xs">
             Volume Analysis
           </h5>
           <div className="grid grid-cols-2 gap-6">
@@ -346,6 +459,97 @@ export function AdvancedMetricsSection({
           </div>
         </div>
       </div>
+
+      {/* Pattern Signals */}
+      {data.advanced_metrics.patterns && (
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-8 border border-gray-200/30 dark:border-gray-800/30 animate-fade-in transition-all duration-300">
+          <div className="mb-6 flex items-center gap-2">
+            <h4 className="text-base font-semibold text-gray-900 dark:text-white tracking-tight">
+              Pattern Signals
+            </h4>
+            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-900/30 rounded-full">
+              Calculated
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Trend Strength (ADX)
+                <MetricDefinition text="Average Directional Index. Measures trend strength: <20 = weak (no trend), 20-40 = moderate, >40 = strong trend. Higher = more directional movement." />
+              </p>
+              {data.advanced_metrics.patterns.adx != null ? (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+                    {data.advanced_metrics.patterns.adx.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {data.advanced_metrics.patterns.adx < 20
+                      ? 'Weak'
+                      : data.advanced_metrics.patterns.adx < 40
+                        ? 'Moderate'
+                        : 'Strong'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-2xl font-semibold tracking-tight text-gray-400">N/A</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Gap Up</p>
+              <p
+                className={`text-2xl font-semibold tracking-tight ${
+                  data.advanced_metrics.patterns.gap_up_detected
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-gray-300 dark:text-gray-600'
+                }`}
+              >
+                {data.advanced_metrics.patterns.gap_up_detected ? '↑' : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Gap Down</p>
+              <p
+                className={`text-2xl font-semibold tracking-tight ${
+                  data.advanced_metrics.patterns.gap_down_detected
+                    ? 'text-red-500 dark:text-red-400'
+                    : 'text-gray-300 dark:text-gray-600'
+                }`}
+              >
+                {data.advanced_metrics.patterns.gap_down_detected ? '↓' : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1">
+                Trend Direction
+                <MetricDefinition text="Based on ADX. Shows if stock is in strong uptrend, moderate uptrend, weak/range-bound, or downtrend." />
+              </p>
+              {data.advanced_metrics.patterns.adx != null ? (
+                <p
+                  className={`text-xl font-semibold tracking-tight ${
+                    data.advanced_metrics.patterns.adx >= 40
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : data.advanced_metrics.patterns.adx >= 25
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : data.advanced_metrics.patterns.adx >= 20
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                  }`}
+                >
+                  {data.advanced_metrics.patterns.adx >= 40
+                    ? 'Strong ↑'
+                    : data.advanced_metrics.patterns.adx >= 25
+                      ? 'Uptrend'
+                      : data.advanced_metrics.patterns.adx >= 20
+                        ? 'Weak →'
+                        : 'Range'}
+                </p>
+              ) : (
+                <p className="text-xl font-semibold tracking-tight text-gray-400">N/A</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Seasonal & Cyclical Patterns */}
       {seasonal && seasonal.monthly_returns && (

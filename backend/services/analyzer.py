@@ -69,12 +69,16 @@ class StockAnalyzer:
         start_date: str | None,
         end_date: str | None,
     ) -> Any:
-        """Return cached OHLC if fresh (< 5 min), otherwise fetch and cache."""
+        """Return cached OHLC if fresh (< 30 min), otherwise fetch and cache.
+
+        Using 30-min cache for OHLC data to reduce Yahoo Finance API calls.
+        Historical data doesn't change frequently, so 30-min staleness is acceptable.
+        """
         now = datetime.now()
-        cache_key = f"{ticker}"
+        cache_key = f"{ticker}_{period}_{start_date}_{end_date}"
         if cache_key in self._ohlc_cache:
             cached_time, cached = self._ohlc_cache[cache_key]
-            if now - cached_time < timedelta(minutes=5):
+            if now - cached_time < timedelta(minutes=30):
                 app_logger.debug(f"Reusing cached OHLC for {ticker}")
                 return cached
 
@@ -147,6 +151,8 @@ class StockAnalyzer:
         tech_indicators = technical_service.calculate_all(df)
         current_price = float(df["close"].iloc[-1]) if not df.empty else None
         advanced_metrics = advanced_service.calculate_all(df)
+
+        # News omitted to avoid extra Yahoo Finance API calls
 
         tech_summary = f"RSI: {tech_indicators.rsi_14}, MACD: {tech_indicators.macd}, SMA20: {tech_indicators.sma_20}, SMA50: {tech_indicators.sma_50}, SMA200: {tech_indicators.sma_200}, Price: {current_price:.2f}"
 
@@ -251,6 +257,46 @@ class StockAnalyzer:
                 if advanced_metrics.seasonal
                 else None,
             },
+            "patterns": {
+                "adx": advanced_metrics.patterns.adx
+                if advanced_metrics.patterns
+                else None,
+                "gap_up_detected": advanced_metrics.patterns.gap_up_detected
+                if advanced_metrics.patterns
+                else False,
+                "gap_down_detected": advanced_metrics.patterns.gap_down_detected
+                if advanced_metrics.patterns
+                else False,
+                "head_and_shoulders": advanced_metrics.patterns.head_and_shoulders
+                if advanced_metrics.patterns
+                else False,
+                "inverted_head_and_shoulders": advanced_metrics.patterns.inverted_head_and_shoulders
+                if advanced_metrics.patterns
+                else False,
+                "double_top": advanced_metrics.patterns.double_top
+                if advanced_metrics.patterns
+                else False,
+                "double_bottom": advanced_metrics.patterns.double_bottom
+                if advanced_metrics.patterns
+                else False,
+                "triangle_pattern": advanced_metrics.patterns.triangle_pattern
+                if advanced_metrics.patterns
+                else None,
+                "flag_pattern": advanced_metrics.patterns.flag_pattern
+                if advanced_metrics.patterns
+                else False,
+                "cup_and_handle": advanced_metrics.patterns.cup_and_handle
+                if advanced_metrics.patterns
+                else False,
+                "support_break": advanced_metrics.patterns.support_break
+                if advanced_metrics.patterns
+                else False,
+                "resistance_break": advanced_metrics.patterns.resistance_break
+                if advanced_metrics.patterns
+                else False,
+            }
+            if advanced_metrics.patterns
+            else None,
         }
 
         return ai_service.interpret(
@@ -258,7 +304,7 @@ class StockAnalyzer:
             company_name=ticker_info.company.name,
             technical_summary=tech_summary,
             fundamental_summary=fundamental_summary,
-            news_summary="News integration pending",
+            news_summary="News integration omitted to minimize API calls.",
             advanced_metrics=advanced_metrics_dict,
             additional_fundamentals=additional_fundamentals,
         )
@@ -285,7 +331,9 @@ def _parse_ticker_info(ticker: str, info: dict) -> TickerInfo:
         ),
         valuation=ValuationMetrics(
             market_cap=info.get("marketCap"),
-            pe_ratio=info.get("trailingPE"),
+            pe_ratio=info.get(
+                "trailingPE"
+            ),  # Already a ratio (e.g., 25.5), not a decimal
             forward_pe=info.get("forwardPE"),
             peg_ratio=info.get("pegRatio"),
             price_to_book=info.get("priceToBook"),
@@ -510,13 +558,27 @@ def _build_analysis_response(
             {"name": "SMA 50", "value": tech_indicators.sma_50, "unit": "$"},
             {"name": "SMA 100", "value": tech_indicators.sma_100, "unit": "$"},
             {"name": "SMA 200", "value": tech_indicators.sma_200, "unit": "$"},
+            {"name": "EMA 12", "value": tech_indicators.ema_12, "unit": "$"},
+            {"name": "EMA 26", "value": tech_indicators.ema_26, "unit": "$"},
+            {"name": "EMA 50", "value": tech_indicators.ema_50, "unit": "$"},
         ],
         "momentum": [
             {"name": "RSI 14", "value": tech_indicators.rsi_14, "unit": ""},
+            {"name": "RSI 21", "value": tech_indicators.rsi_21, "unit": ""},
             {"name": "MACD", "value": tech_indicators.macd, "unit": "$"},
+            {"name": "MACD Signal", "value": tech_indicators.macd_signal, "unit": "$"},
+            {
+                "name": "MACD Histogram",
+                "value": tech_indicators.macd_histogram,
+                "unit": "$",
+            },
+            {"name": "Stochastic %K", "value": tech_indicators.stoch_k, "unit": ""},
+            {"name": "Stochastic %D", "value": tech_indicators.stoch_d, "unit": ""},
+            {"name": "Williams %R", "value": tech_indicators.williams_r, "unit": ""},
         ],
         "volatility": [
             {"name": "ATR 14", "value": tech_indicators.atr_14, "unit": "$"},
+            {"name": "ATR 21", "value": tech_indicators.atr_21, "unit": "$"},
             {
                 "name": "Volatility 30D",
                 "value": tech_indicators.volatility_30d,
@@ -526,6 +588,26 @@ def _build_analysis_response(
                 "name": "Volatility 90D",
                 "value": tech_indicators.volatility_90d,
                 "unit": "%",
+            },
+            {
+                "name": "Volatility 365D",
+                "value": tech_indicators.volatility_365d,
+                "unit": "%",
+            },
+            {
+                "name": "Bollinger Upper",
+                "value": tech_indicators.bollinger_upper,
+                "unit": "$",
+            },
+            {
+                "name": "Bollinger Lower",
+                "value": tech_indicators.bollinger_lower,
+                "unit": "$",
+            },
+            {
+                "name": "Bollinger Width",
+                "value": tech_indicators.bollinger_width,
+                "unit": "$",
             },
         ],
     }

@@ -7,20 +7,48 @@ export const movingAverageDefinitions: Record<string, string> = {
     'Simple Moving Average over the last 100 trading days (in price units). Medium-long term trend indicator.',
   'SMA 200':
     'Simple Moving Average over the last 200 trading days (in price units). Long-term trend indicator. Price above 200 SMA = long-term bullish.',
+  'EMA 12':
+    'Exponential Moving Average with 12-period span. More responsive to recent prices than SMA. Short-term trend indicator.',
+  'EMA 26':
+    'Exponential Moving Average with 26-period span. Used in MACD calculation. Medium-term trend indicator.',
+  'EMA 50':
+    'Exponential Moving Average with 50-period span. Medium-term trend with more weight on recent prices.',
 };
 
 export const momentumDefinitions: Record<string, string> = {
   'RSI 14':
     'Relative Strength Index over 14 periods (scale 0-100). >70 = overbought (possible pullback), <30 = oversold (possible bounce). Below 50 = bearish, above 50 = bullish.',
+  'RSI 21':
+    'Relative Strength Index over 21 periods (scale 0-100). More smoothed than RSI 14. >70 = overbought, <30 = oversold.',
   MACD: 'Moving Average Convergence Divergence (in price units, e.g., +2.50 means short-term MA is $2.50 above long-term MA). Positive MACD = bullish momentum.',
+  'MACD Signal':
+    'Signal line for MACD (9-period EMA of MACD). When MACD crosses above signal = bullish, below = bearish.',
+  'MACD Histogram':
+    'MACD minus Signal line. Positive = histogram rising (bullish), negative = histogram falling (bearish).',
+  'Stochastic %K':
+    'Stochastic oscillator %K (14-period). Measures close position relative to high-low range. >80 = overbought, <20 = oversold.',
+  'Stochastic %D':
+    'Stochastic oscillator %D (3-period SMA of %K). More smoothed, used with %K for signals.',
+  'Williams %R':
+    'Williams %R over 14 periods (scale -100 to 0). >-20 = overbought, <-80 = oversold. Similar to RSI but inverted.',
 };
 
 export const volatilityDefinitions: Record<string, string> = {
   'ATR 14':
     'Average True Range over 14 periods (in price units, e.g., $3.59 means the stock moves ~$3.59 per day on average). Higher ATR = more volatile stock.',
+  'ATR 21':
+    'Average True Range over 21 periods. More smoothed volatility measure. Higher = more volatile.',
   'Volatility 30D':
     '30-day annualized volatility (shown as percentage, e.g., 17% means the stock has historically fluctuated 17% annually). Higher = more volatile.',
   'Volatility 90D': '90-day annualized volatility (shown as percentage). Higher = more volatile.',
+  'Volatility 365D':
+    '365-day annualized volatility (shown as percentage). Long-term volatility view. Higher = more volatile.',
+  'Bollinger Upper':
+    'Upper Bollinger Band (20 SMA + 2 std dev). Price near upper band may indicate overbought conditions.',
+  'Bollinger Lower':
+    'Lower Bollinger Band (20 SMA - 2 std dev). Price near lower band may indicate oversold conditions.',
+  'Bollinger Width':
+    'Difference between upper and lower Bollinger Bands. Higher = more volatile market, lower = less volatile.',
 };
 
 export const profitabilityDefinitions: Record<string, string> = {

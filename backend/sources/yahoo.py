@@ -2,6 +2,7 @@
 
 from asyncio import Semaphore
 from datetime import datetime, timedelta
+from typing import Callable, TypeVar
 
 import pandas as pd
 import yfinance as yf
@@ -12,6 +13,8 @@ from domain.models import OHLCData
 from domain.exceptions import TickerNotFoundError, RateLimitError
 from infrastructure.logging import app_logger
 
+T = TypeVar("T")
+
 # Module-level singleton: serializes all Yahoo Finance API calls across all
 # DataSource instances to prevent burst-triggered rate limits on cold starts.
 _yahoo_semaphore = Semaphore(1)
@@ -20,12 +23,11 @@ _yahoo_semaphore = Semaphore(1)
 _ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
 
 
-async def _fetch_with_semaphore(func):
+async def _fetch_with_semaphore(func: Callable[[], T]) -> T:
     """Execute a Yahoo Finance fetch call with semaphore serialization.
 
-    The semaphore prevents burst traffic that could trigger Yahoo's rate limits.
-    On rate limit error, fails fast rather than retrying inside the semaphore
-    (which would block the single worker for many seconds during backoff).
+    The semaphore prevents burst traffic. Rate limit errors fail fast and bubble up
+    so the caller can handle gracefully (cached data or user-facing retry message).
     """
     async with _yahoo_semaphore:
         try:

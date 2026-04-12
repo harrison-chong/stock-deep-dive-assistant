@@ -8,8 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import router
 
 app = FastAPI(
-    title="Stock Deep Dive Assistant API",
-    description="Stock analysis API",
+    title="Stock Deep Dive API",
+    description="Comprehensive stock analysis API with technical indicators, fundamental metrics, and AI-powered insights.",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 app.add_middleware(
@@ -24,9 +27,3 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint for Render."""
-    return {"status": "ok"}

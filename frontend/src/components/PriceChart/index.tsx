@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useCallback } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   LineChart,
   Line,
@@ -8,8 +8,32 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { PERIODS } from '../../constants';
+import { getChartPeriods } from '../../constants';
 import { getGainLossColor } from '../../utils/formatting';
+
+function _getCutoffDate(chartPeriod: string, lastDate: Date): Date | null {
+  if (chartPeriod === 'max') return null;
+  if (chartPeriod === 'ytd') return new Date(lastDate.getFullYear(), 0, 1);
+
+  const offsets: Record<string, [number, number]> = {
+    '1mo': [1, 0],
+    '3mo': [3, 0],
+    '6mo': [6, 0],
+    '1y': [0, 1],
+    '2y': [0, 2],
+    '5y': [0, 5],
+    '10y': [0, 10],
+  };
+
+  const offset = offsets[chartPeriod];
+  if (!offset) return null;
+
+  const [months, years] = offset;
+  const cutoff = new Date(lastDate);
+  if (months > 0) cutoff.setMonth(cutoff.getMonth() - months);
+  if (years > 0) cutoff.setFullYear(cutoff.getFullYear() - years);
+  return cutoff;
+}
 
 interface PriceChartProps {
   ticker: string;
@@ -22,7 +46,6 @@ interface PriceChartProps {
     sma200?: number | null;
   }[];
   period: string;
-  onPeriodChange: (period: string) => void;
 }
 
 export const PriceChart = memo(function PriceChart({
@@ -30,25 +53,41 @@ export const PriceChart = memo(function PriceChart({
   currentPrice,
   chartData,
   period,
-  onPeriodChange,
 }: PriceChartProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState(period);
+  const [chartPeriod, setChartPeriod] = useState(() => {
+    const available = getChartPeriods(period);
+    return available.find((p) => p.value === period)?.value ?? available[0]?.value ?? '5y';
+  });
   const [showSMA20, setShowSMA20] = useState(false);
   const [showSMA50, setShowSMA50] = useState(false);
   const [showSMA200, setShowSMA200] = useState(false);
 
+  const availableChartPeriods = useMemo(() => getChartPeriods(period), [period]);
+
+  // Sync chart period when period changes (zoom out not allowed — only equal or lower)
+  const effectiveChartPeriod = useMemo(() => {
+    const available = getChartPeriods(period);
+    return available.some((p) => p.value === chartPeriod)
+      ? chartPeriod
+      : (available[0]?.value ?? '5y');
+  }, [period, chartPeriod]);
+
+  // Filter chart data based on selected chart period (zoom in only — no extra API calls)
+  const filteredData = useMemo(() => {
+    if (!chartData.length) return [];
+    const lastDate = new Date(chartData[chartData.length - 1].date);
+    const cutoff = _getCutoffDate(chartPeriod, lastDate);
+    if (!cutoff) return chartData;
+    return chartData.filter((d) => new Date(d.date) >= cutoff);
+  }, [chartData, chartPeriod]);
+
   // Check if SMA data is available
-  const hasSMAData = chartData.some(
+  const hasSMAData = filteredData.some(
     (point) => point.sma20 !== null || point.sma50 !== null || point.sma200 !== null,
   );
 
-  // Sync with parent period when it changes
-  useEffect(() => {
-    setSelectedPeriod(period);
-  }, [period]);
-
   // Transform chart data for the chart
-  const data = chartData.map((point) => ({
+  const data = filteredData.map((point) => ({
     date: new Date(point.date).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -65,17 +104,10 @@ export const PriceChart = memo(function PriceChart({
   const priceChange = latestPrice - startPrice;
   const percentChange = startPrice > 0 ? (priceChange / startPrice) * 100 : 0;
 
-  const handlePeriodChange = useCallback(
-    (newPeriod: string) => {
-      setSelectedPeriod(newPeriod);
-      onPeriodChange(newPeriod);
-    },
-    [onPeriodChange],
-  );
-
   return (
-    <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/30 dark:border-gray-800/30 animate-fade-in transition-all duration-300">
-      <div className="flex items-center justify-between mb-5">
+    <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-800/30 animate-fade-in transition-all duration-300">
+      {/* Header - stack on mobile */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Price Chart</h3>
           <p className="text-sm text-gray-400 dark:text-gray-500 font-mono">
@@ -83,7 +115,7 @@ export const PriceChart = memo(function PriceChart({
           </p>
         </div>
         <div className="text-right">
-          <p className={`text-lg font-semibold ${getGainLossColor(priceChange)}`}>
+          <p className={`text-base sm:text-lg font-semibold ${getGainLossColor(priceChange)}`}>
             {priceChange >= 0 ? '+' : ''}
             {priceChange.toFixed(2)} ({percentChange.toFixed(2)}%)
           </p>
@@ -127,22 +159,25 @@ export const PriceChart = memo(function PriceChart({
         </div>
       )}
 
-      {/* Period Selector - horizontal scroll on mobile */}
+      {/* Chart Period Selector — only allows zooming in, no extra API calls */}
       <div className="overflow-x-auto hide-scrollbar mb-6 border-b border-gray-100 dark:border-gray-700">
         <div className="flex gap-1 min-w-max px-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p.value}
-              onClick={() => handlePeriodChange(p.value)}
-              className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 ${
-                selectedPeriod === p.value
-                  ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-100'
-                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+          {availableChartPeriods.map((p) => {
+            const isActive = p.value === effectiveChartPeriod;
+            return (
+              <button
+                key={p.value}
+                onClick={() => setChartPeriod(p.value)}
+                className={`px-4 py-2.5 text-xs font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-gray-100'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -169,11 +204,11 @@ export const PriceChart = memo(function PriceChart({
               axisLine={false}
               domain={['auto', 'auto']}
               tickFormatter={(value) => `$${value.toFixed(0)}`}
-              width={60}
+              width={52}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fff',
+                backgroundColor: 'rgba(255,255,255,0.95)',
                 border: '1px solid #e5e7eb',
                 borderRadius: '8px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
