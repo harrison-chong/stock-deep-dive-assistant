@@ -10,7 +10,6 @@ import { AdvancedMetricsSection } from './AdvancedMetricsSection';
 interface AnalysisResultsProps {
   data: AnalysisData;
   period: string;
-  onPeriodChange: (period: string) => void;
   loadingAI?: boolean;
   errorAI?: string;
   onGenerateAI?: () => void;
@@ -19,7 +18,6 @@ interface AnalysisResultsProps {
 export function AnalysisResults({
   data,
   period,
-  onPeriodChange,
   loadingAI = false,
   errorAI,
   onGenerateAI,
@@ -38,7 +36,6 @@ export function AnalysisResults({
         currentPrice={data.current_price}
         chartData={data.chart_data}
         period={period}
-        onPeriodChange={onPeriodChange}
       />
 
       {/* Technical Overview */}

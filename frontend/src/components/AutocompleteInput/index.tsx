@@ -17,7 +17,7 @@ export function AutocompleteInput({
   value,
   onChange,
   onSubmit,
-  placeholder = 'Enter stock ticker (e.g., AAPL, BHP.AX) in accordance with Yahoo Finance format',
+  placeholder = 'Enter ticker (e.g., AAPL, CBA.AX, HSBA.L)',
   disabled = false,
   submitLabel = 'Analyse',
   showSubmitButton = true,
@@ -31,6 +31,17 @@ export function AutocompleteInput({
 
   // Compute suggestions directly from value (derived state)
   const suggestions = value.trim() ? getFilteredTickers(value) : [];
+
+  // Get suffix hint for display
+  const getSuffixHint = (ticker: string): string | null => {
+    if (ticker.endsWith('.AX')) return 'Australia';
+    if (ticker.endsWith('.L')) return 'London';
+    if (ticker.endsWith('.TO')) return 'Toronto';
+    if (ticker.endsWith('.SS') || ticker.endsWith('.SZ')) return 'Shanghai';
+    if (ticker.endsWith('.HK')) return 'Hong Kong';
+    if (ticker.endsWith('.T')) return 'Tokyo';
+    return null;
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,21 +178,31 @@ export function AutocompleteInput({
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/30 dark:border-gray-800/30 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={suggestion}
-              role="option"
-              aria-selected={index === highlightedIndex}
-              className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
-                index === highlightedIndex
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/80 dark:bg-gray-900/80 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              <span className="font-medium">{suggestion}</span>
-            </li>
-          ))}
+          {suggestions.map((suggestion, index) => {
+            const suffixHint = getSuffixHint(suggestion);
+            return (
+              <li
+                key={suggestion}
+                role="option"
+                aria-selected={index === highlightedIndex}
+                className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
+                  index === highlightedIndex
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white/80 dark:bg-gray-900/80 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                }`}
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                <span className="font-medium">{suggestion}</span>
+                {suffixHint && (
+                  <span
+                    className={`ml-2 text-xs ${index === highlightedIndex ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}
+                  >
+                    ({suffixHint})
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

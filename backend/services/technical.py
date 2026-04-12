@@ -128,12 +128,13 @@ def _to_float(val) -> float | None:
 
 
 def _calc_rsi(close: pd.Series, period: int = 14) -> float | None:
-    delta = close.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    return float(rsi.iloc[-1]) if len(rsi) > 0 else None
+    try:
+        from ta.momentum import RSIIndicator
+
+        rsi = RSIIndicator(close, window=period)
+        return float(rsi.rsi().iloc[-1]) if len(close) >= period else None
+    except Exception:
+        return None
 
 
 def _calc_macd(close: pd.Series) -> tuple[float | None, float | None, float | None]:

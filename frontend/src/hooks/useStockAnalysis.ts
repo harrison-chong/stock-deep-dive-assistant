@@ -74,11 +74,26 @@ export const useStockAnalysis = (): UseStockAnalysisReturn => {
         queryClient.setQueryData([ANALYSIS_KEY, ticker, period], result);
       } catch (err: unknown) {
         if (err && typeof err === 'object' && 'response' in err) {
-          const axiosError = err as { response?: { data?: { detail?: string }; status?: number } };
+          const axiosError = err as {
+            response?: {
+              data?: { detail?: string };
+              status?: number;
+              headers?: { [key: string]: string };
+            };
+          };
           const status = axiosError.response?.status;
           const detail = axiosError.response?.data?.detail;
+          const retryAfter = axiosError.response?.headers?.['retry-after'];
 
-          if (status === 404) {
+          // Detect rate limit errors (503 or RATE_LIMIT_MSG detail)
+          const isRateLimit = status === 503 || detail === 'RATE_LIMIT_MSG';
+
+          if (isRateLimit) {
+            const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+            setError(
+              `Yahoo Finance rate limit exceeded. Please wait ${retrySeconds} seconds before trying again.`,
+            );
+          } else if (status === 404) {
             setError(
               `No data found for "${ticker.toUpperCase()}". Please check the ticker and try again.`,
             );

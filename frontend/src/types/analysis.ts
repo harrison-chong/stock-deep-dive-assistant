@@ -177,7 +177,7 @@ export interface AnalysisData {
       inverted_head_and_shoulders: boolean;
       double_top: boolean;
       double_bottom: boolean;
-      triangle_pattern: boolean;
+      triangle_pattern: string | null;
       flag_pattern: boolean;
       cup_and_handle: boolean;
       adx: number | null;

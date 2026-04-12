@@ -251,10 +251,27 @@ class SeasonalAnalysis:
 
 
 @dataclass(frozen=True)
+class PatternMetrics:
+    head_and_shoulders: bool = False
+    inverted_head_and_shoulders: bool = False
+    double_top: bool = False
+    double_bottom: bool = False
+    triangle_pattern: str | None = None
+    flag_pattern: bool = False
+    cup_and_handle: bool = False
+    adx: float | None = None
+    gap_up_detected: bool = False
+    gap_down_detected: bool = False
+    support_break: bool = False
+    resistance_break: bool = False
+
+
+@dataclass(frozen=True)
 class AdvancedMetrics:
     statistical: StatisticalMetrics
     technical: TechnicalPerformance
     seasonal: SeasonalAnalysis | None = None
+    patterns: PatternMetrics | None = None
     disclaimer: str = (
         "Advanced metrics are statistical estimates for educational purposes only."
     )

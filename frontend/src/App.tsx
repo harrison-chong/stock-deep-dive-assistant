@@ -5,6 +5,7 @@ import { AnalysisResults } from './components/AnalysisResults';
 import { PerformanceCalculatorPage } from './pages/PerformanceCalculatorPage';
 import { WatchlistPage } from './pages/WatchlistPage';
 import { useState, useEffect } from 'react';
+import { Skeleton } from './components/shared/SkeletonLoader';
 import './App.css';
 import { PERIODS, getDateRange } from './constants';
 import { ErrorAlert } from './components/shared/ErrorAlert';
@@ -70,32 +71,22 @@ function AnalysisTab(
     errorAI,
     data,
     handleAnalyze,
-    updateChartData,
     handleGenerateAI,
   } = props;
   // Get date range for the selected period
   const dateRange = getDateRange(period);
 
-  // Handle period change from chart - lightweight chart-only update (no metrics recalculation)
-  const handleChartPeriodChange = (newPeriod: string) => {
-    setPeriod(newPeriod);
-    if (ticker.trim()) {
-      const newDateRange = getDateRange(newPeriod);
-      updateChartData(newDateRange);
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       {/* Search Section */}
-      <div className="mb-12">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
           <div className="flex-1">
             <AutocompleteInput
               value={ticker}
               onChange={setTicker}
               onSubmit={() => handleAnalyze(undefined, dateRange)}
-              placeholder="Enter ticker (e.g., AAPL, CBA.AX for ASX, NVDA for NASDAQ)"
+              placeholder="Enter ticker (e.g., AAPL, CBA.AX, HSBA.L)"
               disabled={loading}
               submitLabel={loading ? 'Analyzing...' : 'Analyze'}
               showSubmitButton={true}
@@ -123,16 +114,70 @@ function AnalysisTab(
         {error && <ErrorAlert message={error} />}
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="space-y-5">
+          {/* Company header skeleton */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/30 dark:border-gray-800/30 animate-fade-in">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <Skeleton className="h-8 w-64 mb-2" />
+                <Skeleton className="h-4 w-24 mb-3" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+              <div className="text-right">
+                <Skeleton className="h-10 w-32 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </div>
+          </div>
+          {/* Chart skeleton */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/30 dark:border-gray-800/30">
+            <Skeleton className="h-6 w-32 mb-4" />
+            <Skeleton className="h-72 w-full rounded-xl" />
+          </div>
+          {/* Metrics skeleton */}
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/30 dark:border-gray-800/30">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Analysis Results */}
-      {data && (
+      {data && !loading && (
         <AnalysisResults
           data={data}
           period={period}
-          onPeriodChange={handleChartPeriodChange}
           loadingAI={loadingAI}
           errorAI={errorAI}
           onGenerateAI={handleGenerateAI}
         />
+      )}
+
+      {/* Empty state - no data, not loading, no error */}
+      {!data && !loading && !error && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800/60 flex items-center justify-center mb-4">
+            <TrendingUp className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Enter a ticker to begin
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+            Search for any publicly traded company using its stock ticker symbol.
+          </p>
+        </div>
       )}
     </div>
   );

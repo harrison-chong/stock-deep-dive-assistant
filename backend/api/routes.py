@@ -37,7 +37,11 @@ def _is_valid_ticker(ticker: str) -> bool:
     return 1 < len(ticker) < 10 and ticker.replace(".", "").isalnum()
 
 
-@router.post("/analyze")
+@router.post(
+    "/analyze",
+    summary="Analyze a stock",
+    description="Get comprehensive stock analysis including technical indicators, fundamental metrics, and advanced statistics.",
+)
 async def analyze_stock(request: dict, analyzer: StockAnalyzer = Depends(get_analyzer)):
     """Comprehensive stock analysis endpoint."""
     ticker = request.get("ticker", "").upper()
@@ -65,7 +69,11 @@ async def analyze_stock(request: dict, analyzer: StockAnalyzer = Depends(get_ana
         raise HTTPException(status_code=500, detail="Analysis failed")
 
 
-@router.post("/analyze/ai")
+@router.post(
+    "/analyze/ai",
+    summary="Generate AI analysis",
+    description="Generate AI-powered analysis with bull/bear case, risk factors, and recommendations.",
+)
 async def generate_ai_analysis(
     request: AIAnalysisRequest,
     analyzer: StockAnalyzer = Depends(get_analyzer),
@@ -95,7 +103,11 @@ async def generate_ai_analysis(
         raise HTTPException(status_code=500, detail="AI analysis failed")
 
 
-@router.post("/chart-data")
+@router.post(
+    "/chart-data",
+    summary="Get chart data",
+    description="Lightweight endpoint to fetch only price chart data (OHLC) with moving averages.",
+)
 async def get_chart_data(request: dict, data_source: Any = Depends(get_data_source)):
     """Lightweight endpoint to fetch only chart data (OHLC)."""
     ticker = request.get("ticker", "").upper()
@@ -148,7 +160,11 @@ async def get_chart_data(request: dict, data_source: Any = Depends(get_data_sour
         raise HTTPException(status_code=500, detail="Failed to fetch chart data")
 
 
-@router.post("/performance")
+@router.post(
+    "/performance",
+    summary="Calculate performance",
+    description="Calculate stock performance from purchase date to current date.",
+)
 async def calculate_performance(
     request: dict, data_source: Any = Depends(get_data_source)
 ):
@@ -190,7 +206,11 @@ async def calculate_performance(
         raise HTTPException(status_code=500, detail="Performance calculation failed")
 
 
-@router.post("/watchlist")
+@router.post(
+    "/watchlist",
+    summary="Add to watchlist",
+    description="Add a stock to the watchlist with entry price and notes.",
+)
 async def add_to_watchlist(request: dict, data_source: Any = Depends(get_data_source)):
     """Add a stock to the watchlist."""
     from datetime import datetime
@@ -228,7 +248,11 @@ async def add_to_watchlist(request: dict, data_source: Any = Depends(get_data_so
         raise HTTPException(status_code=500, detail="Failed to add stock to watchlist")
 
 
-@router.delete("/watchlist/{id}")
+@router.delete(
+    "/watchlist/{id}",
+    summary="Remove from watchlist",
+    description="Remove a stock from the watchlist.",
+)
 async def delete_from_watchlist(id: str):
     """Delete a stock from the watchlist."""
     try:
@@ -245,7 +269,11 @@ async def delete_from_watchlist(id: str):
         )
 
 
-@router.get("/watchlist")
+@router.get(
+    "/watchlist",
+    summary="Get watchlist",
+    description="Retrieve all watchlist entries, optionally filtered by user.",
+)
 async def get_watchlist(
     added_by: str | None = None, data_source: Any = Depends(get_data_source)
 ):
@@ -257,7 +285,11 @@ async def get_watchlist(
         raise HTTPException(status_code=500, detail="Failed to retrieve watchlist")
 
 
-@router.get("/market/summary")
+@router.get(
+    "/market/summary",
+    summary="Market summary",
+    description="Get market summary with major indices prices and daily changes.",
+)
 async def get_market_summary():
     """Get market summary with major indices."""
     try:

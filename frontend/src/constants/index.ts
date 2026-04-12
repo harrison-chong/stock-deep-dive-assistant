@@ -5,16 +5,24 @@ export const ERROR_MESSAGES = {
 } as const;
 
 export const PERIODS = [
-  { value: '1mo', label: '1M' },
-  { value: '3mo', label: '3M' },
-  { value: '6mo', label: '6M' },
-  { value: '1y', label: '1Y' },
-  { value: '2y', label: '2Y' },
-  { value: '5y', label: '5Y' },
-  { value: '10y', label: '10Y' },
-  { value: 'ytd', label: 'YTD' },
-  { value: 'max', label: 'Max' },
+  { value: '1mo', label: '1M', order: 1 },
+  { value: '3mo', label: '3M', order: 2 },
+  { value: '6mo', label: '6M', order: 3 },
+  { value: '1y', label: '1Y', order: 4 },
+  { value: '2y', label: '2Y', order: 5 },
+  { value: '5y', label: '5Y', order: 6 },
+  { value: '10y', label: '10Y', order: 7 },
+  { value: 'ytd', label: 'YTD', order: 99 }, // special — always available
+  { value: 'max', label: 'Max', order: 8 },
 ];
+
+// Returns periods the chart can show given the analysis period.
+// Chart can only zoom in (lower order), not zoom out beyond what was fetched.
+export const getChartPeriods = (analysisPeriod: string): typeof PERIODS => {
+  const analysis = PERIODS.find((p) => p.value === analysisPeriod);
+  if (!analysis) return PERIODS;
+  return PERIODS.filter((p) => p.order <= analysis.order || p.value === 'ytd');
+};
 
 // Extended PERIODS with date calculation properties
 const PERIODS_WITH_CALC = [
