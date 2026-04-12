@@ -17,6 +17,9 @@ from infrastructure.logging import app_logger
 # DataSource instances to prevent burst-triggered rate limits on cold starts.
 _yahoo_semaphore = Semaphore(1)
 
+# Module-level cache for ticker info: ticker -> (fetched_at, raw_info_dict)
+_ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
+
 
 async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.0):
     """Retry a function with exponential backoff on rate limit errors."""
@@ -86,6 +89,23 @@ class YahooDataSource(DataSource):
             return ticker_obj.info
 
         info = await _retry_with_backoff(fetch)
+        return info
+
+    async def fetch_ticker_info_cached(self, ticker: str) -> dict:
+        """Fetch ticker info with 5-minute in-memory cache."""
+        now = datetime.now()
+        if ticker in _ticker_info_cache:
+            cached_time, cached_data = _ticker_info_cache[ticker]
+            if now - cached_time < timedelta(minutes=5):
+                app_logger.debug(f"Returning cached ticker info for {ticker}")
+                return cached_data
+
+        def fetch() -> dict:
+            ticker_obj = yf.Ticker(ticker)
+            return ticker_obj.info
+
+        info = await _retry_with_backoff(fetch)
+        _ticker_info_cache[ticker] = (now, info)
         return info
 
     async def fetch_current_price(self, ticker: str) -> float:
