@@ -205,4 +205,6 @@ export interface MetricsCardProps {
   }[];
   showInterpretation?: boolean;
   metricDefinitions?: Record<string, string>;
+  /** Data source for the badge. 'yahoo' = sourced from Yahoo Finance, 'calc' = calculated from price data. */
+  source?: 'yahoo' | 'calc';
 }

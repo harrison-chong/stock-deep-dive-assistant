@@ -50,9 +50,12 @@ export function AIOutlookCard({ data, loadingAI, errorAI, onGenerateAI }: AIOutl
             />
           </svg>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">AI Outlook</h3>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{data.ticker}</p>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-900/30 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            AI Generated
+          </span>
         </div>
       </div>
 

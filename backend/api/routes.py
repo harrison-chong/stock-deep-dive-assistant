@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 from typing import Any
 
 from domain.exceptions import TickerNotFoundError, RateLimitError
@@ -18,6 +19,17 @@ from services.watchlist import (
 router = APIRouter()
 
 RATE_LIMIT_MSG = "RATE_LIMIT_MSG"
+
+
+class AIAnalysisRequest(BaseModel):
+    """Request body for /analyze/ai."""
+
+    ticker: str
+    period: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    ohlc_data: dict[str, Any] | None = None
+    ticker_info_data: dict[str, Any] | None = None
 
 
 def _is_valid_ticker(ticker: str) -> bool:
@@ -55,10 +67,11 @@ async def analyze_stock(request: dict, analyzer: StockAnalyzer = Depends(get_ana
 
 @router.post("/analyze/ai")
 async def generate_ai_analysis(
-    request: dict, analyzer: StockAnalyzer = Depends(get_analyzer)
+    request: AIAnalysisRequest,
+    analyzer: StockAnalyzer = Depends(get_analyzer),
 ):
-    """Generate AI analysis on-demand."""
-    ticker = request.get("ticker", "").upper()
+    """Generate AI analysis on-demand. Optionally accepts pre-loaded data."""
+    ticker = request.ticker.upper()
 
     if not _is_valid_ticker(ticker):
         raise HTTPException(status_code=400, detail="Invalid ticker format")
@@ -66,18 +79,17 @@ async def generate_ai_analysis(
     try:
         result = await analyzer.generate_ai_outlook(
             ticker,
-            period=request.get("period"),
-            start_date=request.get("start_date"),
-            end_date=request.get("end_date"),
+            period=request.period,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            ohlc_data=request.ohlc_data,
+            ticker_info_data=request.ticker_info_data,
         )
         return result
     except TickerNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except RateLimitError:
-        raise HTTPException(
-            status_code=503,
-            detail="RATE_LIMIT_MSG",
-        )
+        raise HTTPException(status_code=503, detail="RATE_LIMIT_MSG")
     except Exception as e:
         app_logger.error(f"AI Error: {str(e)}")
         raise HTTPException(status_code=500, detail="AI analysis failed")
