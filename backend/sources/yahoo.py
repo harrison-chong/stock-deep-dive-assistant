@@ -32,6 +32,7 @@ _ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
 # Prevents hammering Yahoo after a rate limit hit.
 _failed_request_cache: dict[str, tuple[datetime, int]] = {}
 _FAILED_REQUEST_TTL_SECONDS = 30
+_RATE_LIMIT_MSG = "Rate limit hit. Please try again."
 
 
 def _is_request_cached_failure(cache_key: str) -> bool:
@@ -54,38 +55,33 @@ async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T
     Failed requests are cached briefly to avoid hammering Yahoo after a limit hit.
     """
     if cache_key and _is_request_cached_failure(cache_key):
-        raise RateLimitError(
-            "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
-        )
+        raise RateLimitError("_RATE_LIMIT_MSG")
+
+    MAX_RETRIES = 10
 
     async with _yahoo_semaphore:
         # Check again after acquiring semaphore (another request may have populated cache)
         if cache_key and _is_request_cached_failure(cache_key):
-            raise RateLimitError(
-                "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
-            )
+            raise RateLimitError("_RATE_LIMIT_MSG")
 
-        for attempt in range(3):
+        for attempt in range(1, MAX_RETRIES + 1):
+            if attempt > 1:
+                # Aggressive retry: short delay between attempts when competing for shared IPs
+                await asyncio.sleep(1)
+            else:
+                await asyncio.sleep(_YAHOO_CALL_DELAY)
+
             try:
-                # Add delay between calls to be respectful of shared IPs (Render free tier)
-                if attempt > 0:
-                    await asyncio.sleep(_YAHOO_CALL_DELAY * (2 ** (attempt - 1)))
-                else:
-                    await asyncio.sleep(_YAHOO_CALL_DELAY)
-
                 result = func()
                 # Clear any cached failure on success
                 if cache_key and cache_key in _failed_request_cache:
                     del _failed_request_cache[cache_key]
                 return result
             except YFRateLimitError as e:
-                wait_time = (attempt + 1) * 15  # 15, 30, 45 seconds
                 app_logger.warning(
-                    f"Yahoo Finance rate limit hit on attempt {attempt + 1}, "
-                    f"waiting {wait_time}s before retry: {e}"
+                    f"Yahoo Finance rate limit hit on attempt {attempt}, "
+                    f"retrying in 1s: {e}"
                 )
-                if attempt < 2:
-                    await asyncio.sleep(wait_time)
 
         # All retries exhausted — cache the failure and raise
         if cache_key:
@@ -93,9 +89,7 @@ async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T
                 datetime.now(),
                 _FAILED_REQUEST_TTL_SECONDS,
             )
-        raise RateLimitError(
-            "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
-        )
+        raise RateLimitError("_RATE_LIMIT_MSG")
 
 
 class YahooDataSource(DataSource):
