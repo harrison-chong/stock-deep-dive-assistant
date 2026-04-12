@@ -1,5 +1,6 @@
 """Yahoo Finance data source adapter."""
 
+import asyncio
 from asyncio import Semaphore
 from datetime import datetime, timedelta
 from typing import Callable, TypeVar
@@ -19,21 +20,82 @@ T = TypeVar("T")
 # DataSource instances to prevent burst-triggered rate limits on cold starts.
 _yahoo_semaphore = Semaphore(1)
 
+# Minimum delay between Yahoo Finance API calls (seconds).
+# This spaces out requests to avoid triggering rate limits, especially
+# important on Render.com free tier where IPs are shared.
+_YAHOO_CALL_DELAY = 0.5
+
 # Module-level cache for ticker info: ticker -> (fetched_at, raw_info_dict)
 _ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
 
+# Cache for failed requests: cache_key -> (failed_at, retry_after_seconds)
+# Prevents hammering Yahoo after a rate limit hit.
+_failed_request_cache: dict[str, tuple[datetime, int]] = {}
+_FAILED_REQUEST_TTL_SECONDS = 30
 
-async def _fetch_with_semaphore(func: Callable[[], T]) -> T:
-    """Execute a Yahoo Finance fetch call with semaphore serialization.
 
-    The semaphore prevents burst traffic. Rate limit errors fail fast and bubble up
-    so the caller can handle gracefully (cached data or user-facing retry message).
+def _is_request_cached_failure(cache_key: str) -> bool:
+    """Check if a request recently failed and should be retried only after TTL."""
+    if cache_key not in _failed_request_cache:
+        return False
+    failed_at, retry_after = _failed_request_cache[cache_key]
+    if datetime.now() - failed_at < timedelta(seconds=retry_after):
+        return True
+    # Expired entry
+    del _failed_request_cache[cache_key]
+    return False
+
+
+async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T:
+    """Execute a Yahoo Finance fetch call with semaphore serialization and retry.
+
+    The semaphore prevents burst traffic. Rate limit errors trigger exponential
+    backoff retry (up to 3 attempts), then bubble up as RateLimitError.
+    Failed requests are cached briefly to avoid hammering Yahoo after a limit hit.
     """
+    if cache_key and _is_request_cached_failure(cache_key):
+        raise RateLimitError(
+            "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
+        )
+
     async with _yahoo_semaphore:
-        try:
-            return func()
-        except YFRateLimitError:
-            raise RateLimitError("Yahoo Finance rate limit exceeded")
+        # Check again after acquiring semaphore (another request may have populated cache)
+        if cache_key and _is_request_cached_failure(cache_key):
+            raise RateLimitError(
+                "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
+            )
+
+        for attempt in range(3):
+            try:
+                # Add delay between calls to be respectful of shared IPs (Render free tier)
+                if attempt > 0:
+                    await asyncio.sleep(_YAHOO_CALL_DELAY * (2 ** (attempt - 1)))
+                else:
+                    await asyncio.sleep(_YAHOO_CALL_DELAY)
+
+                result = func()
+                # Clear any cached failure on success
+                if cache_key and cache_key in _failed_request_cache:
+                    del _failed_request_cache[cache_key]
+                return result
+            except YFRateLimitError as e:
+                wait_time = (attempt + 1) * 15  # 15, 30, 45 seconds
+                app_logger.warning(
+                    f"Yahoo Finance rate limit hit on attempt {attempt + 1}, "
+                    f"waiting {wait_time}s before retry: {e}"
+                )
+                if attempt < 2:
+                    await asyncio.sleep(wait_time)
+
+        # All retries exhausted — cache the failure and raise
+        if cache_key:
+            _failed_request_cache[cache_key] = (
+                datetime.now(),
+                _FAILED_REQUEST_TTL_SECONDS,
+            )
+        raise RateLimitError(
+            "Yahoo Finance rate limit exceeded. Please wait 60 seconds before trying again."
+        )
 
 
 class YahooDataSource(DataSource):
@@ -58,7 +120,10 @@ class YahooDataSource(DataSource):
             else:
                 return yf.download(ticker, period="5y", progress=False, repair=True)
 
-        data = await _fetch_with_semaphore(fetch)
+        data = await _fetch_with_semaphore(
+            fetch,
+            cache_key=f"ohlc:{ticker}:{period}:{start_date}:{end_date}",
+        )
         if data.empty:
             raise TickerNotFoundError(
                 f"Ticker '{ticker}' not found in Yahoo Finance. "
@@ -87,7 +152,7 @@ class YahooDataSource(DataSource):
             ticker_obj = yf.Ticker(ticker)
             return ticker_obj.info
 
-        info = await _fetch_with_semaphore(fetch)
+        info = await _fetch_with_semaphore(fetch, cache_key=f"info:{ticker}")
         return info
 
     async def fetch_ticker_info_cached(self, ticker: str) -> dict:
@@ -103,7 +168,7 @@ class YahooDataSource(DataSource):
             ticker_obj = yf.Ticker(ticker)
             return ticker_obj.info
 
-        info = await _fetch_with_semaphore(fetch)
+        info = await _fetch_with_semaphore(fetch, cache_key=f"info:{ticker}")
         _ticker_info_cache[ticker] = (now, info)
         return info
 
@@ -113,7 +178,7 @@ class YahooDataSource(DataSource):
         def fetch() -> pd.DataFrame:
             return yf.download(ticker, period="1d", progress=False, repair=True)
 
-        data = await _fetch_with_semaphore(fetch)
+        data = await _fetch_with_semaphore(fetch, cache_key=f"price:{ticker}")
         if data.empty:
             raise TickerNotFoundError(f"No data found for '{ticker}'.")
         return float(data["Close"].iloc[-1].item())
@@ -129,7 +194,9 @@ class YahooDataSource(DataSource):
             )
 
         try:
-            data = await _fetch_with_semaphore(fetch)
+            data = await _fetch_with_semaphore(
+                fetch, cache_key=f"prices:{','.join(tickers)}"
+            )
         except Exception:
             return {}
 
@@ -161,7 +228,9 @@ class YahooDataSource(DataSource):
                 repair=True,
             )
 
-        data = await _fetch_with_semaphore(fetch)
+        data = await _fetch_with_semaphore(
+            fetch, cache_key=f"price_on_date:{ticker}:{date}"
+        )
         if data.empty:
             raise TickerNotFoundError(f"No data found for '{ticker}' around {date}.")
 
