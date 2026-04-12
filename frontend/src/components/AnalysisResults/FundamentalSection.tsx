@@ -113,6 +113,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           metrics={fundamental_overview.profitability}
           showInterpretation={true}
           metricDefinitions={profitabilityDefinitions}
+          source="yahoo"
         />
         <MetricsCard
           title="Liquidity & Valuation"
@@ -126,6 +127,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
               'Total market value of all shares (price × shares outstanding). Shows company size. Large caps >$10B, mid caps $2-10B, small caps <$2B.',
             ...liquidityValuationDefinitions,
           }}
+          source="yahoo"
         />
       </div>
       <div
@@ -137,12 +139,14 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           metrics={fundamental_overview.valuation}
           showInterpretation={true}
           metricDefinitions={valuationDefinitions}
+          source="yahoo"
         />
         <MetricsCard
           title="Margins"
           metrics={fundamental_overview.margins}
           showInterpretation={true}
           metricDefinitions={marginsDefinitions}
+          source="yahoo"
         />
       </div>
       <div
@@ -157,12 +161,14 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
             ...financialStrengthDefinitions,
             ...growthDefinitions,
           }}
+          source="yahoo"
         />
         <MetricsCard
           title="Earnings"
           metrics={fundamental_overview.earnings}
           showInterpretation={true}
           metricDefinitions={earningsDefinitions}
+          source="yahoo"
         />
       </div>
       <div
@@ -188,6 +194,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
             'Earnings Date':
               'Upcoming date when the company will report earnings. Stock may be more volatile around this time.',
           }}
+          source="yahoo"
         />
         <MetricsCard
           title="Analyst Ratings"
@@ -219,6 +226,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
             '200D Avg': '200-day moving average price. Long-term trend indicator.',
             ...analystDefinitions,
           }}
+          source="yahoo"
         />
       </div>
       <div
@@ -240,6 +248,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           ]}
           showInterpretation={true}
           metricDefinitions={financialHealthDefinitions}
+          source="yahoo"
         />
         <MetricsCard
           title="Short Interest & Dividends"
@@ -262,6 +271,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           ]}
           showInterpretation={true}
           metricDefinitions={shortInterestDefinitions}
+          source="yahoo"
         />
       </div>
       <div
@@ -278,6 +288,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           ]}
           showInterpretation={true}
           metricDefinitions={ownershipDefinitions}
+          source="yahoo"
         />
         <MetricsCard
           title="Price Performance"
@@ -289,6 +300,7 @@ export function FundamentalSection({ data }: FundamentalSectionProps) {
           ]}
           showInterpretation={true}
           metricDefinitions={performanceDefinitions}
+          source="yahoo"
         />
       </div>
     </div>

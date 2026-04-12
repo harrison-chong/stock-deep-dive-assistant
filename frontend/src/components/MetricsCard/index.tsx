@@ -60,18 +60,37 @@ function formatMetricValue(value: number | null, unit?: string, name?: string): 
   return value.toFixed(2);
 }
 
+function SourceBadge({ source }: { source: 'yahoo' | 'calc' }) {
+  if (source === 'yahoo') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-900/30 rounded-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+        Y! Finance
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-900/30 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+      Calc
+    </span>
+  );
+}
+
 export const MetricsCard = memo(function MetricsCard({
   title,
   metrics,
   metricDefinitions,
-}: MetricsCardProps & {
-  metricDefinitions?: Record<string, string>;
-}) {
+  source,
+}: MetricsCardProps) {
   return (
     <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl p-5 border border-gray-200/30 dark:border-gray-800/30 hover:bg-white/80 dark:hover:bg-gray-900/80 transition-all duration-300">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 tracking-tight">
-        {title}
-      </h3>
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">
+          {title}
+        </h3>
+        {source && <SourceBadge source={source} />}
+      </div>
       <div className="space-y-3.5">
         {metrics.map((metric, i) => (
           <div key={metric.name || i} className="flex justify-between items-start gap-3">

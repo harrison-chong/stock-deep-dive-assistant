@@ -23,16 +23,19 @@ export function TechnicalSection({ technical_overview }: TechnicalSectionProps) 
         title="Moving Averages"
         metrics={technical_overview.moving_averages}
         metricDefinitions={movingAverageDefinitions}
+        source="calc"
       />
       <MetricsCard
         title="Momentum"
         metrics={technical_overview.momentum}
         metricDefinitions={momentumDefinitions}
+        source="calc"
       />
       <MetricsCard
         title="Volatility"
         metrics={technical_overview.volatility || []}
         metricDefinitions={volatilityDefinitions}
+        source="calc"
       />
     </div>
   );
