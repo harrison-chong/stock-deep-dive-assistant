@@ -1,6 +1,7 @@
 """Yahoo Finance data source adapter."""
 
 import asyncio
+import random
 from asyncio import Semaphore
 from datetime import datetime, timedelta
 from typing import Callable, TypeVar
@@ -25,13 +26,21 @@ _yahoo_semaphore = Semaphore(1)
 # important on Render.com free tier where IPs are shared.
 _YAHOO_CALL_DELAY = 0.5
 
+# Exponential backoff settings for rate limit retries
+# Base delay in seconds - starting point for exponential backoff
+_BACKOFF_BASE_SECONDS = 2.0
+# Maximum delay cap in seconds
+_BACKOFF_MAX_SECONDS = 32.0
+# Jitter factor - delay is multiplied by (1 ± jitter) for randomness
+_BACKOFF_JITTER = 0.3
+
 # Module-level cache for ticker info: ticker -> (fetched_at, raw_info_dict)
 _ticker_info_cache: dict[str, tuple[datetime, dict]] = {}
 
 # Cache for failed requests: cache_key -> (failed_at, retry_after_seconds)
 # Prevents hammering Yahoo after a rate limit hit.
 _failed_request_cache: dict[str, tuple[datetime, int]] = {}
-_FAILED_REQUEST_TTL_SECONDS = 30
+_FAILED_REQUEST_TTL_SECONDS = 60
 _RATE_LIMIT_MSG = "Rate limit hit. Please try again."
 
 
@@ -47,11 +56,24 @@ def _is_request_cached_failure(cache_key: str) -> bool:
     return False
 
 
+def _calculate_backoff_delay(attempt: int) -> float:
+    """Calculate delay for a given retry attempt using exponential backoff with jitter.
+
+    Delay = min(BACKOFF_MAX, BACKOFF_BASE * 2^(attempt-1)) * (1 ± JITTER)
+    Attempt 1: ~2s, Attempt 2: ~4s, Attempt 3: ~8s, Attempt 4: ~16s, Attempt 5+: 32s (capped)
+    """
+    raw_delay = _BACKOFF_BASE_SECONDS * (2 ** (attempt - 1))
+    capped_delay = min(raw_delay, _BACKOFF_MAX_SECONDS)
+    jitter_range = capped_delay * _BACKOFF_JITTER
+    actual_delay = capped_delay + random.uniform(-jitter_range, jitter_range)
+    return max(0.1, actual_delay)  # Ensure at least 100ms between attempts
+
+
 async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T:
     """Execute a Yahoo Finance fetch call with semaphore serialization and retry.
 
     The semaphore prevents burst traffic. Rate limit errors trigger exponential
-    backoff retry (up to 3 attempts), then bubble up as RateLimitError.
+    backoff retry with jitter (up to 10 attempts), then bubble up as RateLimitError.
     Failed requests are cached briefly to avoid hammering Yahoo after a limit hit.
     """
     if cache_key and _is_request_cached_failure(cache_key):
@@ -66,8 +88,9 @@ async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T
 
         for attempt in range(1, MAX_RETRIES + 1):
             if attempt > 1:
-                # Aggressive retry: short delay between attempts when competing for shared IPs
-                await asyncio.sleep(1)
+                delay = _calculate_backoff_delay(attempt - 1)
+                app_logger.debug(f"Rate limit retry {attempt}, waiting {delay:.1f}s")
+                await asyncio.sleep(delay)
             else:
                 await asyncio.sleep(_YAHOO_CALL_DELAY)
 
@@ -80,7 +103,7 @@ async def _fetch_with_semaphore(func: Callable[[], T], cache_key: str = "") -> T
             except YFRateLimitError as e:
                 app_logger.warning(
                     f"Yahoo Finance rate limit hit on attempt {attempt}, "
-                    f"retrying in 1s: {e}"
+                    f"will retry with backoff: {e}"
                 )
 
         # All retries exhausted — cache the failure and raise
