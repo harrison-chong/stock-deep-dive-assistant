@@ -2,13 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reduce Yahoo Finance API calls and prevent rate limits on Render free tier cold starts by adding concurrency control, caching, request deduplication, and cold-start staggering.
+**Goal:** Reduce Yahoo Finance API calls and prevent rate limits on Render free tier by adding concurrency control, caching, and call deduplication.
 
 **Architecture:**
 - `YahooDataSource` gains a semaphore wrapper around all Yahoo calls and a 5-minute in-memory cache for ticker info
-- `StockAnalyzer` gains an OHLC cache (per-ticker, 5-minute TTL) to avoid re-fetching OHLC when `generate_ai_outlook` is called after `analyze` — this eliminates the 4→2 call reduction for Analyze + AI without requiring frontend changes
-- Cold-start delay is applied at the analyzer level before the first request after idle
-- The frontend is updated to pass already-loaded data to the backend, skipping redundant fetches for chart updates
+- `StockAnalyzer` gains an OHLC cache (per-ticker, 5-minute TTL) to avoid re-fetching OHLC when `generate_ai_outlook` is called after `analyze` — eliminating the 4→2 call reduction for Analyze + AI
+- The frontend passes already-loaded data to `/api/analyze/ai`, bypassing Yahoo entirely when data is already available
 
 **Tech Stack:** Python asyncio, FastAPI, yfinance, React/TypeScript
 
@@ -18,14 +17,13 @@
 
 ```
 backend/
-  sources/yahoo.py          # Semaphore + ticker info cache + OHLC cache
-  services/analyzer.py      # Cold-start delay + OHLC cache + generate_ai_outlook reuse
-  api/routes.py             # generate_ai_outlook accepts pre-loaded data
+  sources/yahoo.py          # Semaphore + ticker info cache
+  services/analyzer.py      # OHLC cache + _reconstruct_ohlc + generate_ai_outlook accepts pre-loaded data
+  api/routes.py             # AIAnalysisRequest model + /analyze/ai accepts pre-loaded data
 
 frontend/
-  src/services/api.ts       # generateAIAnalysis sends ohlc_data + ticker_info
+  src/services/api.ts       # generateAIAnalysis accepts ohlcData + tickerInfo options
   src/hooks/useStockAnalysis.ts  # handleGenerateAI passes existing data
-  src/types/analysis.ts     # Add OHLCData interface for typed request body
 ```
 
 ---
@@ -452,62 +450,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
-## Task 4: Cold-Start Delay
-
-**Files:**
-- Modify: `backend/services/analyzer.py`
-
-- [ ] **Step 1: Add module-level timing state**
-
-Add at the bottom of `services/analyzer.py` (after all function/class definitions):
-```python
-import time as time_module
-
-_last_yahoo_request_time: float = 0
-COLD_START_DELAY: float = 2.0  # seconds
-_IDLE_THRESHOLD: float = 300  # 5 minutes
-
-
-def _maybe_cold_start_delay() -> None:
-    """Delay on cold start to avoid Yahoo Finance rate limit bursts."""
-    global _last_yahoo_request_time
-    now = time_module.monotonic()
-    if now - _last_yahoo_request_time > _IDLE_THRESHOLD:
-        app_logger.info(f"Cold start detected, sleeping {COLD_START_DELAY}s before Yahoo request")
-        time_module.sleep(COLD_START_DELAY)
-    _last_yahoo_request_time = now
-```
-
-- [ ] **Step 2: Call `_maybe_cold_start_delay()` at the start of `analyze()`**
-
-Add as the first line inside `analyze()`:
-```python
-def analyze(self, ticker: str, period: str | None = None, ...) -> dict:
-    _maybe_cold_start_delay()
-    # ... rest of method
-```
-
-- [ ] **Step 3: Call `_maybe_cold_start_delay()` at the start of `generate_ai_outlook()`**
-
-Add as the first line inside `generate_ai_outlook()`:
-```python
-def generate_ai_outlook(self, ticker: str, ...) -> AIInterpretation:
-    _maybe_cold_start_delay()
-    # ... rest of method
-```
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add backend/services/analyzer.py
-git commit -m "feat(analyzer): add cold-start delay to stagger Yahoo Finance requests
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
-```
-
----
-
-## Task 5: Backend Route — Accept Pre-Loaded Data for AI Analysis
+## Task 4: Backend Route — Accept Pre-Loaded Data for AI Analysis
 
 **Files:**
 - Modify: `backend/api/routes.py`
@@ -620,7 +563,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
-## Task 6: Frontend — Pass Pre-Loaded Data to AI and Chart Endpoints
+## Task 5: Frontend — Pass Pre-Loaded Data to AI and Chart Endpoints
 
 **Files:**
 - Modify: `frontend/src/types/analysis.ts`
@@ -741,11 +684,10 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ## Self-Review Checklist
 
-- [ ] **Spec coverage:** All 5 items from the spec are covered:
+- [ ] **Spec coverage:** All 4 items from the spec are covered:
   1. Semaphore → Task 1
-  2. Cold-start delay → Task 4
-  3. Ticker info cache → Task 2
-  4. Call deduplication → Tasks 3, 5, 6
+  2. Ticker info cache → Task 2
+  3. OHLC cache + call deduplication → Tasks 3, 4, 5
   5. Graceful degradation → already existed in routes.py (RATE_LIMIT_MSG)
 
 - [ ] **Placeholder scan:** No TBD/TODOs. All file paths are exact, all code is complete.

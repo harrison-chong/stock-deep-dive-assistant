@@ -14,13 +14,12 @@ When Render's free tier spins down after inactivity and then receives a request,
 
 ## Solution Overview
 
-Five layers of defense, applied in order:
+Four layers of defense, applied in order:
 
 1. **Concurrency Control** — semaphore limits Yahoo requests to 1 at a time
-2. **Request Staggering** — small delay between first and second request on cold wake
-3. **In-Memory Cache** — ticker info cached for 5 minutes to avoid redundant calls
-4. **Call Deduplication** — reuse already-fetched OHLC/ticker data instead of re-fetching for AI analysis or chart updates
-5. **Graceful Degradation** — clear error messages when rate limits are hit despite above measures
+2. **In-Memory Cache** — ticker info and OHLC cached for 5 minutes to avoid redundant calls
+3. **Call Deduplication** — reuse already-fetched OHLC/ticker data instead of re-fetching for AI analysis or chart updates
+4. **Graceful Degradation** — clear error messages when rate limits are hit despite above measures
 
 ---
 
@@ -60,29 +59,7 @@ async def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 5.
 
 The semaphore ensures only one Yahoo request is in-flight at any moment, preventing burst-triggered rate limits.
 
-### 2. Request Staggering on Cold Start
-
-**File:** `backend/services/analyzer.py`
-
-When the app has been idle (detected via a module-level timestamp), add a **2-second delay** before the first Yahoo request. This gives Yahoo's rate limiter time to recognize sequential requests rather than a burst:
-
-```python
-import time
-
-_last_request_time: float = 0
-COLD_START_DELAY = 2.0  # seconds
-
-def _maybe_cold_start_delay():
-    global _last_request_time
-    now = time.monotonic()
-    if now - _last_request_time > 300:  # 5 minutes idle = cold start
-        time.sleep(COLD_START_DELAY)
-    _last_request_time = now
-```
-
-Call `_maybe_cold_start_delay()` at the start of `analyze()` and `generate_ai_outlook()` in `StockAnalyzer`.
-
-### 3. In-Memory Cache for Ticker Info
+### 2. In-Memory Cache for Ticker Info
 
 **File:** `backend/sources/yahoo.py`
 
@@ -114,7 +91,7 @@ Replace calls to `fetch_ticker_info` in `analyze()` and `generate_ai_outlook()` 
 
 **OHLC data is NOT cached** — it must be fresh for accurate technical analysis.
 
-### 4. Graceful Degradation
+### 3. Graceful Degradation
 
 **File:** `backend/api/routes.py`
 
@@ -130,7 +107,7 @@ except RateLimitError:
 
 The frontend already maps `RATE_LIMIT_MSG` to a user-friendly message. No frontend change needed.
 
-### 5. Call Deduplication
+### 4. Call Deduplication
 
 **Problem:** When a user runs "Analyze" then "Generate AI", the backend makes 4 Yahoo calls (OHLC + ticker_info × 2) when only 1 set is needed — the data from `analyze()` is discarded before `generate_ai_outlook()` re-fetches identical data.
 
@@ -196,15 +173,10 @@ Specifically, add optional fields to the `generateAIAnalysis` API call:
 | File | Changes |
 |------|---------|
 | `backend/sources/yahoo.py` | Add semaphore to `_retry_with_backoff`, add `fetch_ticker_info_cached` with in-memory cache |
-| `backend/services/analyzer.py` | Add cold-start delay; make `ohlc`/`info` optional in `generate_ai_outlook` |
-| `backend/api/routes.py` | `POST /analyze/ai` accepts optional pre-fetched `ohlc`/`ticker_info` in body |
+| `backend/services/analyzer.py` | Add OHLC cache and `_reconstruct_ohlc`; `generate_ai_outlook` accepts pre-loaded data |
+| `backend/api/routes.py` | `POST /analyze/ai` accepts optional pre-fetched `ohlc_data`/`ticker_info_data` in body |
 | `frontend/src/services/api.ts` | `generateAIAnalysis` sends already-loaded data to skip backend re-fetch |
 | `frontend/src/hooks/useStockAnalysis.ts` | Pass existing OHLC/ticker data on `handleGenerateAI` |
-
-| File | Changes |
-|------|---------|
-| `backend/sources/yahoo.py` | Add semaphore to `_retry_with_backoff`, add `fetch_ticker_info_cached` with in-memory cache |
-| `backend/services/analyzer.py` | Add cold-start delay on idle wake |
 
 ---
 
@@ -218,20 +190,17 @@ Specifically, add optional fields to the `generateAIAnalysis` API call:
 
 ## Test Plan
 
-1. **Cold-start test:** Kill the Render service, wait 10+ minutes, send an analyze request — verify it succeeds without 503
-2. **Cache hit test:** Analyze AAPL twice within 5 minutes — second call should be faster (no Yahoo request for ticker info)
-3. **Concurrent requests test:** Send 3 analyze requests simultaneously — verify they all succeed (semaphore queues them)
-4. **Rate limit fallback:** If Yahoo still rate limits, verify 503 is returned with `RATE_LIMIT_MSG`
-5. **Deduplication test:** Call Analyze then Generate AI for the same ticker — verify only 2 Yahoo calls are made (use logging or a mock)
-6. **Chart update test:** Change the period — verify only 1 OHLC call is made, not 2
+1. **Cache hit test:** Analyze AAPL twice within 5 minutes — second call should be faster (no Yahoo request for ticker info)
+2. **Concurrent requests test:** Send 3 analyze requests simultaneously — verify they all succeed (semaphore queues them)
+3. **Rate limit fallback:** If Yahoo still rate limits, verify 503 is returned with `RATE_LIMIT_MSG`
+4. **Deduplication test:** Call Analyze then Generate AI for the same ticker — verify only 2 Yahoo calls are made (use logging or a mock)
 
 ---
 
 ## Rollout Order
 
 1. Add semaphore to `_retry_with_backoff` (highest impact, lowest risk)
-2. Add cold-start delay
-3. Add ticker info cache
-4. Add call deduplication (`generate_ai_outlook` reuse + frontend data passing)
-5. Deploy and monitor
+2. Add ticker info cache
+3. Add OHLC cache in analyzer + call deduplication
+4. Deploy and monitor
 
