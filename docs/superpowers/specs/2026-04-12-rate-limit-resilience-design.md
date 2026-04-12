@@ -14,12 +14,13 @@ When Render's free tier spins down after inactivity and then receives a request,
 
 ## Solution Overview
 
-Four layers of defense, applied in order:
+Five layers of defense, applied in order:
 
 1. **Concurrency Control** — semaphore limits Yahoo requests to 1 at a time
 2. **Request Staggering** — small delay between first and second request on cold wake
 3. **In-Memory Cache** — ticker info cached for 5 minutes to avoid redundant calls
-4. **Graceful Degradation** — clear error messages when rate limits are hit despite above measures
+4. **Call Deduplication** — reuse already-fetched OHLC/ticker data instead of re-fetching for AI analysis or chart updates
+5. **Graceful Degradation** — clear error messages when rate limits are hit despite above measures
 
 ---
 
@@ -129,9 +130,76 @@ except RateLimitError:
 
 The frontend already maps `RATE_LIMIT_MSG` to a user-friendly message. No frontend change needed.
 
+### 5. Call Deduplication
+
+**Problem:** When a user runs "Analyze" then "Generate AI", the backend makes 4 Yahoo calls (OHLC + ticker_info × 2) when only 1 set is needed — the data from `analyze()` is discarded before `generate_ai_outlook()` re-fetches identical data.
+
+Similarly, `updateChartData` in the frontend calls `/api/chart-data` to re-fetch OHLC after `analyze()` already loaded it.
+
+**Fix A: Allow `generate_ai_outlook` to reuse data from `analyze()`**
+
+File: `backend/services/analyzer.py`
+
+Make `ohlc` and `info` optional parameters. If caller passes them in, skip the fetch:
+
+```python
+async def generate_ai_outlook(
+    self,
+    ticker: str,
+    period: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    ohlc: OHLCData | None = None,       # new
+    info: dict | None = None,           # new
+) -> AIInterpretation:
+    if ohlc is None or info is None:
+        ohlc, info = await asyncio.gather(
+            self.data_source.fetch_ohlc(...),
+            self.data_source.fetch_ticker_info_cached(...),
+        )
+```
+
+**Fix B: Backend route accepts pre-loaded data**
+
+File: `backend/api/routes.py`
+
+`POST /api/analyze/ai` accepts optional `ohlc` and `ticker_info` in the request body. If provided, the analyzer skips its own fetch. If omitted, falls back to current behavior.
+
+**Fix C: Frontend reuses data already loaded**
+
+File: `frontend/src/hooks/useStockAnalysis.ts`
+
+When `handleGenerateAI` is called, pass the already-loaded OHLC and ticker info from `data` in the request body so the backend can skip the redundant fetch. The `analyzeStock` response (from `handleAnalyze`) already contains `chart_data` (OHLC-derived) — this can be passed through.
+
+Specifically, add optional fields to the `generateAIAnalysis` API call:
+```typescript
+// In the request body:
+{
+  ticker,
+  period,
+  start_date,
+  end_date,
+  ohlc_data: { /* from existing data */ },  // new — skips OHLC fetch
+  ticker_info: { /* from existing data */ } // new — skips ticker_info fetch
+}
+```
+
+**Net effect:**
+- Analyze alone: 2 Yahoo calls (unchanged)
+- Analyze + Generate AI: 2 calls total (down from 4)
+- Period change via chart: 1 OHLC call (down from 2)
+
 ---
 
 ## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `backend/sources/yahoo.py` | Add semaphore to `_retry_with_backoff`, add `fetch_ticker_info_cached` with in-memory cache |
+| `backend/services/analyzer.py` | Add cold-start delay; make `ohlc`/`info` optional in `generate_ai_outlook` |
+| `backend/api/routes.py` | `POST /analyze/ai` accepts optional pre-fetched `ohlc`/`ticker_info` in body |
+| `frontend/src/services/api.ts` | `generateAIAnalysis` sends already-loaded data to skip backend re-fetch |
+| `frontend/src/hooks/useStockAnalysis.ts` | Pass existing OHLC/ticker data on `handleGenerateAI` |
 
 | File | Changes |
 |------|---------|
@@ -142,9 +210,8 @@ The frontend already maps `RATE_LIMIT_MSG` to a user-friendly message. No fronte
 
 ## What This Does NOT Change
 
-- OHLC data is always fetched fresh (no caching of price history)
-- AI analysis logic is unchanged
-- Frontend is unchanged (existing error handling is sufficient)
+- OHLC data is always fetched fresh when not provided by caller (no persistent cache)
+- AI analysis logic/output is unchanged — only the data-fetching pattern changes
 - Retry logic (3 retries, exponential backoff) is preserved as-is
 
 ---
@@ -152,9 +219,11 @@ The frontend already maps `RATE_LIMIT_MSG` to a user-friendly message. No fronte
 ## Test Plan
 
 1. **Cold-start test:** Kill the Render service, wait 10+ minutes, send an analyze request — verify it succeeds without 503
-2. **Cache hit test:** Analyze AAPL twice within 5 minutes — second call should be faster (no Yahoo request)
+2. **Cache hit test:** Analyze AAPL twice within 5 minutes — second call should be faster (no Yahoo request for ticker info)
 3. **Concurrent requests test:** Send 3 analyze requests simultaneously — verify they all succeed (semaphore queues them)
 4. **Rate limit fallback:** If Yahoo still rate limits, verify 503 is returned with `RATE_LIMIT_MSG`
+5. **Deduplication test:** Call Analyze then Generate AI for the same ticker — verify only 2 Yahoo calls are made (use logging or a mock)
+6. **Chart update test:** Change the period — verify only 1 OHLC call is made, not 2
 
 ---
 
@@ -163,5 +232,6 @@ The frontend already maps `RATE_LIMIT_MSG` to a user-friendly message. No fronte
 1. Add semaphore to `_retry_with_backoff` (highest impact, lowest risk)
 2. Add cold-start delay
 3. Add ticker info cache
-4. Deploy and monitor
+4. Add call deduplication (`generate_ai_outlook` reuse + frontend data passing)
+5. Deploy and monitor
 
