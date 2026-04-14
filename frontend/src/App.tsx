@@ -107,9 +107,15 @@ function AnalysisTab(
         </p>
         {import.meta.env.VITE_API_BASE_URL &&
           !import.meta.env.VITE_API_BASE_URL.includes('localhost') && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Note: Initial load may take ~60s if service was inactive.
-            </p>
+            <>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Note: Initial load may take ~60s if service was inactive.
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Note: Deployment uses shared IP — expect frequent Yahoo Finance rate limits. Just
+                keep trying and wait.
+              </p>
+            </>
           )}
         {error && <ErrorAlert message={error} />}
       </div>
