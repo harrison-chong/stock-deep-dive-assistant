@@ -231,6 +231,9 @@ export function WatchlistPage() {
                   Added By
                 </th>
                 <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Added Date
+                </th>
+                <th className="px-5 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Notes
                 </th>
                 <th className="px-5 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -259,6 +262,15 @@ export function WatchlistPage() {
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
                     {entry.added_by}
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {entry.added_date
+                      ? new Date(entry.added_date + 'T00:00:00').toLocaleDateString('en-AU', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : '—'}
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-[180px] truncate">
                     {entry.notes || '—'}
